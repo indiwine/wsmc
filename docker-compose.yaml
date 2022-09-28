@@ -1,0 +1,27 @@
+services:
+  app:
+    build: './app'
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - './app:/app'
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_NAME: wsmc
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: 741963
+      FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "741963"
+      POSTGRES_DB: "wsmc"
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+volumes:
+  postgresql:
