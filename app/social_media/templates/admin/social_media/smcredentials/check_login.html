@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block content %}
+    <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+<p>
+    Зачекайте<span id="wait-dots"></span>
+</p>
+<script>
+    jQuery(function() {
+        const dotsElement = document.getElementById('wait-dots');
+        setInterval(function() {
+            if (dotsElement.textContent.length === 3) {
+                dotsElement.textContent = '';
+            } else {
+                dotsElement.textContent += '.';
+            }
+        }, 600);
+
+        jQuery.post({
+            url: "{{ post_url }}",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function() {
+                window.location = "{{ redirect_url }}"
+            },
+        })
+    });
+</script>
+{% endblock %}

@@ -11,8 +11,11 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: 741963
       FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
+      WEBDRIVER_URL: 'http://webdriver:4444'
+      SELENIUM_DRIVER: 'chrome' # `firefox` or `chrome` are supported
     depends_on:
       - postgres
+      - webdriver
   postgres:
     image: postgres:14
     environment:
@@ -23,5 +26,14 @@ services:
       - postgresql:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+  webdriver:
+    image: selenium/standalone-chrome
+    shm_size: "2g"
+    environment:
+      SE_VNC_NO_PASSWORD: 1
+    ports:
+      - "4444"
+      - "7900:7900"
+      - "5900:5900"
 volumes:
   postgresql:

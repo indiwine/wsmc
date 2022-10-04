@@ -130,3 +130,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
+
+WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
+WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
+
+# Wait timeout in seconds
+WSMC_SELENIUM_WAIT_TIMEOUT = 15

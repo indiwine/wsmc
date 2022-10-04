@@ -8,9 +8,9 @@ class SocialMediaTypes(Enum):
 
 
 social_media_model_choices = (
-    ('fb', 'Facebook'),
-    ('vk', 'Вконтакте'),
-    ('ok', 'Однокласники')
+    (SocialMediaTypes.FB.value, 'Facebook'),
+    (SocialMediaTypes.VK.value, 'Вконтакте'),
+    (SocialMediaTypes.OK.value, 'Однокласники')
 )
 
 social_media_model_choices_dict = dict(social_media_model_choices)
