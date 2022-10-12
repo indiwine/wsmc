@@ -10,3 +10,6 @@ class SmProfile(Model):
     university = CharField(max_length=512, null=True)
     location = CharField(max_length=512, null=True)
     birthdate = DateField(null=True)
+
+    def __str__(self):
+        return f'{self.name} на {self.credentials.social_media}'

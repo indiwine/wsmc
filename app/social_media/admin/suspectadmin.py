@@ -35,7 +35,7 @@ class SuspectAdmin(ModelAdmin):
         sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
         for sm_account in sm_accounts:
             collect_request = Request(
-                [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE],
+                [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE, SocialMediaEntities.POSTS],
                 sm_account.credentials,
                 sm_account
             )

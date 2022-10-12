@@ -1,10 +1,11 @@
 from enum import Enum
 
 from django.conf import settings
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
-from selenium.webdriver.remote.webdriver import WebDriver
+# from selenium import webdriver
+from seleniumwire import webdriver
 
 
 class SeleniumDriverTypeEnum(Enum):
@@ -14,12 +15,23 @@ class SeleniumDriverTypeEnum(Enum):
 
 class DriverBuilder:
     @staticmethod
-    def build() -> WebDriver:
+    def build():
         selected_driver = DriverBuilder._get_selected_driver()
-        return webdriver.Remote(command_executor=settings.WSMC_WEBDRIVER_URL,
-                                options=DriverBuilder._get_driver_options(selected_driver),
-                                browser_profile=DriverBuilder._get_browser_profile(selected_driver)
-                                )
+        options = DriverBuilder._get_driver_options(selected_driver)
+        capabilities = options.to_capabilities()
+        seleniumwire_options = {
+            "addr": "app"
+        }
+        driver = webdriver.Remote(command_executor=settings.WSMC_WEBDRIVER_URL,
+                                  options=options,
+                                  browser_profile=DriverBuilder._get_browser_profile(selected_driver),
+                                  desired_capabilities=capabilities,
+                                  seleniumwire_options=seleniumwire_options
+                                  )
+        driver.scopes = [
+            '.*facebook\.com/api/graphql*.'
+        ]
+        return driver
 
     @staticmethod
     def _get_selected_driver() -> SeleniumDriverTypeEnum:
@@ -31,12 +43,21 @@ class DriverBuilder:
         raise RuntimeError(f'{raw_driver} is not a valid selenium web driver')
 
     @staticmethod
-    def _get_driver_options(selected_driver: SeleniumDriverTypeEnum):
+    def _get_driver_options(selected_driver: SeleniumDriverTypeEnum) -> ArgOptions:
         if selected_driver == SeleniumDriverTypeEnum.CHROME:
             options = ChromeOptions()
-            prefs = {"profile.default_content_setting_values.notifications": 2}
+            prefs = {
+                "profile.default_content_setting_values.notifications": 2,
+                "profile.managed_default_content_settings.images": 2
+            }
             options.add_experimental_option('prefs', prefs)
             options.add_argument('--lang=ru_RU')
+
+            options.add_argument("--disable-blink-features")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument("start-maximized")
         else:
             options = FirefoxOptions()
 

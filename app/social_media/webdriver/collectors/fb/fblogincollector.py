@@ -5,7 +5,7 @@ from social_media.social_media import SocialMediaEntities
 
 class FbLoginCollector(AbstractCollector):
     def handle(self, request: Request):
-        if SocialMediaEntities.LOGIN in request.entities:
+        if request.can_process_entity(SocialMediaEntities.LOGIN, False):
             credentials = request.credentials
             FacebookLoginPage(request.driver).perform_login(credentials.user_name, credentials.password)
         return super().handle(request)

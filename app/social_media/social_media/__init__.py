@@ -1,2 +1,2 @@
 from .socialmediaentities import SocialMediaEntities
-from .socialmediatypes import SocialMediaTypes, social_media_model_choices, social_media_model_choices_dict
+from .socialmediatypes import SocialMediaTypes
