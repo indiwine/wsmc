@@ -125,15 +125,33 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'social_media': {
+            'format': '[{name}]: {message}',
+            'style': '{',
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'social_media'
         },
     },
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
+    'loggers': {
+        'social_media': {
+            'level': 'DEBUG',
+        },
+        'hpack': {
+            'level': 'WARNING'
+        },
+        'seleniumwire': {
+            'level': 'INFO'
+        }
+    }
 }
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
@@ -143,3 +161,5 @@ WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
 
 # Wait timeout in seconds
 WSMC_SELENIUM_WAIT_TIMEOUT = 15
+
+WSMC_WEBDRIVER_LOCALE = 'ru_RU'

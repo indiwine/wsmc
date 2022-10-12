@@ -51,7 +51,7 @@ class DriverBuilder:
                 "profile.managed_default_content_settings.images": 2
             }
             options.add_experimental_option('prefs', prefs)
-            options.add_argument('--lang=ru_RU')
+            options.add_argument(f'--lang={settings.WSMC_WEBDRIVER_LOCALE}')
 
             options.add_argument("--disable-blink-features")
             options.add_argument("--disable-blink-features=AutomationControlled")

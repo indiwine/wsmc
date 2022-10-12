@@ -1,4 +1,9 @@
+from datetime import date
+from time import mktime
 from typing import Union, List, Callable, Any, Optional, Generator
+
+from django.conf import settings
+from icu import SimpleDateFormat, Locale
 
 
 def recursive_dict_search(data: Union[List, dict],
@@ -28,3 +33,8 @@ def recursive_dict_search(data: Union[List, dict],
             if not value_found and (isinstance(value, dict) or isinstance(value, list)):
                 for f_val in recursive_dict_search(value, key_to_search, filter_cb):
                     yield f_val
+
+
+def date_to_local_month(date_to_format: date) -> str:
+    df = SimpleDateFormat('LLLL', Locale(settings.WSMC_WEBDRIVER_LOCALE))
+    return df.format(mktime(date_to_format.timetuple()))

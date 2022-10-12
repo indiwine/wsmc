@@ -4,3 +4,4 @@ from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from .blackphrase import BlackPhrase
 from .smposts import SmPosts
 from .smprofile import SmProfile
+from .collectedpostsstats import CollectedPostsStats
