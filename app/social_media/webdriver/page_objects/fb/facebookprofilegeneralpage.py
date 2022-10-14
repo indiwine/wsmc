@@ -1,19 +1,20 @@
-import logging
-import dateparser
-logger = logging.getLogger(__name__)
-
 import json
+import logging
+
+import dateparser
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 
 from social_media.dtos import SmProfileDto
-from ..abstrtactpageobject import AbstractPageObject
-from ...common import recursive_dict_search
+from .abstractfbpageobject import AbstractFbPageObject
 from .facebookregionpage import FacebookRegionPage
+from ...common import recursive_dict_search
+
+logger = logging.getLogger(__name__)
 
 
-class FacebookProfileGeneralPage(AbstractPageObject):
+class FacebookProfileGeneralPage(AbstractFbPageObject):
 
     def __init__(self, driver: WebDriver):
         super().__init__(driver)
@@ -31,21 +32,13 @@ class FacebookProfileGeneralPage(AbstractPageObject):
         return self.driver.find_element(By.XPATH, '//script[@data-sjs][contains(text(),"profile_fields")]')
 
     def get_name_element(self):
-        return self.driver.find_element(By.TAG_NAME, 'h1')
+        return self.driver.find_element(By.CSS_SELECTOR, 'div[role="main"] h1')
 
-    @staticmethod
-    def get_overview_url(profile: str):
-        return f'{profile}/about_overview'
-
-    @staticmethod
-    def get_basic_info_url(profile: str):
-        return f'{profile}/about_contact_and_basic_info'
-
-    def collect_profile(self, profile: str) -> SmProfileDto:
-        self._navigate_and_wait(self.get_overview_url(profile))
-        profile_dto = SmProfileDto(name=self.get_name_element().text)
+    def collect_profile(self) -> SmProfileDto:
+        self._navigate_and_wait(self.navigation_strategy.generate_about_profile_link())
+        profile_dto = SmProfileDto(name=self.get_name_element().get_attribute('textContent'))
         self._extract_json_data(profile_dto)
-        self._navigate_and_wait(self.get_basic_info_url(profile))
+        self._navigate_and_wait(self.navigation_strategy.generate_basic_profile_info_link())
         self._extract_json_data(profile_dto)
         self._normalize_profile(profile_dto)
 
@@ -56,8 +49,7 @@ class FacebookProfileGeneralPage(AbstractPageObject):
             profile.birthdate = dateparser.parse(profile.birthdate)
 
     def _navigate_and_wait(self, url):
-        logger.debug(f'navigation to {url}')
-        self.driver.get(url)
+        self.navigate_to(url)
         self.get_wait().until(EC.presence_of_element_located(self.get_profile_app_section()))
 
     def _extract_json_data(self, profile_dto: SmProfileDto):
@@ -84,7 +76,9 @@ class FacebookProfileGeneralPage(AbstractPageObject):
         if 'ranges' in node['title']:
             range = node['title']['ranges'][0]
             if range['entity']['category_type'] == 'REGION':
-                city = FacebookRegionPage(self.driver).get_name(range['entity']['profile_url'])
+                city = FacebookRegionPage(self.driver) \
+                    .set_navigation_strategy(self.navigation_strategy) \
+                    .get_name(range['entity']['profile_url'])
         logger.debug(f'City found {city}')
         profile_dto.location = city
 

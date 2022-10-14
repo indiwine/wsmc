@@ -12,4 +12,8 @@ class SmProfile(Model):
     birthdate = DateField(null=True)
 
     def __str__(self):
-        return f'{self.name} на {self.credentials.social_media}'
+        return f'Профіль {self.suspect.name} у {self.credentials.social_media}'
+
+    class Meta:
+        verbose_name = 'Профіль'
+        verbose_name_plural = 'Профілі'

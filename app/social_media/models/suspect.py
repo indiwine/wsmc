@@ -1,7 +1,8 @@
-from django.db import models
+from django.db.models import Model, CharField, PositiveIntegerField
 
-class Suspect(models.Model):
-    name = models.fields.CharField(max_length=255)
+class Suspect(Model):
+    name = CharField(max_length=255)
+    score = PositiveIntegerField(default=0, verbose_name='Підозрілість')
 
     def __str__(self):
         return self.name

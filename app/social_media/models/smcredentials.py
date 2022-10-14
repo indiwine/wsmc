@@ -17,5 +17,5 @@ class SmCredentials(models.Model):
         return f'{self.user_name} ::> {self.social_media}'
 
     class Meta:
-        verbose_name = 'Аккакунт соціальної мережі'
-        verbose_name_plural = 'Аккакунти соціальних мереж'
+        verbose_name = 'Аккаунт соціальної мережі'
+        verbose_name_plural = 'Аккаунти соціальних мереж'

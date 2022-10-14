@@ -2,17 +2,17 @@ import logging
 from datetime import date
 from typing import Final
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+
+from .abstractfbpageobject import AbstractFbPageObject
+from ...common import date_to_local_month
+
 logger = logging.getLogger(__name__)
 
-from selenium.webdriver.remote.webelement import WebElement
 
-from ..abstrtactpageobject import AbstractPageObject
-from ...common import date_to_local_month
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-
-
-class FacebookPostsFilterDialogFragment(AbstractPageObject):
+class FacebookPostsFilterDialogFragment(AbstractFbPageObject):
     YEAR_INDEX: Final[int] = 0
     MONTH_INDEX: Final[int] = 1
 
@@ -27,31 +27,40 @@ class FacebookPostsFilterDialogFragment(AbstractPageObject):
         return self.driver.find_element(By.XPATH, '//div[@role="button"][@aria-label="Фильтры"]')
 
     def get_submit_button(self, dialog: WebElement):
-        return dialog.find_element(By.XPATH, '//div[@role="button"][@aria-label="Готово"]')
+        return dialog.find_element(By.XPATH, '//div[@role="button" and @aria-label="Готово" and @tabindex="0"]')
 
-    def get_selectors(self, dialog: WebElement):
-        return dialog.find_elements(By.XPATH, '//div[@role="combobox"]')
+    def get_selectors(self):
+        return self.driver.find_elements(By.XPATH, '//div[@role="combobox"]')
 
     def set_post_filter_year_month(self, date_to_set: date):
+        logger.info(f'Setting FB filter to {date_to_set}')
         self.open_dialog()
-        dialog_element = self.get_filter_dialog()
-        self._select_in_dropdown(self._open_selector(dialog_element, self.YEAR_INDEX), date_to_set.year.__str__())
-        self._select_in_dropdown(self._open_selector(dialog_element, self.MONTH_INDEX),
+
+        self._select_in_dropdown(self._open_selector(self.YEAR_INDEX), date_to_set.year.__str__())
+        self._select_in_dropdown(self._open_selector(self.MONTH_INDEX),
                                  date_to_local_month(date_to_set))
-        self.get_submit_button(dialog_element).click()
+        self.get_submit_button(self.get_filter_dialog()).click()
 
     def open_dialog(self):
-        self.get_filters_button().click()
-        self.get_wait().until(EC.presence_of_element_located(self.get_filter_dialog_locator()))
+        button = self.get_filters_button()
+        self.driver.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"});', button)
+        button.click()
 
-    def _open_selector(self, dialog: WebElement, index: int):
-        selector = self.get_selectors(dialog)[index]
+        self.get_wait().until(EC.visibility_of_element_located(self.get_filter_dialog_locator()))
+        logger.debug('Dialog opened')
+
+    def _open_selector(self, index: int):
+        self.get_wait().until(lambda d: len(self.get_selectors()) > 0)
+        selector = self.get_selectors()[index]
         selector.click()
-        self.get_wait().until(EC.element_attribute_to_include(selector, 'aria-controls'))
+
+        self.get_wait().until(EC.element_attribute_to_include((By.ID, selector.get_attribute('id')), 'aria-controls'))
+        logger.debug('Selector opened')
         dropdown = self.driver.find_element(By.ID, selector.get_attribute('aria-controls'))
         return dropdown
 
     def _select_in_dropdown(self, dropdown: WebElement, value_to_select: str):
+        logger.debug(f'Tying to find "{value_to_select}" in selector')
         for el in dropdown.find_elements(By.XPATH, '//div[@role="option"]'):
             if el.get_property('textContent') == value_to_select:
                 el.click()

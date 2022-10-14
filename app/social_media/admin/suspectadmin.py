@@ -8,11 +8,6 @@ from social_media.social_media import SocialMediaEntities
 from social_media.webdriver import Request, Agent
 
 
-class LinkedSmAccounts(StackedInline):
-    model = SuspectSocialMediaAccount
-    extra = 1
-
-
 class LinkedSmProfile(StackedInline):
     model = SmProfile
 
@@ -26,16 +21,24 @@ class LinkedSmProfile(StackedInline):
         return False
 
 
+class LinkedSmAccounts(StackedInline):
+    model = SuspectSocialMediaAccount
+    extra = 1
+
+
 class SuspectAdmin(ModelAdmin):
     inlines = [LinkedSmAccounts, LinkedSmProfile]
     search_fields = ['name']
+    readonly_fields = ['score']
+    list_display = ['name', 'score']
 
     def perform_scan(self, request: HttpRequest, object_id):
         suspect: Suspect = self.get_object(request, object_id)
         sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
         for sm_account in sm_accounts:
             collect_request = Request(
-                [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE, SocialMediaEntities.POSTS],
+                # [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE, SocialMediaEntities.POSTS],
+                [SocialMediaEntities.LOGIN, SocialMediaEntities.POSTS],
                 sm_account.credentials,
                 sm_account
             )

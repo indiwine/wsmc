@@ -1,23 +1,22 @@
-import logging
-
-logger = logging.getLogger(__name__)
-
 import json
-
-from typing import Generator
+import logging
 from datetime import date
+from typing import Generator
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire.utils import decode
 
-from ...common import recursive_dict_search
-from ..abstrtactpageobject import AbstractPageObject
-from .facebookpostsfilterdialogfragment import FacebookPostsFilterDialogFragment
-from .api_objects.FacebookPostNode import FacebookPostNode
 from social_media.dtos.smpostdto import SmPostDto
 from social_media.social_media.socialmediatypes import SocialMediaTypes
+from .abstractfbpageobject import AbstractFbPageObject
+from .api_objects.FacebookPostNode import FacebookPostNode
+from .facebookpostsfilterdialogfragment import FacebookPostsFilterDialogFragment
+from ...common import recursive_dict_search
+
+logger = logging.getLogger(__name__)
 
 # Number of loops without change before timeline will be consigned "settled"
 _TIMELINE_LOOP_SETTLED_COUNT = 10
@@ -26,8 +25,9 @@ _TIMELINE_LOOP_SETTLED_COUNT = 10
 _MAX_PAGE_SCROLLS = None
 
 
-class FacebookPostsPage(AbstractPageObject):
+class FacebookPostsPage(AbstractFbPageObject):
     skip_count = 0
+    found_count = 0
 
     _previous_children_count = 0
     _loops_with_no_change = 0
@@ -46,25 +46,28 @@ class FacebookPostsPage(AbstractPageObject):
         self.navigate_to(profile)
         self.get_wait().until(EC.presence_of_element_located(self.get_profile_timeline_locator()))
 
-    def collect_posts(self, profile: str, date_to_check: date) -> Generator[SmPostDto, None, None]:
+    def collect_posts(self, date_to_check: date) -> Generator[SmPostDto, None, None]:
+        self.found_count = self.skip_count = 0
         logger.info('Start collecting FB posts')
         self.clear_requests()
 
-        if self.driver.current_url != profile:
-            self.navigate_to_profile(profile)
+        profile_url = self.navigation_strategy.generate_profile_link()
+        if self.driver.current_url != profile_url:
+            self.navigate_to_profile(profile_url)
 
-        dialog = FacebookPostsFilterDialogFragment(self.driver)
+        dialog = FacebookPostsFilterDialogFragment(self.driver).set_navigation_strategy(self.navigation_strategy)
         dialog.set_post_filter_year_month(date_to_check)
         self._wait_until_settled()
 
-        return
-
-        logger.debug('Collecting SCRIPTS from page')
-        for element in self.get_timeline_scripts():
-            for node in self._process_raw_json(element.get_attribute('textContent')):
-                yield self._to_dto(node)
+        # logger.debug('Collecting SCRIPTS from page')
+        # for element in self.get_timeline_scripts():
+        #     for node in self._process_raw_json(element.get_attribute('textContent')):
+        #         yield self._to_dto(node)
 
         for node in self._process_requests():
+            if not node.is_same_year_and_month(date_to_check):
+                return
+            self.found_count += 1
             yield self._to_dto(node)
 
     @staticmethod
@@ -142,7 +145,7 @@ class FacebookPostsPage(AbstractPageObject):
         self._previous_children_count = child_count
         loop_ends = self._loops_with_no_change == _TIMELINE_LOOP_SETTLED_COUNT
         if loop_ends:
-            logger.debug('Timeline: settled')
+            logger.info('Timeline: settled')
             self._loops_with_no_change = 0
         return loop_ends and not loader_is_in_view
 
@@ -154,6 +157,7 @@ class FacebookPostsPage(AbstractPageObject):
                 self._filter_story_items
         ):
             post_node = self._wrap_node_unit(node)
+            logger.info(f'Fb POST found: {post_node.__str__()}')
             if post_node.is_valid_story:
                 yield post_node
             else:
