@@ -1,21 +1,20 @@
 import logging
-
-logger = logging.getLogger(__name__)
-
 from typing import Optional, List
-
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from .driverbuilder import DriverBuilder
-from ..models import SuspectSocialMediaAccount, SmCredentials
+from ..models import SuspectSocialMediaAccount, SmCredential
 from ..social_media import SocialMediaEntities
+
+logger = logging.getLogger(__name__)
 
 
 class Request:
     _driver: Optional[WebDriver] = None
 
-    def __init__(self, entities: List[SocialMediaEntities], credentials: SmCredentials, social_media_account: SuspectSocialMediaAccount = None):
+    def __init__(self, entities: List[SocialMediaEntities], credentials: SmCredential,
+                 social_media_account: SuspectSocialMediaAccount = None):
         self.entities = entities
         self.credentials = credentials
         self.social_media_account: Optional[SuspectSocialMediaAccount] = social_media_account
@@ -37,4 +36,5 @@ class Request:
             self._driver = None
 
     def can_process_entity(self, entity: SocialMediaEntities, has_social_media_account: bool = True) -> bool:
-        return entity in self.entities and (not has_social_media_account or (has_social_media_account and self.social_media_account is not None))
+        return entity in self.entities and (not has_social_media_account or (
+                has_social_media_account and self.social_media_account is not None))

@@ -5,7 +5,7 @@ from social_media.models import BlackPhrase
 
 
 class BlackPhraseAdmin(ModelAdmin):
-    list_display = ('phrase', 'wight')
+    list_display = ('phrase',)
 
 
 admin.site.register(BlackPhrase, BlackPhraseAdmin)

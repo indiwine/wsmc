@@ -4,7 +4,7 @@ from django.http import HttpRequest, JsonResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
-from social_media.models import SmCredentials
+from social_media.models import SmCredential
 from ..social_media import SocialMediaEntities
 from ..webdriver import Request, Agent
 from ..webdriver.exceptions import WsmcWebDriverLoginError
@@ -19,7 +19,7 @@ class SmCredentialsAdmin(ModelAdmin):
         return ['social_media']
 
     def check_login(self, request: HttpRequest, object_id):
-        credential: SmCredentials = self.get_object(request, object_id)
+        credential: SmCredential = self.get_object(request, object_id)
 
         if request.method == "POST":
             login_request = Request([SocialMediaEntities.LOGIN], credential)
@@ -51,4 +51,4 @@ class SmCredentialsAdmin(ModelAdmin):
         return ursl + additional_urls
 
 
-admin.site.register(SmCredentials, SmCredentialsAdmin)
+admin.site.register(SmCredential, SmCredentialsAdmin)

@@ -1,9 +1,11 @@
 from django.db.models import Model, ForeignKey, RESTRICT, CASCADE, CharField, DateField
-from .smcredentials import SmCredentials
+
+from .smcredential import SmCredential
 from .suspect import Suspect
 
+
 class SmProfile(Model):
-    credentials = ForeignKey(SmCredentials, on_delete=RESTRICT)
+    credentials = ForeignKey(SmCredential, on_delete=RESTRICT)
     suspect = ForeignKey(Suspect, on_delete=CASCADE)
 
     name = CharField(max_length=512)

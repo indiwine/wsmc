@@ -1,7 +1,7 @@
 from __future__ import annotations
-from dataclasses import asdict
 
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 
 from ..request import Request
 from ...models import SmProfile

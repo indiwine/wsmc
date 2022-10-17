@@ -16,14 +16,17 @@
             }
         }, 600);
 
+        const redirectFn = function() {
+            window.location = "{{ redirect_url }}"
+        };
+
         jQuery.post({
             url: "{{ post_url }}",
             data: {
                 csrfmiddlewaretoken: '{{ csrf_token }}'
             },
-            success: function() {
-                window.location = "{{ redirect_url }}"
-            },
+            success: redirectFn,
+            error: redirectFn
         })
     });
 </script>

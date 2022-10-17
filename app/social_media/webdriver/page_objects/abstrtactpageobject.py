@@ -1,10 +1,11 @@
 import logging
 from abc import ABC
 
-logger = logging.getLogger(__name__)
 from django.conf import settings
 from selenium.webdriver.support.wait import WebDriverWait, POLL_FREQUENCY
 from seleniumwire.webdriver import Remote
+
+logger = logging.getLogger(__name__)
 
 
 class AbstractPageObject(ABC):

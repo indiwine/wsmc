@@ -13,6 +13,7 @@ services:
       FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
       WEBDRIVER_URL: 'http://webdriver:4444'
       SELENIUM_DRIVER: 'chrome' # `firefox` or `chrome` are supported
+    user: '1000:1000'
     depends_on:
       - postgres
       - webdriver

@@ -5,19 +5,19 @@ from typing import Generator
 
 from django.db.models import Model, PositiveIntegerField, DateField, ForeignKey, CASCADE, BooleanField, Index, Manager
 
-from social_media.models import SuspectSocialMediaAccount
+from social_media.models.suspectsocialmediaaccount import SuspectSocialMediaAccount
 
 
 class CollectedPostsStatsManager(Manager):
-    def posts_to_check_generator(self, suspect_account: SuspectSocialMediaAccount) -> Generator[
-        CollectedPostsStats, None, None]:
+    def posts_to_check_generator(self, suspect_account: SuspectSocialMediaAccount) -> Generator[CollectedPostsStat,
+                                                                                                None, None]:
         for date_to_check in self._date_generator():
             try:
                 stat = self.get(suspect_account=suspect_account, date=date_to_check)
                 if stat.finished:
                     continue
-            except CollectedPostsStats.DoesNotExist:
-                stat = CollectedPostsStats(suspect_account=suspect_account, date=date_to_check)
+            except CollectedPostsStat.DoesNotExist:
+                stat = CollectedPostsStat(suspect_account=suspect_account, date=date_to_check)
 
             yield stat
 
@@ -32,7 +32,7 @@ class CollectedPostsStatsManager(Manager):
                 yield check_year.replace(month=month)
 
 
-class CollectedPostsStats(Model):
+class CollectedPostsStat(Model):
     suspect_account = ForeignKey(SuspectSocialMediaAccount, on_delete=CASCADE)
     found = PositiveIntegerField(default=0)
     skipped = PositiveIntegerField(default=0)

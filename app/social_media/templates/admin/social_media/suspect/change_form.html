@@ -2,6 +2,7 @@
 {% block object-tools-items %}
     {{ block.super }}
     <li>
-        <a class="viewsitelink" href="{% url 'admin:social_media_suspect_perform_scan' object_id %}">Перевірка</a>
+        <a class="viewsitelink" href="{% url 'admin:social_media_suspect_perform_scan' object_id %}">Збір даних</a>
+        <a class="viewsitelink" href="{% url 'admin:social_media_suspect_perform_screening' object_id %}">Перевірка</a>
     </li>
 {% endblock %}

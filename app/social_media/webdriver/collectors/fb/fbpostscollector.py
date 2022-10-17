@@ -1,4 +1,4 @@
-from social_media.models import SmPosts, CollectedPostsStats
+from social_media.models import SmPost, CollectedPostsStat
 from social_media.social_media import SocialMediaEntities
 from ..abstractcollector import AbstractCollector
 from ...link_builders.fb.fblinkbuilder import FbLinkBuilder
@@ -14,14 +14,14 @@ class FbPostsCollector(AbstractCollector):
             page = FacebookPostsPage(request.driver) \
                 .set_navigation_strategy(FbLinkBuilder.build_strategy(request.social_media_account.link))
 
-            for stats in CollectedPostsStats.objects.posts_to_check_generator(request.social_media_account):
+            for stats in CollectedPostsStat.objects.posts_to_check_generator(request.social_media_account):
                 for post_dto in page.collect_posts(stats.date):
                     try:
-                        sm_post = SmPosts.objects.get(sm_post_id=post_dto.sm_post_id,
-                                                      profile=sm_profile,
-                                                      social_media=post_dto.social_media)
-                    except SmPosts.DoesNotExist:
-                        sm_post = SmPosts(profile=sm_profile, suspect=request.social_media_account.suspect)
+                        sm_post = SmPost.objects.get(sm_post_id=post_dto.sm_post_id,
+                                                     profile=sm_profile,
+                                                     social_media=post_dto.social_media)
+                    except SmPost.DoesNotExist:
+                        sm_post = SmPost(profile=sm_profile, suspect=request.social_media_account.suspect)
 
                     self.assign_dto_to_obj(post_dto, sm_post)
                     sm_post.save()
