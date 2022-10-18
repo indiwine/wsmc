@@ -1,22 +1,39 @@
+version: '3.4'
+x-app-common: &common-variables
+  POSTGRES_NAME: wsmc
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: 741963
+  FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
+  WEBDRIVER_URL: 'http://webdriver:4444'
+  SELENIUM_DRIVER: 'chrome' # `firefox` or `chrome` are supported
+
 services:
   app:
     build: './app'
     command: python manage.py runserver 0.0.0.0:8000
+    hostname: 'app'
     volumes:
       - './app:/app'
     ports:
       - "8000:8000"
-    environment:
-      POSTGRES_NAME: wsmc
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: 741963
-      FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
-      WEBDRIVER_URL: 'http://webdriver:4444'
-      SELENIUM_DRIVER: 'chrome' # `firefox` or `chrome` are supported
-    user: '1000:1000'
+    environment: *common-variables
     depends_on:
       - postgres
       - webdriver
+      - redis
+      - celery
+  celery:
+    build: './app'
+    hostname: 'celery'
+    volumes:
+      - './app:/app'
+    command: celery -A wsmc worker
+    environment: *common-variables
+    depends_on:
+      - redis
+      - postgres
+  redis:
+    image: redis:7-alpine
   postgres:
     image: postgres:14
     environment:

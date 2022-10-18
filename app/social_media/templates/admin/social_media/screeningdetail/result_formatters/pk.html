@@ -1,0 +1,14 @@
+{% for check_result in item.result %}
+    <div class="screening-result-pk">
+        <p>Знайдено фразу "<i>{{ check_result.request }}</i>":</p>
+
+        <div class="headline screening-result-quotes">
+        {% autoescape off %}
+            {{ check_result.headline|linebreaks }}
+        {% endautoescape %}
+
+        </div>
+
+
+    </div>
+{% endfor %}

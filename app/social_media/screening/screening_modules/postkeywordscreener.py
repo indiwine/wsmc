@@ -17,7 +17,7 @@ class PostKeywordScreener(AbstractScreeningModule):
 
     def handle(self, screening_request: ScreeningRequest):
         self._black_phrases_query_set = self._load_keywords()
-        posts = SmPost.objects.only().filter(suspect=screening_request.suspect).iterator(1000)
+        posts = SmPost.objects.only().filter(suspect=screening_request.suspect, body__isnull=False).iterator(1000)
         for post in posts:
             found_matches = self._check_against_phrases(post)
             if len(found_matches) > 0:
@@ -44,7 +44,8 @@ class PostKeywordScreener(AbstractScreeningModule):
                                       query,
                                       config=settings.PG_SEARCH_LANG,
                                       start_sel='<span>',
-                                      stop_sel='</span>'
+                                      stop_sel='</span>',
+                                      fragment_delimiter='...'
                                       )
             found_post = SmPost.objects.annotate(headline=headline).filter(id=post.id, search_vector=query).first()
             if found_post:

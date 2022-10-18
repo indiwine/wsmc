@@ -1,4 +1,6 @@
+import logging
 from enum import Enum
+import socket
 
 from django.conf import settings
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -6,7 +8,7 @@ from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
 # from selenium import webdriver
 from seleniumwire import webdriver
-
+logger = logging.getLogger(__name__)
 
 class SeleniumDriverTypeEnum(Enum):
     FIREFOX = 'firefox'
@@ -16,12 +18,15 @@ class SeleniumDriverTypeEnum(Enum):
 class DriverBuilder:
     @staticmethod
     def build():
+
         selected_driver = DriverBuilder._get_selected_driver()
+        logger.debug(f'Building webdriver {selected_driver.name}')
         options = DriverBuilder._get_driver_options(selected_driver)
         capabilities = options.to_capabilities()
         seleniumwire_options = {
-            "addr": "app"
+            "addr": socket.gethostname()
         }
+        logger.debug(f'Webdriver executor: {settings.WSMC_WEBDRIVER_URL}')
         driver = webdriver.Remote(command_executor=settings.WSMC_WEBDRIVER_URL,
                                   options=options,
                                   browser_profile=DriverBuilder._get_browser_profile(selected_driver),

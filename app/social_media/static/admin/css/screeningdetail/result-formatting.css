@@ -1,0 +1,18 @@
+.screening-result-pk {
+
+}
+
+.screening-result-pk .headline {
+    padding-left: 20px;
+}
+
+.screening-result-pk .headline span {
+    font-weight: bold;
+    color: black;
+
+}
+
+
+.screening-result-quotes {
+    border-left: gray 6px solid;
+}

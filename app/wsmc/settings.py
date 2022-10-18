@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
-    'encrypted_model_fields'
+    'encrypted_model_fields',
+    'django_celery_results'
 ]
 
 MIDDLEWARE = [
@@ -154,6 +155,13 @@ LOGGING = {
         }
     }
 }
+
+# Celery Configuration Options
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = 'redis://redis:6379/'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_RESULT_EXTENDED = True
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
 
