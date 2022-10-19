@@ -23,7 +23,7 @@ services:
       - redis
       - celery
   celery:
-    build: './app'
+    image: wsmc_app
     hostname: 'celery'
     volumes:
       - './app:/app'

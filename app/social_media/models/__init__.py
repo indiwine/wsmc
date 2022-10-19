@@ -1,5 +1,6 @@
 from .blackphrase import BlackPhrase
 from .collectedpostsstat import CollectedPostsStat
+from .location import Location
 from .screeningdetail import ScreeningDetail
 from .screeningreport import ScreeningReport
 from .smcredential import SmCredential

@@ -1,0 +1,2 @@
+class LocationRequestInvalidError(Exception):
+    pass

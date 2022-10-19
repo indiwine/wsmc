@@ -156,6 +156,10 @@ LOGGING = {
     }
 }
 
+FIXTURE_DIRS = [
+    'social_media/fixtures'
+]
+
 # Celery Configuration Options
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_RESULT_BACKEND = 'django-db'
@@ -164,6 +168,7 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXTENDED = True
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
+NOMINATIM_USER_AGENT = 'wsmc_test_app'
 
 WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')

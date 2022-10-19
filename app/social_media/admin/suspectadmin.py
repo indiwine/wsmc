@@ -37,26 +37,8 @@ class SuspectAdmin(ModelAdmin):
     def perform_scan(self, request: HttpRequest, object_id):
         perform_sm_data_collection.delay(object_id)
 
-
-        # suspect: Suspect = self.get_object(request, object_id)
-        # sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
-        # for sm_account in sm_accounts:
-        #     collect_request = Request(
-        #         [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE, SocialMediaEntities.POSTS],
-        #         # [SocialMediaEntities.LOGIN, SocialMediaEntities.POSTS],
-        #         sm_account.credentials,
-        #         sm_account
-        #     )
-        #     agent = Agent(collect_request)
-        #     agent.run()
-
     def perform_screening(self, request: HttpRequest, object_id):
         perform_screening.delay(object_id)
-        # suspect: Suspect = self.get_object(request, object_id)
-        # screen = Screener.build(suspect)
-        # new_score = screen.scan()
-        # suspect.score = new_score
-        # suspect.save()
 
     def get_urls(self):
         ursl = super().get_urls()
