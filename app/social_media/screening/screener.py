@@ -3,6 +3,7 @@ from __future__ import annotations
 from social_media.models import Suspect, ScreeningReport
 from .screening_modules.abstractscreeningmodule import AbstractScreeningModule
 from .screening_modules.postkeywordscreener import PostKeywordScreener
+from .screening_modules.profilelocationscreener import ProfileLocationScreener
 from .screeningrequest import ScreeningRequest
 
 
@@ -17,7 +18,7 @@ class Screener:
         return self.request.score
 
     def _build_chain(self) -> AbstractScreeningModule:
-        return PostKeywordScreener()
+        return PostKeywordScreener().set_next(ProfileLocationScreener())
 
     @staticmethod
     def build(suspect: Suspect) -> Screener:

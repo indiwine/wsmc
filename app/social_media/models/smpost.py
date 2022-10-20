@@ -15,7 +15,7 @@ class SmPost(Model):
     datetime = DateTimeField(verbose_name='Час створення')
 
     body = TextField(null=True, verbose_name='Текст')
-    permalink = URLField(null=True, help_text='Прямий лінк на пост')
+    permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512)
     raw_post = JSONField(null=True, editable=False)
     search_vector = SearchVectorField('body')
 

@@ -31,8 +31,7 @@ class FacebookLoginPage(AbstractFbPageObject):
         return By.CSS_SELECTOR, 'div[role=navigation]'
 
     def perform_login(self, user_name: str, password: str):
-        logger.debug(f'Navigating to: {self.navigation_strategy.base_url}')
-        self.driver.get(self.navigation_strategy.base_url)
+        self.navigate_to(self.navigation_strategy.base_url)
         self.royal_email().send_keys(user_name)
         self.royal_pass().send_keys(password)
         self.royal_login_button().click()

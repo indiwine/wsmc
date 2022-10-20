@@ -1,0 +1,1 @@
+from .vklogincollector import VkLoginCollector

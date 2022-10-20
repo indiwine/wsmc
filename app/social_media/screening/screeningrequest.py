@@ -6,3 +6,6 @@ class ScreeningRequest:
         self.suspect = suspect
         self.report = report
         self.score = 0
+
+    def add_score(self, amount: int):
+        self.score += amount

@@ -13,7 +13,7 @@ class SmCredential(models.Model):
         default=SocialMediaTypes.FB)
 
     def __str__(self):
-        return f'{self.user_name} ::> {self.social_media}'
+        return f'{self.user_name} ({self.get_social_media_display()})'
 
     class Meta:
         verbose_name = 'Аккаунт соціальної мережі'

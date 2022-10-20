@@ -32,6 +32,8 @@ class PostKeywordScreener(AbstractScreeningModule):
                 )
                 detail.save()
 
+        super().handle(screening_request)
+
     @staticmethod
     def _load_keywords():
         return BlackPhrase.objects.all()

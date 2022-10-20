@@ -39,7 +39,7 @@ class SmCredentialsAdmin(ModelAdmin):
                 "post_url": request.get_full_path(),
                 "redirect_url": reverse("admin:%s_%s_change" % (opts.app_label, opts.model_name), args=(object_id,))
             }
-            return TemplateResponse(request, 'admin/social_media/smcredentials/check_login.html', context)
+            return TemplateResponse(request, 'admin/social_media/smcredential/check_login.html', context)
 
     def get_urls(self):
         ursl = super().get_urls()

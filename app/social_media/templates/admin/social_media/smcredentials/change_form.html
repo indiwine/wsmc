@@ -1,7 +1,0 @@
-{% extends "admin/change_form.html" %}
-{% block object-tools-items %}
-    {{ block.super }}
-    <li>
-        <a class="viewsitelink" href="{% url 'admin:social_media_smcredentials_check_login' object_id %}">Перевірити логін</a>
-    </li>
-{% endblock %}

@@ -22,8 +22,37 @@ def _extract_page(page: Union[LinkTypes, str]) -> str:
     return page
 
 
+def generate_admin_url(page: Union[LinkTypes, str],
+                       app_label: str,
+                       model_name: str,
+                       args: Optional[tuple] = None,
+                       kwargs: Optional[dict] = None,
+                       params: Optional[dict] = None) -> str:
+    url = reverse(f'admin:{app_label}_{model_name}_{_extract_page(page)}', args=args, kwargs=kwargs)
+    if params:
+        url += f'?{urllib.parse.urlencode(params)}'
+
+    return url
+
+
+def generate_url_for_model(
+        page: Union[LinkTypes, str],
+        model: Type[Model],
+        args: Optional[tuple] = None,
+        kwargs: Optional[dict] = None,
+        params: Optional[dict] = None) -> str:
+    return generate_admin_url(
+        page,
+        model._meta.app_label,
+        model._meta.model_name,
+        args,
+        kwargs,
+        params
+    )
+
+
 def generate_admin_link(
-        page: str,
+        page: Union[LinkTypes, str],
         app_label: str,
         model_name: str,
         text: str,
@@ -31,9 +60,7 @@ def generate_admin_link(
         kwargs: Optional[dict] = None,
         params: Optional[dict] = None
 ) -> str:
-    url = reverse(f'admin:{app_label}_{model_name}_{page}', args=args, kwargs=kwargs)
-    if params:
-        url += f'?{urllib.parse.urlencode(params)}'
+    url = generate_admin_url(page, app_label, model_name, args, kwargs, params)
     return mark_safe(f'<a href="{url}">{text}</a>')
 
 
@@ -45,7 +72,7 @@ def generate_link_for_model(
         kwargs: Optional[dict] = None,
         params: Optional[dict] = None) -> str:
     return generate_admin_link(
-        _extract_page(page),
+        page,
         model._meta.app_label,
         model._meta.model_name,
         text,
@@ -62,7 +89,7 @@ def generate_link_for_model_object(
         kwargs: Optional[dict] = None,
         params: Optional[dict] = None) -> str:
     return generate_admin_link(
-        _extract_page(page),
+        page,
         model._meta.app_label,
         model._meta.model_name,
         text,

@@ -9,5 +9,5 @@ class Suspect(Model):
         return self.name
 
     class Meta:
-        verbose_name = 'Підозрюваний'
-        verbose_name_plural = 'Підозрювані'
+        verbose_name = 'Людина'
+        verbose_name_plural = 'Люди'
