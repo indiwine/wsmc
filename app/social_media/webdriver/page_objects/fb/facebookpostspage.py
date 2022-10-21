@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
-from seleniumwire.utils import decode
 
 from social_media.dtos.smpostdto import SmPostDto
 from social_media.social_media.socialmediatypes import SocialMediaTypes
@@ -114,17 +113,10 @@ class FacebookPostsPage(AbstractFbPageObject):
         self.get_wait(poll_frequency=1, timeout=60).until(self._is_time_line_settled)
 
     def _iterate_over_requests(self) -> Generator[FacebookPostNode, None, None]:
-        logger.debug(f'Iterating true {len(self.driver.requests)} requests')
-        for request in self.driver.requests:
-            response = request.response
-            if response and response.status_code == 200:
-                body = decode(response.body, response.headers.get('Content-Encoding', 'identity')).decode()
-                for line in body.splitlines():
-                    for node in self._process_raw_json(line):
-                        yield node
-            else:
-                logger.error('No response', response)
-        del self.driver.requests
+        for body in self.request_iterator():
+            for line in body.splitlines():
+                for node in self._process_raw_json(line):
+                    yield node
 
     def _is_time_line_settled(self, driver) -> bool:
         logger.debug('Checking if timeline settled')

@@ -1,1 +1,2 @@
 from .vklogincollector import VkLoginCollector
+from .vkprofilecollector import VkProfileCollector

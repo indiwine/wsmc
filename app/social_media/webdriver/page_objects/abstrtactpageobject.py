@@ -1,8 +1,10 @@
 import logging
 from abc import ABC
+from typing import Generator
 
 from django.conf import settings
 from selenium.webdriver.support.wait import WebDriverWait, POLL_FREQUENCY
+from seleniumwire.utils import decode
 from seleniumwire.webdriver import Remote
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,16 @@ class AbstractPageObject(ABC):
             rect.right <= (window.innerWidth || document.documentElement.clientWidth) 
         );
         """, css_selector)
+
+    def request_iterator(self) -> Generator[str, None, None]:
+        logger.debug(f'Iterating true {len(self.driver.requests)} requests')
+        for request in self.driver.requests:
+            response = request.response
+            if response and response.status_code == 200:
+                yield decode(response.body, response.headers.get('Content-Encoding', 'identity')).decode()
+            else:
+                logger.error('No response', response)
+        self.clear_requests()
 
     def init_end_of_page_count(self):
         self._is_eop_inited = True

@@ -21,7 +21,7 @@ class VkLoginPage(AbstractVkPageObject):
         self.get_wait().until(EC.visibility_of_element_located(self.email_input_locator()))
         self.email_input().send_keys(user_name)
         self.submit_button().click()
-        auth_page = VkAuthPage(self.driver)
+        auth_page = VkAuthPage(self.driver, self.link_strategy)
         main_feed_page = auth_page.set_password(password)
         main_feed_page.wait_for_main_feed()
 

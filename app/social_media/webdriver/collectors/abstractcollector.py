@@ -34,6 +34,13 @@ class AbstractCollector(Collector):
         return SmProfile.objects.get(credentials=request.credentials,
                                      suspect=request.social_media_account.suspect)
 
+    def get_or_create_sm_profile(self, request) -> SmProfile:
+        try:
+            sm_profile = self.get_sm_profile(request)
+        except SmProfile.DoesNotExist:
+            sm_profile = SmProfile(credentials=request.credentials, suspect=request.social_media_account.suspect)
+        return sm_profile
+
     @staticmethod
     def assign_dto_to_obj(dto, model):
         for key, value in asdict(dto).items():

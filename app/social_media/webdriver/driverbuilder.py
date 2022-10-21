@@ -1,6 +1,6 @@
 import logging
-from enum import Enum
 import socket
+from enum import Enum
 
 from django.conf import settings
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -8,7 +8,9 @@ from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
 # from selenium import webdriver
 from seleniumwire import webdriver
+
 logger = logging.getLogger(__name__)
+
 
 class SeleniumDriverTypeEnum(Enum):
     FIREFOX = 'firefox'
@@ -34,7 +36,8 @@ class DriverBuilder:
                                   seleniumwire_options=seleniumwire_options
                                   )
         driver.scopes = [
-            '.*facebook\.com/api/graphql*.'
+            '.*facebook\.com/api/graphql.*',
+            '.*api\.vk\.com/method/execute.*'
         ]
         return driver
 

@@ -1,0 +1,1 @@
+from .vklinkbuilder import VkLinkBuilder

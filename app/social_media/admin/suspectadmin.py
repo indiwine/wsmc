@@ -41,7 +41,7 @@ class SuspectAdmin(ModelAdmin):
     list_display = ['name', 'score']
 
     def perform_scan(self, request: HttpRequest, object_id):
-        result: AsyncResult = perform_sm_data_collection.delay(object_id)
+        result: AsyncResult = perform_sm_data_collection(object_id)
         self._send_message(request, result)
         return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 

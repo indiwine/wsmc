@@ -20,4 +20,4 @@ class VkAuthPage(AbstractVkPageObject):
         self.get_wait().until(EC.visibility_of_element_located(self.password_locator()))
         self.password_field().send_keys(password)
         self.get_submit_button().click()
-        return VkMainFeedPage(self.driver)
+        return VkMainFeedPage(self.driver, self.link_strategy)
