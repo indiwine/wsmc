@@ -10,3 +10,7 @@ class AbstractVkLinkStrategy(ABC):
     @abstractmethod
     def get_profile_link(self) -> str:
         pass
+
+    @abstractmethod
+    def add_offset(self, url: str, offset: int) -> str:
+        pass

@@ -1,8 +1,12 @@
+import urllib.parse
 from datetime import date
 from time import mktime
 from typing import Union, List, Callable, Any, Optional, Generator
+from urllib.parse import ParseResult
 
+from dateparser import parse
 from django.conf import settings
+from django.utils import timezone
 from icu import SimpleDateFormat, Locale
 
 
@@ -36,5 +40,33 @@ def recursive_dict_search(data: Union[List, dict],
 
 
 def date_to_local_month(date_to_format: date) -> str:
+    """
+    Extract month from date_to_format in a correct grammatical case
+    @param date_to_format:
+    @return:
+    """
     df = SimpleDateFormat('LLLL', Locale(settings.WSMC_WEBDRIVER_LOCALE))
     return df.format(mktime(date_to_format.timetuple()))
+
+
+def add_get_params_to_url(url: ParseResult, params: dict) -> str:
+    """
+    Reformat url with a given params as a GET parametres
+    @param url:
+    @param params:
+    @return: Constructed url
+    """
+    url_parts = list(url)
+    query = dict(urllib.parse.parse_qsl(url_parts[4]))
+    query.update(params)
+    url_parts[4] = urllib.parse.urlencode(query)
+    return urllib.parse.urlunparse(url_parts)
+
+
+def date_time_parse(date_str: str, **kwargs):
+    return parse(date_str, **kwargs,
+                 languages=['en', 'ru', 'uk'],
+                 settings={
+                     'TIMEZONE': timezone.get_current_timezone().__str__(),
+                     'RETURN_AS_TIMEZONE_AWARE': True
+                 })

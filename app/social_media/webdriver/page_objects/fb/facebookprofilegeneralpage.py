@@ -1,12 +1,12 @@
 import json
 import logging
 
-import dateparser
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 
 from social_media.dtos import SmProfileDto
+from social_media.webdriver.common import date_time_parse
 from .abstractfbpageobject import AbstractFbPageObject
 from .facebookregionpage import FacebookRegionPage
 from ...common import recursive_dict_search
@@ -46,7 +46,7 @@ class FacebookProfileGeneralPage(AbstractFbPageObject):
 
     def _normalize_profile(self, profile: SmProfileDto):
         if profile.birthdate is not None:
-            profile.birthdate = dateparser.parse(profile.birthdate)
+            profile.birthdate = date_time_parse(profile.birthdate)
 
     def _navigate_and_wait(self, url):
         self.navigate_to(url)

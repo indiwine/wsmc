@@ -33,6 +33,9 @@ class CollectedPostsStatsManager(Manager):
 
 
 class CollectedPostsStat(Model):
+    """
+    Used for saving statistics about Facebook posts collecting
+    """
     suspect_account = ForeignKey(SuspectSocialMediaAccount, on_delete=CASCADE)
     found = PositiveIntegerField(default=0)
     skipped = PositiveIntegerField(default=0)

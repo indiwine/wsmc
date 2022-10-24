@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-import dateparser
+from social_media.webdriver.common import date_time_parse
 
 
 class VkProfileNode:
@@ -28,5 +28,5 @@ class VkProfileNode:
     @property
     def birthday(self) -> Optional[datetime]:
         if 'bdate' in self.raw_node:
-            return dateparser.parse(self.raw_node['bdate'])
+            return date_time_parse(self.raw_node['bdate'])
         return None

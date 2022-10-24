@@ -8,3 +8,4 @@ from .smpost import SmPost
 from .smprofile import SmProfile
 from .suspect import Suspect
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
+from .vkpoststat import VkPostStat
