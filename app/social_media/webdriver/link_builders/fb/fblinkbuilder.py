@@ -1,3 +1,4 @@
+from typing import final
 from urllib.parse import urlparse
 
 from .strategies.abstractfblinkstrategy import AbstractFbLinkStrategy
@@ -5,6 +6,7 @@ from .strategies.idstrategy import IdFbLinkStrategy
 from .strategies.nicknamestrategy import NickNameFbLinkStrategy
 
 
+@final
 class FbLinkBuilder:
 
     @staticmethod

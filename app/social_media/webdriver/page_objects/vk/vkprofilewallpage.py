@@ -1,5 +1,8 @@
+import json
+import logging
 import urllib.parse
 from typing import Generator
+from dataclasses import asdict
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -9,6 +12,8 @@ from social_media.dtos.smpostdto import SmPostDto
 from social_media.social_media import SocialMediaTypes
 from .abstractvkpageobject import AbstractVkPageObject
 from ...common import date_time_parse
+
+logger = logging.getLogger(__name__)
 
 
 class VkProfileWallPage(AbstractVkPageObject):
@@ -23,6 +28,7 @@ class VkProfileWallPage(AbstractVkPageObject):
         self.get_wait().until(EC.presence_of_element_located((By.ID, 'page_wall_posts')))
 
     def collect_posts(self, offset: int) -> Generator[SmPostDto, None, None]:
+        logger.debug(f'Collecting posts for offset: {offset}')
         self.clear_requests()
         self.navigate_to(self.link_strategy.add_offset(self.driver.current_url, offset))
         self.wait_for_posts()
@@ -43,6 +49,9 @@ class VkProfileWallPage(AbstractVkPageObject):
         dto.body = body_node.get_attribute('textContent').strip()
         if len(dto.body) == 0:
             dto.body = None
+
+        d_dict = asdict(dto)
+        logger.info(f'VK post found: {json.dumps(d_dict, indent=2, ensure_ascii=False, default=str)}')
         return dto
 
     def _remove_more_button(self, body_node: WebElement):

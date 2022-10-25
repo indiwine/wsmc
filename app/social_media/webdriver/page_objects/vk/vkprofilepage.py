@@ -1,4 +1,6 @@
 import json
+import logging
+from dataclasses import asdict
 from typing import Optional
 
 from selenium.webdriver.common.by import By
@@ -10,6 +12,8 @@ from .api_objects.vkprofilenode import VkProfileNode
 from .vkprofilewallpage import VkProfileWallPage
 from ...common import recursive_dict_search
 from ...exceptions import WsmcWebDriverProfileException
+
+logger = logging.getLogger(__name__)
 
 
 class VkProfilePage(AbstractVkPageObject):
@@ -31,6 +35,7 @@ class VkProfilePage(AbstractVkPageObject):
         return VkProfileWallPage(self.driver, self.link_strategy)
 
     def collect_profile(self) -> SmProfileDto:
+        logger.debug('Collecting profile information')
         self.clear_requests()
         self._navigate_if_necessary()
         self._user_id = self._extract_user_id()
@@ -63,17 +68,21 @@ class VkProfilePage(AbstractVkPageObject):
         if isinstance(node, list):
             for item in node:
                 if isinstance(item, dict) and 'id' in item and item['id'] == self._user_id:
+                    logger.info('User information found')
                     return item
         return None
 
     def _extract_user_id(self) -> int:
         wrapper = self.submit_post_box()
         oid = wrapper.get_attribute('data-oid')
+        logger.debug(f'Found user id: {oid}')
         return int(oid)
 
     @staticmethod
     def _node_to_dto(node: VkProfileNode) -> SmProfileDto:
-        return SmProfileDto(name=node.name,
-                            location=node.home_town,
-                            university=node.education,
-                            birthdate=node.birthday)
+        dto = SmProfileDto(name=node.name,
+                           location=node.home_town,
+                           university=node.education,
+                           birthdate=node.birthday)
+        logger.info(f'Profile info found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
+        return dto

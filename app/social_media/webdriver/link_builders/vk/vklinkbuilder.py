@@ -1,7 +1,10 @@
+from typing import final
+
 from .strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 from .strategies.basicvklinkstrategy import BasicVkLinkStrategy
 
 
+@final
 class VkLinkBuilder:
 
     @staticmethod

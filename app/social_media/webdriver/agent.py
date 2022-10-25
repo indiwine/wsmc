@@ -2,6 +2,7 @@ import logging
 
 from .collectors import Collector
 from .collectors.fb import FbLoginCollector, FbProfileCollector, FbPostsCollector
+from .collectors.ok import OkLoginCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector
 from .request import Request
 from ..social_media import SocialMediaTypes
@@ -31,6 +32,9 @@ class Agent:
         elif sm_type == SocialMediaTypes.VK:
             login_handler = VkLoginCollector()
             login_handler.set_next(VkProfileCollector().set_next(VkPostsCollector()))
+            return login_handler
+        elif sm_type == SocialMediaTypes.OK:
+            login_handler = OkLoginCollector()
             return login_handler
         else:
             raise RuntimeError(f'No suitable chain for social media {sm_type}')

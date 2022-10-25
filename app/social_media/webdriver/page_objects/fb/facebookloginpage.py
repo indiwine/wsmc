@@ -21,17 +21,34 @@ class FacebookLoginPage(AbstractFbPageObject):
         return self.driver.find_element(By.XPATH, "//*[@id='pass']")
 
     def royal_login_button(self):
-        return self.driver.find_element(By.XPATH, "//*[@data-testid = 'royal_login_button']")
+        return self.driver.find_element(*self.royal_login_button_locator())
 
     def login_form(self):
         return self.driver.find_element(By.XPATH, '//*[@id="loginform"]')
+
+    def cookie_policy_dialog(self):
+        return self.driver.find_element(*self.cookie_policy_dialog_essential_button_locator())
+
+    @staticmethod
+    def cookie_policy_dialog_locator():
+        return By.XPATH, '//div[@data-testid="cookie-policy-manage-dialog"]'
+
+    @staticmethod
+    def cookie_policy_dialog_essential_button_locator():
+        return By.XPATH, '//button[@data-testid="cookie-policy-manage-dialog-accept-button"]'
 
     @staticmethod
     def navigation_locator():
         return By.CSS_SELECTOR, 'div[role=navigation]'
 
+    @staticmethod
+    def royal_login_button_locator():
+        return By.XPATH, "//*[@data-testid = 'royal_login_button']"
+
     def perform_login(self, user_name: str, password: str):
         self.navigate_to(self.navigation_strategy.base_url)
+        self.get_wait().until(EC.presence_of_element_located(self.royal_login_button_locator()))
+        self._check_for_cookie_policy()
         self.royal_email().send_keys(user_name)
         self.royal_pass().send_keys(password)
         self.royal_login_button().click()
@@ -50,3 +67,10 @@ class FacebookLoginPage(AbstractFbPageObject):
 
     def navigations(self):
         self.driver.find_elements()
+
+    def _check_for_cookie_policy(self):
+        policy_manager = self.cookie_policy_dialog()
+        if policy_manager:
+            button = policy_manager.find_element(*self.cookie_policy_dialog_essential_button_locator())
+            button.click()
+            self.get_wait().until_not(EC.presence_of_element_located(self.cookie_policy_dialog_locator()))
