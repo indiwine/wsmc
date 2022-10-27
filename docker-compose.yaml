@@ -40,7 +40,7 @@ services:
       POSTGRES_PASSWORD: "741963"
       POSTGRES_DB: "wsmc"
     volumes:
-      - postgresql:/var/lib/postgresql/data
+      - ./deploy/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
   webdriver:
@@ -51,5 +51,3 @@ services:
     ports:
       - "7900:7900"
       - "5900:5900"
-volumes:
-  postgresql:

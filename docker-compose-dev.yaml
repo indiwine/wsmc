@@ -11,3 +11,8 @@ services:
   webdriver:
     ports:
       - '4444'
+  postgres:
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+volumes:
+  postgresql:
