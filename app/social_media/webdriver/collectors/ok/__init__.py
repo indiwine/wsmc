@@ -1,1 +1,3 @@
 from .oklogincollector import OkLoginCollector
+from .okprofilecollector import OkProfileCollector
+from .okpostscollector import OkPostsCollector

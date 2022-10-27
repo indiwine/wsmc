@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  app:
+    build: './app'
+    volumes:
+      - './app:/app'
+  celery:
+    image: wsmc_app
+    volumes:
+      - './app:/app'
+  webdriver:
+    ports:
+      - '4444'

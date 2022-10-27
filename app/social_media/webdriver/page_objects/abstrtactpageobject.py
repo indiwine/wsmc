@@ -1,8 +1,10 @@
 import logging
 from abc import ABC
-from typing import Generator
+from functools import partial
+from typing import Generator, Optional, Callable
 
 from django.conf import settings
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait, POLL_FREQUENCY
 from seleniumwire.utils import decode
 from seleniumwire.webdriver import Remote
@@ -11,8 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractPageObject(ABC):
+    # Number of loops without change before timeline will be consigned "settled"
+    _TIMELINE_LOOP_SETTLED_COUNT = 10
+
     _is_eop_inited: bool = False
     _eop_last_height: int = 0
+
+    _previous_children_count = 0
+    _loops_with_no_change = 0
 
     def __init__(self, driver: Remote):
         self.driver = driver
@@ -28,6 +36,9 @@ class AbstractPageObject(ABC):
     def clear_requests(self) -> None:
         logger.debug('Clearing fetched requests')
         del self.driver.requests
+
+    def scroll_into_view(self, element: WebElement):
+        self.driver.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"});', element)
 
     def is_element_at_page_and_visible(self, css_selector: str) -> bool:
         return self.driver.execute_script("""
@@ -77,3 +88,39 @@ class AbstractPageObject(ABC):
             logger.info('END OF PAGE reached')
 
         return is_nowhere_to_scroll
+
+    def check_time_line_settled(self, child_css: str, loader_css: Optional[str]) -> Callable[[Remote], bool]:
+        """
+        A "wait" callback that waits until the number of child elements remains unchanged.
+
+        Optionally checks whatever is loader visible or not (in a viewport).
+        @param child_css: css sector for the element on which we can get "childElementCount"
+        @param loader_css: css selector for a "loader" container
+        @return: Callable for `until()` method
+        """
+        return partial(self._is_time_line_settled, child_css, loader_css)
+
+    def _is_time_line_settled(self, child_css: str, loader_css: Optional[str], driver) -> bool:
+        logger.debug('Checking if timeline settled')
+        child_count = self.driver.execute_script(
+            "return document.querySelector(arguments[0]).childElementCount", child_css)
+        logger.debug(f'Checking container child number: {child_count}')
+
+        loader_is_in_view = False
+        if loader_css:
+            loader_is_in_view = self.is_element_at_page_and_visible(loader_css)
+            logger.debug(f'Loader is in view: {loader_is_in_view}')
+
+        if child_count == self._previous_children_count:
+            self._loops_with_no_change = self._loops_with_no_change + 1
+            logger.debug('Timeline: no change in child number')
+        else:
+            logger.debug('Timeline: child number changed')
+            self._loops_with_no_change = 0
+
+        self._previous_children_count = child_count
+        loop_ends = self._loops_with_no_change == self._TIMELINE_LOOP_SETTLED_COUNT
+        if loop_ends:
+            logger.info('Timeline: settled')
+            self._loops_with_no_change = 0
+        return loop_ends and not loader_is_in_view

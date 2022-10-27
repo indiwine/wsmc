@@ -1,19 +1,19 @@
-version: '3.4'
+version: '3.8'
 x-app-common: &common-variables
   POSTGRES_NAME: wsmc
   POSTGRES_USER: user
   POSTGRES_PASSWORD: 741963
-  FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio='
+  FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio=' # Precalculated key
   WEBDRIVER_URL: 'http://webdriver:4444'
-  SELENIUM_DRIVER: 'chrome' # `firefox` or `chrome` are supported
+  SELENIUM_DRIVER: 'chrome'
+  NOMINATIM_USER_AGENT: 'wsmc_test_app'
+  CELERY_BROKER_URL: 'redis://redis:6379/'
+  DEBUG: '1'
 
 services:
   app:
-    build: './app'
-    command: python manage.py runserver 0.0.0.0:8000
+    image: indiwine/wsmc:latest
     hostname: 'app'
-    volumes:
-      - './app:/app'
     ports:
       - "8000:8000"
     environment: *common-variables
@@ -23,15 +23,14 @@ services:
       - redis
       - celery
   celery:
-    image: wsmc_app
+    image: indiwine/wsmc:latest
     hostname: 'celery'
-    volumes:
-      - './app:/app'
     command: celery -A wsmc worker
     environment: *common-variables
     depends_on:
       - redis
       - postgres
+      - webdriver
   redis:
     image: redis:7-alpine
   postgres:
@@ -45,12 +44,11 @@ services:
     ports:
       - "5432:5432"
   webdriver:
-    image: selenium/standalone-chrome
+    image: selenium/standalone-chrome:105.0
     shm_size: "2g"
     environment:
       SE_VNC_NO_PASSWORD: 1
     ports:
-      - "4444"
       - "7900:7900"
       - "5900:5900"
 volumes:

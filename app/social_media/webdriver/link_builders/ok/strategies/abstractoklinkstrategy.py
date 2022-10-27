@@ -11,3 +11,7 @@ class AbstractOkLinkStrategy(ABC):
     @abstractmethod
     def get_profile_about(self) -> str:
         pass
+
+    @abstractmethod
+    def get_posts_page(self) -> str:
+        pass

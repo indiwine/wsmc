@@ -22,9 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rj&+$ma$$l@i#r4x1f0h&kvx2)hwc)3)&nm1yy--pq5lkha&c6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.environ.get('DEBUG', False))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '0.0.0.0',
+    'localhost'
+]
 
 # Application definition
 
@@ -163,12 +166,12 @@ FIXTURE_DIRS = [
 # Celery Configuration Options
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_RESULT_BACKEND = 'django-db'
-CELERY_BROKER_URL = 'redis://redis:6379/'
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', '')
 CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXTENDED = True
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
-NOMINATIM_USER_AGENT = 'wsmc_test_app'
+NOMINATIM_USER_AGENT = os.environ.get('NOMINATIM_USER_AGENT', 'wsmc_test_app')
 
 WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')

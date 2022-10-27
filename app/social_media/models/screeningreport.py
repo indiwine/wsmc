@@ -11,3 +11,7 @@ class ScreeningReport(Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Результат перевірки'
+        verbose_name_plural = 'Результати перевірок'

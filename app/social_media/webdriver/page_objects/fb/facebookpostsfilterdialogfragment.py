@@ -43,7 +43,7 @@ class FacebookPostsFilterDialogFragment(AbstractFbPageObject):
 
     def open_dialog(self):
         button = self.get_filters_button()
-        self.driver.execute_script('arguments[0].scrollIntoView({block: "center", inline: "center"});', button)
+        self.scroll_into_view(button)
         button.click()
 
         self.get_wait().until(EC.visibility_of_element_located(self.get_filter_dialog_locator()))
