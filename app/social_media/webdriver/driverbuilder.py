@@ -56,7 +56,7 @@ class DriverBuilder:
             options = ChromeOptions()
             prefs = {
                 "profile.default_content_setting_values.notifications": 2,
-                # "profile.managed_default_content_settings.images": 2
+                "profile.managed_default_content_settings.images": 2
             }
             options.add_experimental_option('prefs', prefs)
             options.add_argument(f'--lang={settings.WSMC_WEBDRIVER_LOCALE}')

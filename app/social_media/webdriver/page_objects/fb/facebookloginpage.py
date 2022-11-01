@@ -1,7 +1,7 @@
 import logging
 from urllib.parse import urlparse
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -69,8 +69,12 @@ class FacebookLoginPage(AbstractFbPageObject):
         self.driver.find_elements()
 
     def _check_for_cookie_policy(self):
-        policy_manager = self.cookie_policy_dialog()
-        if policy_manager:
+        try:
+            policy_manager = self.cookie_policy_dialog()
             button = policy_manager.find_element(*self.cookie_policy_dialog_essential_button_locator())
             button.click()
             self.get_wait().until_not(EC.presence_of_element_located(self.cookie_policy_dialog_locator()))
+        except NoSuchElementException:
+            logger.info('No cookie policy manager')
+
+
