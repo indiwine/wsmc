@@ -3,12 +3,16 @@ x-app-common: &common-variables
   POSTGRES_NAME: wsmc
   POSTGRES_USER: user
   POSTGRES_PASSWORD: 741963
-  FIELD_ENCRYPTION_KEY: '4hCUXfHTHrwEYJpugii3Bw_hScG9zhePKX971E-Bhio=' # Precalculated key
+  FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY} # Precalculated key
   WEBDRIVER_URL: 'http://webdriver:4444'
   SELENIUM_DRIVER: 'chrome'
   NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
   DEBUG: '1'
+x-app-telegram: &telegram-vars
+  TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+  TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+  TELEGRAM_PHONE: ${TELEGRAM_PHONE}
 
 services:
   app:
@@ -16,7 +20,11 @@ services:
     hostname: 'app'
     ports:
       - "8000:8000"
-    environment: *common-variables
+    environment:
+      <<: *common-variables
+      <<: *telegram-vars
+    volumes:
+      - tdlib:/tmp/.tdlib_files/
     depends_on:
       - postgres
       - webdriver
@@ -53,3 +61,4 @@ services:
       - "5900:5900"
 volumes:
   postgresql:
+  tdlib:

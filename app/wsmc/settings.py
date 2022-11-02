@@ -31,8 +31,11 @@ ALLOWED_HOSTS = [
 
 # Application definition
 
+
 INSTALLED_APPS = [
     'social_media.apps.SocialMediaConfig',
+    'telegram_connection.apps.TelegramConfig',
+    'phonenumber_field',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -181,3 +184,13 @@ WSMC_SELENIUM_WAIT_TIMEOUT = 15
 
 WSMC_WEBDRIVER_LOCALE = 'ru_RU'
 PG_SEARCH_LANG = 'pg_catalog.russian'
+
+PHONENUMBER_DEFAULT_REGION = 'UA'
+
+# TDlib config
+# See https://my.telegram.org/apps
+TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
+TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
+TELEGRAM_PHONE = os.environ.get('TELEGRAM_PHONE', '')
+TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
+

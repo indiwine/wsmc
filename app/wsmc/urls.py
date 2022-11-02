@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+# from telegram_connection.admin import CustomAdminSite
+# admin.site.__class__ = CustomAdminSite
 
 urlpatterns = [
     path('', admin.site.urls),

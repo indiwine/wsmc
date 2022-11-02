@@ -24,6 +24,7 @@ Deprecated==1.2.13
 Django==4.1.2
 django-celery-results==2.4.0
 django-encrypted-model-fields==0.6.5
+django-phonenumber-field==7.0.0
 exceptiongroup==1.0.0rc9
 Fiona==1.8.22
 folium==0.13.0
@@ -50,6 +51,7 @@ numpy==1.23.4
 outcome==1.2.0
 packaging==21.3
 pandas==1.5.1
+phonenumberslite==8.12.57
 Pillow==9.2.0
 prompt-toolkit==3.0.31
 psycopg2==2.9.3
@@ -61,6 +63,7 @@ pyparsing==3.0.9
 pyproj==3.4.0
 PySocks==1.7.1
 python-dateutil==2.8.2
+python-telegram==0.16.0
 pytz==2022.4
 pytz-deprecation-shim==0.1.0.post0
 redis==4.3.4
