@@ -1,6 +1,7 @@
 # WSMC - Wartime Social Media Crawler
 
-A better way to mine data from social networks
+A Django based OSINT scraping tool
 
 
 ## How to start
+TODO: Add instructions
