@@ -9,5 +9,6 @@ def build_client(phone: str) -> Telegram:
         phone=phone,
         database_encryption_key=settings.TELEGRAM_DATABASE_ENCRYPTION_KEY,
         device_model='WSMC App',
-        system_version='latest'
+        system_version='latest',
+        use_message_database=False
     )

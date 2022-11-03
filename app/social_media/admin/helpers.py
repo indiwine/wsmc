@@ -51,6 +51,21 @@ def generate_url_for_model(
     )
 
 
+def generate_url_for_model_object(
+        page: Union[LinkTypes, str],
+        model: Model,
+        kwargs: Optional[dict] = None,
+        params: Optional[dict] = None) -> str:
+    return generate_admin_url(
+        page,
+        model._meta.app_label,
+        model._meta.model_name,
+        (model.pk,),
+        kwargs,
+        params
+    )
+
+
 def generate_admin_link(
         page: Union[LinkTypes, str],
         app_label: str,

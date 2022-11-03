@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+    <div>
+        <h2>Логін у телеграм акаунт "{{ account.phone.as_international }}"</h2>
+        {% if form %}
+            <form method="post" action="{{ form_url }}">
+                {% csrf_token %}
+                <p>{{ input_text }}</p>
+                {{ form.as_div }}
+                <input type="submit" value="Login">
+            </form>
+        {% else %}
+            <p>Логін не підтримується або не може бути виконано</p>
+        {% endif %}
+    </div>
+{% endblock %}
