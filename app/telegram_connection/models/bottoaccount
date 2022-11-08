@@ -1,0 +1,12 @@
+from django.db.models import Model, ForeignKey, CASCADE, UniqueConstraint
+
+from .telegramaccount import TelegramAccount
+from .telegrambot import TelegramBot
+
+
+class BotToAccount(Model):
+    account = ForeignKey(TelegramAccount, on_delete=CASCADE)
+    bot = ForeignKey(TelegramBot, on_delete=CASCADE)
+
+    class Meta:
+        constraints: [UniqueConstraint(fields=['bot'], name='unique_bot_to_account')]

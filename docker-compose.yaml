@@ -12,7 +12,6 @@ x-app-common: &common-variables
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
-  TELEGRAM_PHONE: ${TELEGRAM_PHONE}
 
 services:
   app:

@@ -33,9 +33,6 @@ ALLOWED_HOSTS = [
 
 
 INSTALLED_APPS = [
-    'social_media.apps.SocialMediaConfig',
-    'telegram_connection.apps.TelegramConfig',
-    'phonenumber_field',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     'encrypted_model_fields',
-    'django_celery_results'
+    'django_celery_results',
+    'social_media.apps.SocialMediaConfig',
+    'telegram_connection.apps.TelegramConfig',
+    'phonenumber_field',
 ]
 
 MIDDLEWARE = [
@@ -153,6 +153,9 @@ LOGGING = {
         'social_media': {
             'level': 'DEBUG',
         },
+        'telegram_connection': {
+            'level': 'DEBUG',
+        },
         'hpack': {
             'level': 'WARNING'
         },
@@ -191,6 +194,5 @@ PHONENUMBER_DEFAULT_REGION = 'UA'
 # See https://my.telegram.org/apps
 TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
-TELEGRAM_PHONE = os.environ.get('TELEGRAM_PHONE', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
 

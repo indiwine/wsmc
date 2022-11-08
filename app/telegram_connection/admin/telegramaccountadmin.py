@@ -11,7 +11,7 @@ from django.urls import path
 from telegram.client import AuthorizationState
 
 from social_media.admin.helpers import generate_url_for_model_object, LinkTypes
-from ..connection import build_client
+from ..agent import TgAgent
 from ..models import TelegramAccount
 
 logger = logging.getLogger(__name__)
@@ -25,19 +25,48 @@ class TelegramAccountAdmin(ModelAdmin):
     list_display = ['phone', 'name', 'logged_in']
     readonly_fields = ['name', 'logged_in']
     save_as_continue = False
+    filter_horizontal = ['bots_to_use']
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    # def has_change_permission(self, request, obj=None):
+    #     return False
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        if obj is not None:
+            return fields + ['phone']
+        return fields
 
     def confirm_tg_login(self, request: HttpRequest, object_id):
         account: TelegramAccount = self.get_object(request, object_id)
-        tg = build_client(account.phone.__str__())
-        code = tg.login(False)
+        agent = TgAgent(account)
+
+        # tg = build_client(account.phone.__str__())
+        code = agent.login()
         logger.info(f'TG status: {code}')
         try:
 
             if code == AuthorizationState.READY:
                 self.message_user(request, 'Логін успішний', messages.SUCCESS)
+                # agent.search('getfb')
+                # i = 0
+                # for chat in agent.get_chats():
+                #     pprint(chat.title)
+                #     i+=1
+                #
+                # pprint(i)
+                # chats_result = tg.get_chats()
+                # chats_result.wait()
+                #
+                # for chat_id in chats_result.update['chat_ids']:
+                #     chat_result = tg.get_chat(chat_id)
+                #     chat_result.wait()
+                #     if chat_result.update['title'] == 'getfb':
+                #         pprint(chat_result.update['title'])
+                # if chat_result.update['title'] == 'Osint':
+                #     send_result = tg.send_message(chat_result.update['id'], 'Скажи приветы роботам!')
+                #     send_result.wait()
+                #     break
+
                 return redirect(request.GET['back_to'])
 
             if code == AuthorizationState.WAIT_REGISTRATION:
@@ -51,19 +80,19 @@ class TelegramAccountAdmin(ModelAdmin):
                 if form.is_valid():
                     otp_or_pass = form.cleaned_data['password']
 
-                    if code == AuthorizationState.WAIT_CODE:
-                        tg.send_code(otp_or_pass)
-                    elif code == AuthorizationState.WAIT_PASSWORD:
-                        tg.send_password(otp_or_pass)
-                    else:
-                        self.message_user(request, f'Unknown code "{code}" received during login to telegram',
-                                          messages.ERROR)
-                    me = tg.get_me()
-                    me.wait()
-                    account.name = self._extract_user_name(me)
-                    account.logged_in = True
-                    account.save()
-                    return redirect(request.GET['back_to'])
+                    # if code == AuthorizationState.WAIT_CODE:
+                    #     tg.send_code(otp_or_pass)
+                    # elif code == AuthorizationState.WAIT_PASSWORD:
+                    #     tg.send_password(otp_or_pass)
+                    # else:
+                    #     self.message_user(request, f'Unknown code "{code}" received during login to telegram',
+                    #                       messages.ERROR)
+                    # me = tg.get_me()
+                    # me.wait()
+                    # account.name = self._extract_user_name(me)
+                    # account.logged_in = True
+                    # account.save()
+                    # return redirect(request.GET['back_to'])
 
             if code == AuthorizationState.WAIT_CODE or code == AuthorizationState.WAIT_PASSWORD:
                 form = OtpForm()
@@ -83,7 +112,7 @@ class TelegramAccountAdmin(ModelAdmin):
             return TemplateResponse(
                 request, 'admin/telegram_connection/telegramaccount/confirm.html', context)
         finally:
-            tg.stop()
+            agent.stop()
 
     def get_urls(self):
         opts = self.model._meta
