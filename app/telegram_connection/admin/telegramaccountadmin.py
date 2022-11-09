@@ -47,7 +47,10 @@ class TelegramAccountAdmin(ModelAdmin):
 
             if code == AuthorizationState.READY:
                 self.message_user(request, 'Логін успішний', messages.SUCCESS)
-                # agent.search('getfb')
+                chat = agent.find_chat_or_fail('getfb')
+                s = agent.send_message_contact(chat.id, {'phone_number': '+380934351952', 'first_name': 'Another test'})
+                msg = agent.wait_for_massage(lambda update_msg: not update_msg.is_outgoing and update_msg.chat_id == chat.id)
+                pass
                 # i = 0
                 # for chat in agent.get_chats():
                 #     pprint(chat.title)

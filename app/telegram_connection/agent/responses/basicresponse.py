@@ -11,8 +11,8 @@ class BasicResponse(ABC):
         pass
 
     def __init__(self, result: AsyncResult):
-        # if not result.ok_received:
-        #     raise RuntimeError('Cannot wrap response that are not yet received or has an error response')
+        if result.update is None:
+            raise RuntimeError('Cannot wrap response that are not yet received or has an error response')
         self.result = result
 
     @property
