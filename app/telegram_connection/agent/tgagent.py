@@ -1,5 +1,6 @@
 import asyncio
-from asyncio import Future
+import logging
+from pprint import pprint
 from typing import TypedDict, Optional, Callable, List
 
 from django.conf import settings
@@ -7,9 +8,11 @@ from telegram.client import Telegram, AuthorizationState
 from telegram.utils import AsyncResult
 
 from telegram_connection.models import TelegramAccount
-from .responses import available_responses, ChatResponse, ChatsResponse, MessageResponse
+from .responses import available_responses, ChatResponse, ChatsResponse, MessageResponse, UserResponse
 from .responses.basicresponse import BasicResponse
-from ..exceptions import NoResponseWrapperFound, ChatNotFound
+from ..exceptions import NoResponseWrapperFound, ChatNotFound, AccountNotLoggedIn
+
+logger = logging.getLogger(__name__)
 
 
 class TgContactMessage(TypedDict, total=False):
@@ -47,20 +50,29 @@ class TgAgent:
     def on_msg_update(self, handler: MessageResponseHandler):
         self._update_msg_subscribers.append(handler)
 
-    def wait_for_massage(self, predicate: MessageResponsePredicate, timeout: float = 30.0):
-        return asyncio.run(asyncio.wait_for(self._wait_for_msg(predicate), timeout=timeout))
+    def wait_for_massage(self, predicate: MessageResponsePredicate, timeout: float = 30.0) -> MessageResponse:
+        logger.debug('Asynchronously waiting for message')
+        return asyncio.run(self._do_wait_for_msg(predicate, timeout))
 
-    async def _wait_for_msg(self, predicate: MessageResponsePredicate) -> MessageResponse:
-        future = Future()
+    def get_me(self) -> UserResponse:
+        return self._wait_and_wrap(self.tg.get_me())
+
+    async def _do_wait_for_msg(self, predicate: MessageResponsePredicate, timeout: float) -> MessageResponse:
+        # Get the current event loop.
+        loop = asyncio.get_running_loop()
+
+        # Create a new Future object.
+        future = loop.create_future()
 
         def handler(msg: MessageResponse):
             if predicate(msg):
-                future.set_result(msg)
+                logger.debug(f'Awaited message found')
+                pprint(msg.update)
+                loop.call_soon_threadsafe(future.set_result, msg)
 
         self.on_msg_update(handler)
-
-        await future
-
+        await asyncio.wait_for(future, timeout=timeout)
+        logger.debug(f'Future resolved')
         self._update_msg_subscribers.remove(handler)
         return future.result()
 
@@ -72,6 +84,14 @@ class TgAgent:
         code = self.tg.login(False)
         self.tg.add_message_handler(self._upd_msg_handler)
         return code
+
+    def login_or_fail(self) -> None:
+        """
+        Login into tg account. Fails if status is not ready.
+        """
+        code = self.login()
+        if code != AuthorizationState.READY:
+            raise AccountNotLoggedIn(f'Login into {self.tg_account.__str__()} was not performed ')
 
     def stop(self):
         """
@@ -93,7 +113,7 @@ class TgAgent:
             raise ChatNotFound(f'Cannot find chat: "{chat_name}"')
         return self.get_chat(chats.first_chat_id)
 
-    def send_message_contact(self, chat_id: int, contact: TgContactMessage):
+    def send_message_contact(self, chat_id: int, contact: TgContactMessage) -> MessageResponse:
         data = {
             'chat_id': chat_id,
             'input_message_content': {
@@ -104,7 +124,7 @@ class TgAgent:
                 }
             }
         }
-        return self.tg.call_method('sendMessage', data, False)
+        return self._wait_and_wrap(self.tg.call_method('sendMessage', data, False))
 
     def get_chat(self, id: int) -> ChatResponse:
         return self._wait_and_wrap(self.tg.get_chat(id))

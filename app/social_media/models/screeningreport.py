@@ -13,5 +13,5 @@ class ScreeningReport(Model):
         return self.name
 
     class Meta:
-        verbose_name = 'Результат перевірки'
-        verbose_name_plural = 'Результати перевірок'
+        verbose_name = 'Перевірка соцмереж'
+        verbose_name_plural = 'Перевірки соцмереж'

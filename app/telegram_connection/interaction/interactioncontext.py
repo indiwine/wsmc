@@ -16,4 +16,9 @@ class InteractionContext:
         @param request: interaction request
         @return:
         """
+        self._populate_chat(request)
+
         return self.strategy.do_interaction(request)
+
+    def _populate_chat(self, request: AbstractInteractionRequest):
+        request.set_chat(request.agent.find_chat_or_fail(self.bot.get_chat_name()))

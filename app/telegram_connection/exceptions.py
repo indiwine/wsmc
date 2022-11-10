@@ -8,3 +8,7 @@ class TgAgentErrors(Exception):
 
 class ChatNotFound(TgAgentErrors):
     pass
+
+
+class AccountNotLoggedIn(TgAgentErrors):
+    pass

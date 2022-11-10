@@ -4,16 +4,15 @@ from django.contrib.admin import ModelAdmin, StackedInline
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import path
-from django_celery_results.models import TaskResult
 from django.utils.safestring import mark_safe
 
-from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile
-# from social_media.screening.screener import Screener
-# from social_media.social_media import SocialMediaEntities
-# from social_media.webdriver import Request, Agent
+
+from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
 from social_media.tasks import perform_sm_data_collection, perform_screening
+from telegram_connection.interaction.builder import BotBuilder
+from .helpers import LinkTypes
 from .helpers import generate_url_for_model
-from .helpers import LinkTypes, generate_link_for_model_object
+from ..osint.osintmodules import OsintModules
 
 
 class LinkedSmProfile(StackedInline):
@@ -50,11 +49,23 @@ class SuspectAdmin(ModelAdmin):
         self._send_message(request, result)
         return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 
-    def _send_message(self, request: HttpRequest, result: AsyncResult):
-        # tk = TaskResult.objects.get_task(result.task_id)
-        # link = generate_link_for_model_object(LinkTypes.CHANGE, tk, result.task_id)
+    def perform_osint(self, request: HttpRequest, object_id):
+        suspect: Suspect = Suspect.objects.get(id=object_id)
+        check_result = BotBuilder.check_phone(str(suspect.phone), suspect.name)
+        report = OsintReport(suspect=suspect)
+        report.save()
+        for ic, result in check_result:
+            OsintDetail(
+                report=report,
+                module=OsintModules.TG_PHONE_BOT,
+                sub_module=ic.bot.get_name(),
+                result={"text": result}
+            ).save()
+        return redirect(generate_url_for_model(LinkTypes.CHANGELIST, OsintDetail, params={"report_id": report.id}))
 
-        self.message_user(request, mark_safe(f'Задача "{result.task_id}" поставлена в чергу зі сатусом "{result.state}"'),
+    def _send_message(self, request: HttpRequest, result: AsyncResult):
+        self.message_user(request,
+                          mark_safe(f'Задача "{result.task_id}" поставлена в чергу зі сатусом "{result.state}"'),
                           messages.SUCCESS)
 
     def get_urls(self):
@@ -64,7 +75,9 @@ class SuspectAdmin(ModelAdmin):
             path('<path:object_id>/perform-scan', self.perform_scan,
                  name='%s_%s_perform_scan' % (opts.app_label, opts.model_name)),
             path('<path:object_id>/perform-screening', self.perform_screening,
-                 name='%s_%s_perform_screening' % (opts.app_label, opts.model_name))
+                 name='%s_%s_perform_screening' % (opts.app_label, opts.model_name)),
+            path('<path:object_id>/perform-osint', self.perform_osint,
+                 name='%s_%s_perform_osint' % (opts.app_label, opts.model_name))
         ]
         return ursl + additional_urls
 
