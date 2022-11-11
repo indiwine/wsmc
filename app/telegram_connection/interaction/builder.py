@@ -4,9 +4,9 @@ from typing import List, Tuple, Type, Any
 
 from telegram_connection.agent import TgAgent
 from telegram_connection.bots.abstractbot import AbstractBot
-from telegram_connection.bots.getfbbot import GetFbBot
+from telegram_connection.bots import GetFbBot, UniversalSearchBot
 from telegram_connection.interaction.abstractinteractionstrategy import AbstractInteractionStrategy
-from telegram_connection.interaction.phone_check import GetFbPhoneCheckStrategy, PhoneCheckRequest
+from telegram_connection.interaction.phone_check import GetFbPhoneCheckStrategy, PhoneCheckRequest, UniversalSearchPhoneCheckStrategy
 from telegram_connection.models import TelegramAccount
 from .abstractinteractionrequest import AbstractInteractionRequest
 from .interactioncontext import InteractionContext
@@ -34,7 +34,8 @@ class TgAgentContext:
 
 class BotBuilder:
     _PHONE_MAP: BotMapType = [
-        (GetFbBot, GetFbPhoneCheckStrategy)
+        (GetFbBot, GetFbPhoneCheckStrategy),
+        (UniversalSearchBot, UniversalSearchPhoneCheckStrategy)
     ]
 
     @staticmethod
@@ -47,7 +48,7 @@ class BotBuilder:
     @staticmethod
     def build_tg_contexts(contexts: List[InteractionContext]) -> List[TgAgentContext]:
         bot_codes = map(lambda ct: ct.bot.get_code(), contexts)
-        tg_accounts = TelegramAccount.objects.filter(bots_to_use__code__in=bot_codes, logged_in=True)
+        tg_accounts = TelegramAccount.objects.filter(bots_to_use__code__in=bot_codes, logged_in=True).distinct()
 
         agent_contexts: List[TgAgentContext] = []
         for tg_account in tg_accounts:

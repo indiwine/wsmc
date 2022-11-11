@@ -1,7 +1,6 @@
 import logging
 
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.forms import Form, CharField
 from django.http import HttpRequest

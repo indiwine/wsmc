@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from pprint import pprint
 from typing import TypedDict, Optional, Callable, List
 
@@ -44,34 +45,104 @@ class TgAgent:
             device_model='WSMC App',
             system_version='latest',
             tdlib_verbosity=2,
-            use_message_database=False
+            use_message_database=False,
+            use_test_dc=False
         )
+
+    def wait_for_massage(self,
+                         collect_predicate: MessageResponsePredicate,
+                         timeout: float = 30.0,
+                         stop_predicate: Optional[MessageResponsePredicate] = None) -> List[MessageResponse]:
+        f"""
+        A synchronous version of await_for_message
+        @param collect_predicate:
+        @param timeout:
+        @param stop_predicate:
+        @return:
+        """
+        return asyncio.run(self.await_for_message(collect_predicate, timeout, stop_predicate))
 
     def on_msg_update(self, handler: MessageResponseHandler):
         self._update_msg_subscribers.append(handler)
 
-    def wait_for_massage(self, predicate: MessageResponsePredicate, timeout: float = 30.0) -> MessageResponse:
-        logger.debug('Asynchronously waiting for message')
-        return asyncio.run(self._do_wait_for_msg(predicate, timeout))
+    @staticmethod
+    def up():
+        r = TelegramAccount.objects.get(id=14)
+        agent = TgAgent(r)
+        agent.login()
+        chat = agent.find_chat_or_fail('Universal Search')
+        agent.send_message_text(chat.id, '+79876543210')
+        # agent.send_message_contact(chat.id, {'phone_number': '+79876543210', 'first_name': 'Мдлодло'})
+
+        def collect_predicate(msg: MessageResponse):
+            return msg.chat_id == chat.id and not msg.is_outgoing and msg.has_message_text
+
+        def stop(msg: MessageResponse):
+            end_msgs = [
+                'Вечная ссылка',
+                'Ссылка на бот'
+            ]
+            return collect_predicate(msg) and any(
+                test_str in msg.message_text.palin_text for test_str in end_msgs)
+
+        return agent.wait_for_massage(collect_predicate, stop_predicate=stop, timeout=120.0)
 
     def get_me(self) -> UserResponse:
         return self._wait_and_wrap(self.tg.get_me())
 
-    async def _do_wait_for_msg(self, predicate: MessageResponsePredicate, timeout: float) -> MessageResponse:
+    async def await_for_message(self,
+                                collect_predicate: MessageResponsePredicate,
+                                timeout: float = 30.0,
+                                stop_predicate: Optional[MessageResponsePredicate] = None) -> List[MessageResponse]:
+        """
+        Collects messages from telegram
+        @param collect_predicate: A callback to determine which messages should be collected
+        @param timeout: timeout since last message (or start of waiting if no messages been recived)
+        @param stop_predicate: A callback to determine when to stop collecting messages
+        @return: List of collected messages
+        """
+
+        logger.debug('Asynchronously waiting for message')
         # Get the current event loop.
         loop = asyncio.get_running_loop()
 
         # Create a new Future object.
         future = loop.create_future()
 
+        msg_collection = []
+
+        last_msg = time.monotonic()
+
+        def resolve():
+            loop.call_soon_threadsafe(future.set_result, msg_collection)
+
         def handler(msg: MessageResponse):
-            if predicate(msg):
+            if collect_predicate(msg):
+                nonlocal last_msg
+                last_msg = time.monotonic()
+                logger.debug(f'Collecting message')
+                pprint(msg.update)
+                msg_collection.append(msg)
+
+            if stop_predicate(msg):
                 logger.debug(f'Awaited message found')
                 pprint(msg.update)
-                loop.call_soon_threadsafe(future.set_result, msg)
+                resolve()
+
+        async def wait_for_last():
+            while True:
+                logger.debug(f"last msg: {last_msg}")
+                if future.done():
+                    return
+                if last_msg + timeout < time.monotonic():
+                    logger.debug('Timeout from last message reached')
+                    resolve()
+                    return
+                else:
+                    await asyncio.sleep(1)
 
         self.on_msg_update(handler)
-        await asyncio.wait_for(future, timeout=timeout)
+        await asyncio.gather(future, wait_for_last())
         logger.debug(f'Future resolved')
         self._update_msg_subscribers.remove(handler)
         return future.result()
@@ -107,11 +178,13 @@ class TgAgent:
         @param chat_name:
         @return: found chat
         """
-        self._wait(self.tg.get_chats())
         chats: ChatsResponse = self._wait_and_wrap(self.tg.call_method('searchChats', {"query": chat_name, 'limit': 1}))
         if chats.total == 0:
             raise ChatNotFound(f'Cannot find chat: "{chat_name}"')
         return self.get_chat(chats.first_chat_id)
+
+    def refresh_chats(self):
+        self._wait(self.tg.get_chats())
 
     def send_message_contact(self, chat_id: int, contact: TgContactMessage) -> MessageResponse:
         data = {
@@ -125,6 +198,9 @@ class TgAgent:
             }
         }
         return self._wait_and_wrap(self.tg.call_method('sendMessage', data, False))
+
+    def send_message_text(self, chat_id: int, msg: str) -> MessageResponse:
+        return self._wait_and_wrap(self.tg.send_message(chat_id, msg))
 
     def get_chat(self, id: int) -> ChatResponse:
         return self._wait_and_wrap(self.tg.get_chat(id))

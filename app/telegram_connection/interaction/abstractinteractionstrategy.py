@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List
 
 from .abstractinteractionrequest import AbstractInteractionRequest
+from ..agent.responses import MessageResponse
 
 
 class AbstractInteractionStrategy(ABC):
@@ -13,3 +14,7 @@ class AbstractInteractionStrategy(ABC):
         @param request:
         """
         pass
+
+    @staticmethod
+    def join_messages(msgs: List[MessageResponse]) -> str:
+        return '\n\n'.join(msg.message_text.palin_text for msg in msgs)
