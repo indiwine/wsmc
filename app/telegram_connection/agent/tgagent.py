@@ -9,7 +9,8 @@ from telegram.client import Telegram, AuthorizationState
 from telegram.utils import AsyncResult
 
 from telegram_connection.models import TelegramAccount
-from .responses import available_responses, ChatResponse, ChatsResponse, MessageResponse, UserResponse
+from .responses import available_responses, ChatResponse, ChatsResponse, MessageResponse, UserResponse, \
+    CallbackQueryAnswer
 from .responses.basicresponse import BasicResponse
 from ..exceptions import NoResponseWrapperFound, ChatNotFound, AccountNotLoggedIn
 
@@ -65,27 +66,36 @@ class TgAgent:
     def on_msg_update(self, handler: MessageResponseHandler):
         self._update_msg_subscribers.append(handler)
 
-    @staticmethod
-    def up():
-        r = TelegramAccount.objects.get(id=14)
-        agent = TgAgent(r)
-        agent.login()
-        chat = agent.find_chat_or_fail('Universal Search')
-        agent.send_message_text(chat.id, '+79876543210')
-        # agent.send_message_contact(chat.id, {'phone_number': '+79876543210', 'first_name': 'Мдлодло'})
-
-        def collect_predicate(msg: MessageResponse):
-            return msg.chat_id == chat.id and not msg.is_outgoing and msg.has_message_text
-
-        def stop(msg: MessageResponse):
-            end_msgs = [
-                'Вечная ссылка',
-                'Ссылка на бот'
-            ]
-            return collect_predicate(msg) and any(
-                test_str in msg.message_text.palin_text for test_str in end_msgs)
-
-        return agent.wait_for_massage(collect_predicate, stop_predicate=stop, timeout=120.0)
+    # @staticmethod
+    # def up():
+    #     r = TelegramAccount.objects.get(id=14)
+    #     agent = TgAgent(r)
+    #     agent.login_or_fail()
+    #     agent.refresh_chats()
+    #     chat = agent.find_chat_or_fail('Quick OSINT')
+    #     agent.send_message_text(chat.id, '+79876543210')
+    #
+    #     # agent.send_message_contact(chat.id, {'phone_number': '+79876543210', 'first_name': 'Мдлодло'})
+    #
+    #     def collect_predicate(msg: MessageResponse):
+    #         return msg.chat_id == chat.id and not msg.is_outgoing
+    #
+    #     def stop_predicate(msg: MessageResponse):
+    #         if collect_predicate(msg):
+    #             if msg.has_message_text:
+    #                 return '@Qu1ck_os11nt_bot' in msg.content.get_text
+    #             if msg.has_reply_markup:
+    #                 return msg.reply_markup.has_btn_with_text('Дополнительные методы поиска')
+    #         return False
+    #
+    #     # def stop(msg: MessageResponse):
+    #     #     end_msgs = [
+    #     #         '@Qu1ck_os11nt_bot'
+    #     #     ]
+    #     #     return collect_predicate(msg) and any(
+    #     #         test_str in msg.message_text.palin_text for test_str in end_msgs)
+    #
+    #     return (agent.wait_for_massage(collect_predicate, timeout=60.0, stop_predicate=stop_predicate), agent)
 
     def get_me(self) -> UserResponse:
         return self._wait_and_wrap(self.tg.get_me())
@@ -124,7 +134,7 @@ class TgAgent:
                 pprint(msg.update)
                 msg_collection.append(msg)
 
-            if stop_predicate(msg):
+            if stop_predicate is not None and stop_predicate(msg):
                 logger.debug(f'Awaited message found')
                 pprint(msg.update)
                 resolve()
@@ -185,6 +195,17 @@ class TgAgent:
 
     def refresh_chats(self):
         self._wait(self.tg.get_chats())
+
+    def get_callback_query_answer(self, msg: MessageResponse, callback_data: str) -> CallbackQueryAnswer:
+        data = {
+            'chat_id': msg.chat_id,
+            'message_id': msg.id,
+            'payload': {
+                '@type': 'callbackQueryPayloadData',
+                'data': callback_data
+            }
+        }
+        return self._wait_and_wrap(self.tg.call_method('getCallbackQueryAnswer', data, False))
 
     def send_message_contact(self, chat_id: int, contact: TgContactMessage) -> MessageResponse:
         data = {

@@ -9,12 +9,13 @@ class OsintDetailAdmin(ModelAdmin):
     actions = None
     list_display_links = None
 
-    def formatted_result(self):
+    def formatted_result(self: OsintDetail):
         return render_to_string(f'admin/social_media/osintdetail/result_formatters/{self.module}.html', {
             'item': self
         })
 
     list_display = ['module', 'sub_module', formatted_result]
+    list_filter = ['module', 'sub_module']
 
     def has_add_permission(self, request):
         return False
@@ -24,6 +25,11 @@ class OsintDetailAdmin(ModelAdmin):
 
     def has_module_permission(self, request):
         return False
+
+    class Media:
+        css = {
+            'all': ('admin/css/osintdetail/result-formatting.css',)
+        }
 
 
 admin.site.register(OsintDetail, OsintDetailAdmin)

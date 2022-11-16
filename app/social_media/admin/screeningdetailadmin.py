@@ -10,12 +10,12 @@ class ScreeningDetailAdmin(ModelAdmin):
     actions = None
     list_display_links = None
 
-    def formatted_content_object(self):
+    def formatted_content_object(self: ScreeningDetail):
         return generate_link_for_model_object(LinkTypes.CHANGE, self.content_object, self.content_type.name)
 
     formatted_content_object.short_description = 'Сутність'
 
-    def formatted_result(self):
+    def formatted_result(self: ScreeningDetail):
         return render_to_string(f'admin/social_media/screeningdetail/result_formatters/{self.module}.html', {
             'item': self
         })

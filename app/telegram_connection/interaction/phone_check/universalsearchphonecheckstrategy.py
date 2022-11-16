@@ -2,7 +2,6 @@ from typing import Any
 
 from . import PhoneCheckRequest
 from .abstractphonecheckstrategy import AbstractPhoneCheckStrategy
-from ...agent.responses import MessageResponse
 
 
 class UniversalSearchPhoneCheckStrategy(AbstractPhoneCheckStrategy):
@@ -10,16 +9,9 @@ class UniversalSearchPhoneCheckStrategy(AbstractPhoneCheckStrategy):
         chat = request.chat
         request.agent.send_message_text(chat.id, request.phone)
 
-        def collect_predicate(msg: MessageResponse):
-            return msg.chat_id == chat.id and not msg.is_outgoing and msg.has_message_text
+        collect_predicate = self.get_same_chat_predicate(chat)
 
-        def stop(msg: MessageResponse):
-            end_msgs = [
-                'Вечная ссылка',
-                'Ссылка на бот'
-            ]
-            return collect_predicate(msg) and any(
-                test_str in msg.message_text.palin_text for test_str in end_msgs)
+        stop_predicate = self.get_same_chat_with_text_predicate(chat, ['Вечная ссылка', 'Ссылка на бот'])
 
-        messages = request.agent.wait_for_massage(collect_predicate, stop_predicate=stop, timeout=120.0)
-        return self.join_messages(messages)
+        messages = request.agent.wait_for_massage(collect_predicate, stop_predicate=stop_predicate, timeout=120.0)
+        return self.messages_to_list(messages)

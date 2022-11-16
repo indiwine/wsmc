@@ -1,3 +1,5 @@
 from .getfbphonecheckstrategy import GetFbPhoneCheckStrategy
 from .phonecheckrequest import PhoneCheckRequest
 from .universalsearchphonecheckstrategy import UniversalSearchPhoneCheckStrategy
+from .infobazaphonecheckstrategy import InfoBazaPhoneCheckStrategy
+from .quickosintphonecheckstrategy import QuickOsintPhoneCheckStrategy

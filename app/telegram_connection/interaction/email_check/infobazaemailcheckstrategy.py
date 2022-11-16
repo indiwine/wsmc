@@ -1,13 +1,13 @@
 from typing import Any
 
-from . import PhoneCheckRequest
-from .abstractphonecheckstrategy import AbstractPhoneCheckStrategy
+from .abstractemailcheckstrategy import AbstractEmailCheckStrategy
+from .emailcheckrequest import EmailCheckRequest
 
 
-class InfoBazaPhoneCheckStrategy(AbstractPhoneCheckStrategy):
-    def do_interaction(self, request: PhoneCheckRequest) -> Any:
+class InfobazaEmailCheckStrategy(AbstractEmailCheckStrategy):
+    def do_interaction(self, request: EmailCheckRequest) -> Any:
         chat = request.chat
-        request.agent.send_message_text(chat.id, request.phone)
+        request.agent.send_message_text(chat.id, request.email)
 
         collect_predicate = self.get_same_chat_predicate(chat)
 

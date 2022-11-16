@@ -6,12 +6,15 @@ from django.shortcuts import redirect
 from django.urls import path
 from django.utils.safestring import mark_safe
 
-
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
 from social_media.tasks import perform_sm_data_collection, perform_screening
 from telegram_connection.interaction.builder import BotBuilder
+from telegram_connection.interaction.email_check.emailcheckrequest import EmailCheckRequest
+from telegram_connection.interaction.name_check.namecheckrequest import NameCheckRequest
+from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from .helpers import LinkTypes
 from .helpers import generate_url_for_model
+from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
 
 
@@ -51,16 +54,32 @@ class SuspectAdmin(ModelAdmin):
 
     def perform_osint(self, request: HttpRequest, object_id):
         suspect: Suspect = Suspect.objects.get(id=object_id)
-        check_result = BotBuilder.check_phone(str(suspect.phone), suspect.name)
+        check_requests = [NameCheckRequest().set_arguments(suspect.name)]
+        if suspect.email:
+            check_requests.append(EmailCheckRequest().set_arguments(suspect.email))
+        if suspect.phone:
+            check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.name))
+
+        check_result = BotBuilder.process_requests(check_requests)
         report = OsintReport(suspect=suspect)
         report.save()
         for ic, result in check_result:
             OsintDetail(
                 report=report,
-                module=OsintModules.TG_PHONE_BOT,
+                module=OsintModules.from_interation_request(ic.request),
                 sub_module=ic.bot.get_name(),
                 result={"text": result}
             ).save()
+
+        if suspect.email:
+            out = HoleheAgent.check_email(suspect.email)
+            for check in out:
+                OsintDetail(
+                    report=report,
+                    module=OsintModules.HOLEHE_EMAIL,
+                    sub_module=check['domain'],
+                    result=check).save()
+
         return redirect(generate_url_for_model(LinkTypes.CHANGELIST, OsintDetail, params={"report_id": report.id}))
 
     def _send_message(self, request: HttpRequest, result: AsyncResult):

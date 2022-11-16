@@ -11,7 +11,7 @@ class GetFbPhoneCheckStrategy(AbstractPhoneCheckStrategy):
             'first_name': request.name
         })
 
-        predicate = lambda update_msg: not update_msg.is_outgoing and update_msg.chat_id == request.chat.id
+        same_chat_predicate = self.get_same_chat_predicate(request.chat)
 
-        messages = request.agent.wait_for_massage(predicate, stop_predicate=predicate)
-        return self.join_messages(messages)
+        messages = request.agent.wait_for_massage(same_chat_predicate, stop_predicate=same_chat_predicate)
+        return self.messages_to_list(messages)
