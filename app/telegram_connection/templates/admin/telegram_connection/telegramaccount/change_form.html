@@ -2,6 +2,11 @@
 {% block object-tools-items %}
     {{ block.super }}
     <li>
-        <a class="viewsitelink" href="{% url 'admin:telegram_connection_telegramaccount_confirm' object_id %}?back_to={{ request.get_full_path }}">Логін</a>
+        <a class="viewsitelink"
+           href="{% url 'admin:telegram_connection_telegramaccount_confirm' object_id %}?back_to={{ request.get_full_path }}">Логін</a>
+        {% if original.logged_in %}
+            <a 
+               href="{% url 'admin:telegram_connection_telegramaccount_logout' object_id %}">logout</a>
+        {% endif %}
     </li>
 {% endblock %}

@@ -21,4 +21,5 @@ class QuickOsintPhoneCheckStrategy(AbstractPhoneCheckStrategy):
             return False
 
         messages = request.agent.wait_for_massage(same_chat_cb, stop_predicate=stop_predicate, timeout=60.0)
+        # request.agent.open_and_mark_read(chat, messages)
         return self.messages_to_list(messages)

@@ -8,12 +8,14 @@ from django.utils.safestring import mark_safe
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
 from social_media.tasks import perform_sm_data_collection, perform_screening
+from telegram_connection.admin_pages import CONFIRM_PAGE
+from telegram_connection.exceptions import AccountNotLoggedIn
 from telegram_connection.interaction.builder import BotBuilder
 from telegram_connection.interaction.email_check.emailcheckrequest import EmailCheckRequest
 from telegram_connection.interaction.name_check.namecheckrequest import NameCheckRequest
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from .helpers import LinkTypes
-from .helpers import generate_url_for_model
+from .helpers import generate_url_for_model, generate_url_for_model_object
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
 
@@ -60,7 +62,13 @@ class SuspectAdmin(ModelAdmin):
         if suspect.phone:
             check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.name))
 
-        check_result = BotBuilder.process_requests(check_requests)
+        try:
+            check_result = BotBuilder.process_requests(check_requests)
+        except AccountNotLoggedIn as e:
+            return redirect(
+                generate_url_for_model_object(CONFIRM_PAGE, e.tg_account, params={'back_to': request.get_full_path()})
+            )
+
         report = OsintReport(suspect=suspect)
         report.save()
         for ic, result in check_result:

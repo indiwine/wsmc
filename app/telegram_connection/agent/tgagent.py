@@ -162,9 +162,14 @@ class TgAgent:
         Login into telegram account
         @return:
         """
+        logger.debug(f'Trying to log in {self.tg_account.__str__()}')
         code = self.tg.login(False)
+        logger.info(f'TG Login status code: {code}')
         self.tg.add_message_handler(self._upd_msg_handler)
         return code
+
+    def logout(self):
+        return self._wait(self.tg.call_method('logOut', block=False))
 
     def login_or_fail(self) -> None:
         """
@@ -172,7 +177,7 @@ class TgAgent:
         """
         code = self.login()
         if code != AuthorizationState.READY:
-            raise AccountNotLoggedIn(f'Login into {self.tg_account.__str__()} was not performed ')
+            raise AccountNotLoggedIn(self.tg_account)
 
     def stop(self):
         """
@@ -188,6 +193,7 @@ class TgAgent:
         @param chat_name:
         @return: found chat
         """
+        logger.debug(f'Looking for chat: "{chat_name}"')
         chats: ChatsResponse = self._wait_and_wrap(self.tg.call_method('searchChats', {"query": chat_name, 'limit': 1}))
         if chats.total == 0:
             raise ChatNotFound(f'Cannot find chat: "{chat_name}"')
@@ -196,7 +202,27 @@ class TgAgent:
     def refresh_chats(self):
         self._wait(self.tg.get_chats())
 
+    def open_and_mark_read(self, chat: ChatResponse, msgs: List[MessageResponse]):
+        chat_data = {'chat_id': chat.id}
+        self._wait(self.tg.call_method('openChat', chat_data, False))
+        view_data = {
+            'chat_id': chat.id,
+            'message_thread_id': 0,
+            'message_ids': list(map(lambda msg: msg.id, msgs))
+        }
+        self._wait(self.tg.call_method('viewMessages', view_data, False))
+        self._wait(self.tg.call_method('closeChat', chat_data, False))
+
+
     def get_callback_query_answer(self, msg: MessageResponse, callback_data: str) -> CallbackQueryAnswer:
+        """
+        Send a callback query to a bot
+
+        Typically, this is a way to trigger a bot button press
+        @param msg:
+        @param callback_data:
+        @return:
+        """
         data = {
             'chat_id': msg.chat_id,
             'message_id': msg.id,
@@ -208,6 +234,12 @@ class TgAgent:
         return self._wait_and_wrap(self.tg.call_method('getCallbackQueryAnswer', data, False))
 
     def send_message_contact(self, chat_id: int, contact: TgContactMessage) -> MessageResponse:
+        """
+        Send "contact" message
+        @param chat_id:
+        @param contact:
+        @return:
+        """
         data = {
             'chat_id': chat_id,
             'input_message_content': {

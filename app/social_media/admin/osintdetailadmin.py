@@ -15,7 +15,7 @@ class OsintDetailAdmin(ModelAdmin):
         })
 
     list_display = ['module', 'sub_module', formatted_result]
-    list_filter = ['module', 'sub_module']
+    list_filter = ['module']
 
     def has_add_permission(self, request):
         return False

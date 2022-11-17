@@ -8,9 +8,9 @@ from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
 from telegram.client import AuthorizationState
-from telegram_connection.interaction.builder import BotBuilder
 
 from social_media.admin.helpers import generate_url_for_model_object, LinkTypes
+from ..admin_pages import CONFIRM_PAGE, LOGOUT_PAGE
 from ..agent import TgAgent
 from ..models import TelegramAccount
 
@@ -33,12 +33,26 @@ class TelegramAccountAdmin(ModelAdmin):
             return fields + ['phone']
         return fields
 
+    def tg_logout(self, request: HttpRequest, object_id):
+        account: TelegramAccount = self.get_object(request, object_id)
+        agent = TgAgent(account)
+
+        code = agent.login()
+        if code == AuthorizationState.READY:
+            agent.logout()
+            account.logged_in = False
+            account.save()
+            self.message_user(request, 'Логаут успішний', messages.SUCCESS)
+        else:
+            self.message_user(request, f'Код: "{code}"', messages.WARNING)
+
+        return redirect(generate_url_for_model_object(LinkTypes.CHANGE, account))
+
     def confirm_tg_login(self, request: HttpRequest, object_id):
         account: TelegramAccount = self.get_object(request, object_id)
         agent = TgAgent(account)
 
         code = agent.login()
-        logger.info(f'TG status: {code}')
         try:
 
             if code == AuthorizationState.READY:
@@ -93,14 +107,16 @@ class TelegramAccountAdmin(ModelAdmin):
         opts = self.model._meta
         additional_urls = [
             path('<path:object_id>/confirm', self.confirm_tg_login,
-                 name='%s_%s_confirm' % (opts.app_label, opts.model_name)),
+                 name='%s_%s_%s' % (opts.app_label, opts.model_name, CONFIRM_PAGE)),
+            path('<path:object_id>/logout', self.tg_logout,
+                 name='%s_%s_%s' % (opts.app_label, opts.model_name, LOGOUT_PAGE)),
         ]
 
         return additional_urls + super().get_urls()
 
     def response_add(self, request: HttpRequest, obj: TelegramAccount, post_url_continue=None):
         back_url = generate_url_for_model_object(LinkTypes.CHANGE, obj)
-        url = generate_url_for_model_object('confirm', obj, params={'back_to': back_url})
+        url = generate_url_for_model_object(CONFIRM_PAGE, obj, params={'back_to': back_url})
         return redirect(url)
 
 

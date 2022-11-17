@@ -1,1 +1,2 @@
 from .infobazanamecheckstrategy import InfoBazaNameCheckStrategy
+from .opendatauabotnamecheckstrategy import OpenDataUABotNameCheckStrategy

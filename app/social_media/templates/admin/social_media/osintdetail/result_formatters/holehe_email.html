@@ -1,11 +1,7 @@
-{#{% for holehe_result in item.result %}#}
-    <div>
-        {% if item.result.exists %}
-            <span>✅</span>
-        {% else %}
-            <span>❌</span>
-        {% endif %}
-
-{#        {{ item.result.domain }}#}
-    </div>
-{#{% endfor %}#}
+<div>
+    {% if item.result.exists %}
+        <span>✅</span>
+    {% else %}
+        <span>❌</span>
+    {% endif %}
+</div>

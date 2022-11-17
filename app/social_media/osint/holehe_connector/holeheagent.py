@@ -7,17 +7,20 @@ from holehe.core import get_functions, launch_module
 
 
 def import_submodules(package, recursive=True):
-    """Get all the holehe submodules"""
+    """
+    Get all the holehe submodules
+
+    This is almost a direct copy paste from the original function provided be pached
+    """
     if isinstance(package, str):
         package = importlib.import_module(package)
     results = {}
-    for loader, name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + '.'):
-        # full_name = package.__name__ + '.' + name
-        full_name= name
+    for loader, full_name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + '.'):
         results[full_name] = importlib.import_module(full_name)
         if recursive and is_pkg:
             results.update(import_submodules(full_name))
     return results
+
 
 class HoleheAgent:
     @classmethod

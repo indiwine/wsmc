@@ -14,7 +14,8 @@ class TelegramAccount(Model):
     logged_in = BooleanField(default=False, verbose_name='Логін?')
     bots_to_use = ManyToManyField(TelegramBot,
                                   verbose_name='Бот',
-                                  help_text='Боти що можуть бути використані з цим аккаунтом.')
+                                  help_text='Боти що можуть бути використані з цим аккаунтом. ' + \
+                                            'Переконайтись що обрані боти вже додані до цього аккаунта.')
 
     class Meta:
         verbose_name = 'Обліковий запис Telegram'

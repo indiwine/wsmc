@@ -2,7 +2,7 @@ import logging
 from typing import List, Tuple, Type, Any, Dict
 
 from telegram_connection.agent import TgAgent
-from telegram_connection.bots import GetFbBot, UniversalSearchBot, InfoBazaBot, QuickOsintBot
+from telegram_connection.bots import GetFbBot, UniversalSearchBot, InfoBazaBot, QuickOsintBot, OpenDataUABot
 from telegram_connection.bots.abstractbot import AbstractBot
 from telegram_connection.models import TelegramAccount
 from .abstractinteractionrequest import AbstractInteractionRequest
@@ -10,7 +10,7 @@ from .abstractinteractionstrategy import AbstractInteractionStrategy
 from .email_check import InfobazaEmailCheckStrategy, QuickOsintEmailCheckStrategy
 from .email_check.emailcheckrequest import EmailCheckRequest
 from .interactioncontext import InteractionContext
-from .name_check import InfoBazaNameCheckStrategy
+from .name_check import InfoBazaNameCheckStrategy, OpenDataUABotNameCheckStrategy
 from .name_check.namecheckrequest import NameCheckRequest
 from .phone_check import GetFbPhoneCheckStrategy, PhoneCheckRequest, \
     UniversalSearchPhoneCheckStrategy, InfoBazaPhoneCheckStrategy, QuickOsintPhoneCheckStrategy
@@ -50,12 +50,14 @@ class BotBuilder:
     ]
 
     _NAME_MAP: BotMapType = [
-        (InfoBazaBot, InfoBazaNameCheckStrategy)
+        (InfoBazaBot, InfoBazaNameCheckStrategy),
+        (OpenDataUABot, OpenDataUABotNameCheckStrategy)
     ]
 
-    @staticmethod
-    def build_interaction_contexts(check_requests: List[AbstractInteractionRequest]) -> BotInterationType:
+    @classmethod
+    def build_interaction_contexts(cls, check_requests: List[AbstractInteractionRequest]) -> BotInterationType:
         result = {}
+        logger.debug('Building contexts')
 
         def append_from_map(bot_map: BotMapType, in_request: AbstractInteractionRequest):
             for Bot, Strategy in bot_map:
@@ -65,20 +67,20 @@ class BotBuilder:
 
         for request in check_requests:
             if isinstance(request, PhoneCheckRequest):
-                append_from_map(BotBuilder._PHONE_MAP, request)
+                append_from_map(cls._PHONE_MAP, request)
             elif isinstance(request, NameCheckRequest):
-                append_from_map(BotBuilder._NAME_MAP, request)
+                append_from_map(cls._NAME_MAP, request)
             elif isinstance(request, EmailCheckRequest):
-                append_from_map(BotBuilder._EMAIL_MAP, request)
+                append_from_map(cls._EMAIL_MAP, request)
         return result
 
-    @staticmethod
-    def process_requests(check_requests: List[AbstractInteractionRequest]) -> InterationResultType:
-        interation_contexts = BotBuilder.build_interaction_contexts(check_requests)
+    @classmethod
+    def process_requests(cls, check_requests: List[AbstractInteractionRequest]) -> InterationResultType:
+        interation_contexts = cls.build_interaction_contexts(check_requests)
         if len(interation_contexts) == 0:
             return []
 
-        agent_contexts = BotBuilder.build_tg_contexts(interation_contexts)
+        agent_contexts = cls.build_tg_contexts(interation_contexts)
 
         try:
             for tg_context in agent_contexts:
@@ -107,7 +109,7 @@ class BotBuilder:
                     bot_ref = next(ct for ct in contexts.keys() if ct.get_code() == bot.code)
                     tg_context.add_contexts(contexts[bot_ref])
                 except StopIteration:
-                    logging.debug(f'No interaction context for BOT {bot.__str__()} found')
+                    logger.debug(f'No interaction context for BOT {bot.__str__()} found')
 
             agent_contexts.append(tg_context)
 
