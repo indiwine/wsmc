@@ -1,8 +1,10 @@
 import json
 import logging
+import re
 from dataclasses import asdict
 from typing import Optional
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -73,9 +75,35 @@ class VkProfilePage(AbstractVkPageObject):
         return None
 
     def _extract_user_id(self) -> int:
-        wrapper = self.submit_post_box()
-        oid = wrapper.get_attribute('data-oid')
+        oid = self._try_get_user_id_from_submit_box()
+        if oid is None:
+            pass
+        oid = self._try_get_user_id_from_wall_link()
+
         logger.debug(f'Found user id: {oid}')
+        return oid
+
+    def _try_get_user_id_from_submit_box(self) -> Optional[int]:
+        logger.debug('Trying to find VK user id using submit box method')
+        try:
+            wrapper = self.submit_post_box()
+            oid = wrapper.get_attribute('data-oid')
+            return int(oid)
+        except NoSuchElementException:
+            logger.debug('Submit box method failed')
+            return None
+
+    def _try_get_user_id_from_wall_link(self) -> int:
+        logger.debug('Trying to find VK user id using wall link method')
+
+        pattern = re.compile(r"\/wall(?P<oid>\d+)")
+        wall_link = self.wall_link().get_attribute('href')
+        match = pattern.search(wall_link)
+
+        if match is None:
+            raise WsmcWebDriverProfileException(f'Cannot locate "/wall" in wall url: "{wall_link}"')
+
+        oid = match.group('oid')
         return int(oid)
 
     @staticmethod
