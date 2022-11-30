@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 from pprint import pprint
-from typing import TypedDict, Optional, Callable, List
+from typing import TypedDict, Optional, Callable, List, Union
 
 from django.conf import settings
 from telegram.client import Telegram, AuthorizationState
@@ -252,8 +252,8 @@ class TgAgent:
         }
         return self._wait_and_wrap(self.tg.call_method('sendMessage', data, False))
 
-    def send_message_text(self, chat_id: int, msg: str) -> MessageResponse:
-        return self._wait_and_wrap(self.tg.send_message(chat_id, msg))
+    def send_message_text(self, chat_id: Union[int, ChatResponse], msg: str) -> MessageResponse:
+        return self._wait_and_wrap(self.tg.send_message(self._extract_chat_id(chat_id), msg))
 
     def get_chat(self, id: int) -> ChatResponse:
         return self._wait_and_wrap(self.tg.get_chat(id))
@@ -264,6 +264,12 @@ class TgAgent:
         wrapped_msg = MessageResponse(result)
         for cl in self._update_msg_subscribers:
             cl(wrapped_msg)
+
+    @staticmethod
+    def _extract_chat_id(chat_id: Union[int, ChatResponse]) -> int:
+        if isinstance(chat_id, ChatResponse):
+            return chat_id.id
+        return chat_id
 
     @staticmethod
     def _wait_and_wrap(async_result: AsyncResult) -> BasicResponse:

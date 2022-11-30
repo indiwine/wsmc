@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Any
 
 from . import PhoneCheckRequest
@@ -11,6 +12,7 @@ class QuickOsintPhoneCheckStrategy(AbstractPhoneCheckStrategy):
         request.agent.send_message_text(chat.id, request.phone)
 
         same_chat_cb = self.get_same_chat_predicate(chat)
+
 
         def stop_predicate(msg: MessageResponse):
             if same_chat_cb(msg):

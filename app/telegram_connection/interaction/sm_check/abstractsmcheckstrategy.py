@@ -7,8 +7,9 @@ from ..abstractinteractionstrategy import AbstractInteractionStrategy
 
 
 class AbstractSmCheckStrategy(AbstractInteractionStrategy, ABC):
-    @abstractmethod
+
     @property
+    @abstractmethod
     def acceptable_social_media(self) -> List[SocialMediaTypes]:
         pass
 

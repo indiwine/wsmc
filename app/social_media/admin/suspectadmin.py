@@ -14,6 +14,7 @@ from telegram_connection.interaction.builder import BotBuilder
 from telegram_connection.interaction.email_check.emailcheckrequest import EmailCheckRequest
 from telegram_connection.interaction.name_check.namecheckrequest import NameCheckRequest
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
+from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckRequest
 from .helpers import LinkTypes
 from .helpers import generate_url_for_model, generate_url_for_model_object
 from ..osint.holehe_connector.holeheagent import HoleheAgent
@@ -56,11 +57,19 @@ class SuspectAdmin(ModelAdmin):
 
     def perform_osint(self, request: HttpRequest, object_id):
         suspect: Suspect = Suspect.objects.get(id=object_id)
-        check_requests = [NameCheckRequest().set_arguments(suspect.name)]
-        if suspect.email:
-            check_requests.append(EmailCheckRequest().set_arguments(suspect.email))
-        if suspect.phone:
-            check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.name))
+        # check_requests = [NameCheckRequest().set_arguments(suspect.name)]
+        check_requests = []
+        # if suspect.email:
+        #     check_requests.append(EmailCheckRequest().set_arguments(suspect.email))
+        # if suspect.phone:
+        #     check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.name))
+
+        suspect_sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
+        if len(suspect_sm_accounts) > 0:
+            sm_check_request = SmCheckRequest()
+            for sm_account in suspect_sm_accounts:
+                sm_check_request.add_sm(sm_account.link, sm_account.credentials.social_media)
+            check_requests.append(sm_check_request)
 
         try:
             check_result = BotBuilder.process_requests(check_requests)

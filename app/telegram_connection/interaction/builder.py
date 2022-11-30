@@ -14,6 +14,8 @@ from .name_check import InfoBazaNameCheckStrategy, OpenDataUABotNameCheckStrateg
 from .name_check.namecheckrequest import NameCheckRequest
 from .phone_check import GetFbPhoneCheckStrategy, PhoneCheckRequest, \
     UniversalSearchPhoneCheckStrategy, InfoBazaPhoneCheckStrategy, QuickOsintPhoneCheckStrategy
+from .sm_check.smcheckrequest import SmCheckRequest
+from .sm_check import QuickOsintSmCheckStrategy
 
 logger = logging.getLogger(__name__)
 BotMapType = List[Tuple[Type[AbstractBot], Type[AbstractInteractionStrategy]]]
@@ -54,6 +56,10 @@ class BotBuilder:
         (OpenDataUABot, OpenDataUABotNameCheckStrategy)
     ]
 
+    _SM_MAP: BotMapType = [
+        (QuickOsintBot, QuickOsintSmCheckStrategy)
+    ]
+
     @classmethod
     def build_interaction_contexts(cls, check_requests: List[AbstractInteractionRequest]) -> BotInterationType:
         result = {}
@@ -72,6 +78,8 @@ class BotBuilder:
                 append_from_map(cls._NAME_MAP, request)
             elif isinstance(request, EmailCheckRequest):
                 append_from_map(cls._EMAIL_MAP, request)
+            elif isinstance(request, SmCheckRequest):
+                append_from_map(cls._SM_MAP, request)
         return result
 
     @classmethod
