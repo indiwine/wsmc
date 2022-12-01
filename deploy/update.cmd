@@ -1,9 +1,19 @@
+@echo off
+
 echo "Fetching changes from github"
 git pull
 
-echo "Stopping our setup"
+echo "Stopping"
 docker-compose stop
+
 echo "Pulling update"
 docker-compose pull app
+
+echo "Applying migrations"
+docker-compose run --rm app python manage.py migrate
+
 echo "Setting back"
 docker-compose up -d
+
+echo "All done"
+pause

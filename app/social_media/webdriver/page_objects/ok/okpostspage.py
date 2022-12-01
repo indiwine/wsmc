@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from social_media.dtos.smpostdto import SmPostDto
 from .abstractokpageobject import AbstractOkPageObject
 from .oksinglepostpage import OkSinglePostPage
+from ...exceptions import WsmcWebDriverPostException
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +53,13 @@ class OkPostsPage(AbstractOkPageObject):
 
     def _fetch_posts(self) -> Generator[SmPostDto, None, None]:
         for node in self.feed_units():
-            dto = OkSinglePostPage(self.driver, self.link_strategy).fetch(node)
+            try:
+                dto = OkSinglePostPage(self.driver, self.link_strategy).fetch(node)
+                yield dto
+            except WsmcWebDriverPostException:
+                pass
             self._clear_post(node)
-            yield dto
+
 
     def _clear_post(self, node: WebElement):
         self.driver.execute_script(

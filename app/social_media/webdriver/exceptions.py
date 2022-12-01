@@ -8,3 +8,7 @@ class WsmcWebDriverLoginError(WsmcWebdriverException):
 
 class WsmcWebDriverProfileException(WsmcWebdriverException):
     pass
+
+
+class WsmcWebDriverPostException(WsmcWebdriverException):
+    pass

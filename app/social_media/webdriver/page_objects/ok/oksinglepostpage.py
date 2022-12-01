@@ -1,5 +1,8 @@
 import datetime
+import logging
+import time
 
+from selenium.common import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,6 +11,9 @@ from social_media.dtos.smpostdto import SmPostDto
 from social_media.social_media import SocialMediaTypes
 from .abstractokpageobject import AbstractOkPageObject
 from ...common import date_time_parse
+from ...exceptions import WsmcWebDriverPostException
+
+logger = logging.getLogger(__name__)
 
 
 class OkSinglePostPage(AbstractOkPageObject):
@@ -22,6 +28,11 @@ class OkSinglePostPage(AbstractOkPageObject):
         return By.CSS_SELECTOR, f'#{id} a[data-clipboard-url]'
 
     def fetch(self, element: WebElement) -> SmPostDto:
+        """
+        @param element:
+        @return: Ready DTp
+        @raise WsmcWebDriverPostException: If post cannot be properly obtrained
+        """
         post_id = self.share_btn(element)
 
         dto = SmPostDto(datetime=self._fetch_date(element),
@@ -45,6 +56,10 @@ class OkSinglePostPage(AbstractOkPageObject):
 
     def share_btn(self, element: WebElement):
         btn = element.find_element(By.CSS_SELECTOR, 'button[data-type="RESHARE"]')
+        disabled = self.driver.execute_script("return arguments[0].parentElement.classList.contains('__disabled')", btn)
+        if disabled:
+            logger.info(f'Share button is disabled in post "{element.text}"')
+            raise WsmcWebDriverPostException(f'Post cannot be obtained, because share button is disabled.')
         self.scroll_into_view(btn)
         btn.click()
         self.get_wait().until(EC.presence_of_element_located(self.clipboard_url_abs(element)))
