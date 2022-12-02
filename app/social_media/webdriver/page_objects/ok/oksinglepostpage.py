@@ -1,8 +1,7 @@
 import datetime
 import logging
-import time
 
-from selenium.common import ElementClickInterceptedException
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,9 +10,12 @@ from social_media.dtos.smpostdto import SmPostDto
 from social_media.social_media import SocialMediaTypes
 from .abstractokpageobject import AbstractOkPageObject
 from ...common import date_time_parse
-from ...exceptions import WsmcWebDriverPostException
+from ...exceptions import WsmcWebDriverPostException, WsmcWebdriverException
 
 logger = logging.getLogger(__name__)
+
+SHARE_BTN_RTRY = 10
+SHARE_BTN_TIMEOUT = 20
 
 
 class OkSinglePostPage(AbstractOkPageObject):
@@ -31,7 +33,7 @@ class OkSinglePostPage(AbstractOkPageObject):
         """
         @param element:
         @return: Ready DTp
-        @raise WsmcWebDriverPostException: If post cannot be properly obtrained
+        @raise WsmcWebDriverPostException: If post cannot be properly obtained
         """
         post_id = self.share_btn(element)
 
@@ -60,7 +62,28 @@ class OkSinglePostPage(AbstractOkPageObject):
         if disabled:
             logger.info(f'Share button is disabled in post "{element.text}"')
             raise WsmcWebDriverPostException(f'Post cannot be obtained, because share button is disabled.')
-        self.scroll_into_view(btn)
-        btn.click()
-        self.get_wait().until(EC.presence_of_element_located(self.clipboard_url_abs(element)))
+
+        def try_clik() -> btn:
+            self.scroll_into_view(btn)
+            btn.click()
+            try:
+                self.get_wait(timeout=SHARE_BTN_TIMEOUT).until(
+                    EC.presence_of_element_located(self.clipboard_url_abs(element)))
+                return True
+            except TimeoutException:
+                logger.warning(f'Cannot click onto share button! Timeout after {SHARE_BTN_TIMEOUT} sec')
+                return False
+
+        click_successful = False
+
+        for i in range(1, SHARE_BTN_RTRY):
+            if try_clik():
+                click_successful = True
+                logger.debug(f'Share button click successful after "{i}" attempts!')
+                break
+
+        if not click_successful:
+            raise WsmcWebdriverException(
+                f'Click at share button failed after {SHARE_BTN_RTRY} times at post: {element.text}')
+
         return btn.get_attribute('data-id1')

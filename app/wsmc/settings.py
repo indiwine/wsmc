@@ -183,7 +183,7 @@ WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
 
 # Wait timeout in seconds
-WSMC_SELENIUM_WAIT_TIMEOUT = 15
+WSMC_SELENIUM_WAIT_TIMEOUT = 120
 
 WSMC_WEBDRIVER_LOCALE = 'ru_RU'
 PG_SEARCH_LANG = 'pg_catalog.russian'
