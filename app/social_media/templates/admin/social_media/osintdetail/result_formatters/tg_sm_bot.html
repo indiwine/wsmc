@@ -1,0 +1,9 @@
+{% load render_sm_name %}
+{% for sm, msgs in item.result.text %}
+    <div class="tg-message">
+        <div class="title">{{ sm|render_sm_name }}</div>
+        {% for msg in msgs %}
+            <div class="body">{{ msg|linebreaks }}</div>
+        {% endfor %}
+    </div>
+{% endfor %}
