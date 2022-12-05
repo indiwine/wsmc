@@ -22,6 +22,6 @@ class Screener:
 
     @staticmethod
     def build(suspect: Suspect) -> Screener:
-        report = ScreeningReport(name=f'Перевірка "{suspect.name}"', suspect=suspect)
+        report = ScreeningReport(name=f'Перевірка "{suspect.__str__()}"', suspect=suspect)
         report.save()
         return Screener(ScreeningRequest(suspect, report))

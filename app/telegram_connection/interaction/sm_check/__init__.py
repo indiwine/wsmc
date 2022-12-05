@@ -1,1 +1,3 @@
 from .quickosintsmcheckstrategy import QuickOsintSmCheckStrategy
+from .infobazasmcheckstrategy import InfoBazaSmCheckStrategy
+from .universalsearchsmcheckstrategy import UniversalSearchSmCheckStrategy

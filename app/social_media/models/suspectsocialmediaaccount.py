@@ -10,7 +10,7 @@ class SuspectSocialMediaAccount(Model):
     suspect = ForeignKey(Suspect, on_delete=CASCADE)
 
     def __str__(self):
-        return f'{self.suspect.name} у {self.credentials.get_social_media_display()}'
+        return f'{self.suspect.__str__()} у {self.credentials.get_social_media_display()}'
 
     class Meta:
         unique_together = ['credentials', 'suspect']

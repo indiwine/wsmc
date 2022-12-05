@@ -43,7 +43,7 @@ class SuspectAdmin(ModelAdmin):
     inlines = [LinkedSmAccounts, LinkedSmProfile]
     search_fields = ['name']
     readonly_fields = ['score']
-    list_display = ['name', 'score']
+    list_display = ['__str__', 'score']
 
     def perform_scan(self, request: HttpRequest, object_id):
         result: AsyncResult = perform_sm_data_collection.delay(object_id)
@@ -57,12 +57,16 @@ class SuspectAdmin(ModelAdmin):
 
     def perform_osint(self, request: HttpRequest, object_id):
         suspect: Suspect = Suspect.objects.get(id=object_id)
-        # check_requests = [NameCheckRequest().set_arguments(suspect.name)]
         check_requests = []
-        # if suspect.email:
-        #     check_requests.append(EmailCheckRequest().set_arguments(suspect.email))
-        # if suspect.phone:
-        #     check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.name))
+
+        if suspect.has_name:
+            check_requests.append(NameCheckRequest().set_arguments(suspect.name))
+
+        if suspect.email:
+            check_requests.append(EmailCheckRequest().set_arguments(suspect.email))
+
+        if suspect.phone:
+            check_requests.append(PhoneCheckRequest().set_arguments(str(suspect.phone), suspect.__str__()))
 
         suspect_sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
         if len(suspect_sm_accounts) > 0:

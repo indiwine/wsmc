@@ -8,7 +8,7 @@ class OsintReport(Model):
     created_at = DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'OSINT по {self.suspect.name}'
+        return f'OSINT по {self.suspect.__str__()}'
 
     class Meta:
         verbose_name = 'OSINT'

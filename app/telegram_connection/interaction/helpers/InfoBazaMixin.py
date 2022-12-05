@@ -11,11 +11,10 @@ class InfoBazaMixin:
                                 chat: ChatResponse,
                                 agent: TgAgent,
                                 send_cb: Callable):
-        send_cb()
-
         collect_predicate = strategy.get_same_chat_predicate(chat)
 
-        stop_predicate = strategy.get_same_chat_with_text_predicate(chat, ['Ліміт пошуку'])
+        stop_predicate = strategy.get_same_chat_with_text_predicate(chat, ['Ліміт пошуку', 'Перевищенно ліміт'])
 
+        send_cb()
         messages = agent.wait_for_massage(collect_predicate, stop_predicate=stop_predicate)
         return strategy.messages_to_list(messages)

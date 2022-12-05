@@ -1,3 +1,7 @@
 {% for msg in item.result.text %}
-    <div class="tg-message">{{ msg|linebreaks }}</div>
+    <div class="tg-message">
+        <div class="body">
+            {{ msg|linebreaks }}
+        </div>
+    </div>
 {% endfor %}
