@@ -16,6 +16,7 @@ class SmProfile(Model):
     name = CharField(max_length=512, verbose_name="Ім'я", help_text="Ім'я як вказано в соціальній мережі")
     university = CharField(max_length=512, null=True, verbose_name='Освіта')
     location = CharField(max_length=512, null=True, verbose_name='Місце проживання')
+    # home_town = CharField(max_length=512, null=True, verbose_name='Місце народження')
     birthdate = DateField(null=True, verbose_name="Дата народження",
                           help_text='Може бути вказаний поточний рік у випадку якщо рік не вказан в соц мережі')
 

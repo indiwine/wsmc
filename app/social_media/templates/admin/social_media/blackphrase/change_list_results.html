@@ -1,0 +1,15 @@
+{% if result_hidden_fields %}
+    <div class="hiddenfields">{# DIV for HTML validation #}
+        {% for item in result_hidden_fields %}{{ item }}{% endfor %}
+    </div>
+{% endif %}
+<div>
+    {% for object in cl.result_list %}
+        <span class="phrase-tag">
+        <span class="action-checkbox"><input type="checkbox" name="_selected_action" value="{{ object.id }}"
+                                             class="action-select"></span>
+        <a href="{% url 'admin:social_media_blackphrase_change' object.id %}">{{ object.phrase }}</a>
+    </span>
+    {% endfor %}
+</div>
+
