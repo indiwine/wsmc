@@ -36,9 +36,18 @@ class OkAboutProfilePage(AbstractOkPageObject):
         self.get_wait().until(EC.presence_of_element_located(self.profile_summary_locator()))
 
         dto = SmProfileDto(self.compact_profile().get_property('textContent'))
+        dto.oid = self._get_oid()
         dto.birthdate = self._get_age()
         dto.location = self._get_location()
         return dto
+
+    def _get_oid(self) -> Optional[str]:
+        hrefattrs = self.compact_profile().find_element(By.CLASS_NAME, 'compact-profile_a').get_attribute('hrefattrs')
+        pattern = re.compile(r"friendId=(?P<oid>\d+)")
+        match = pattern.search(hrefattrs)
+        if match:
+            return match.group('oid')
+        return None
 
     def _get_age(self) -> Optional[datetime.datetime]:
         try:

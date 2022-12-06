@@ -37,7 +37,7 @@ class FacebookProfileGeneralPage(AbstractFbPageObject):
     def collect_profile(self) -> SmProfileDto:
         self._navigate_and_wait(self.navigation_strategy.generate_about_profile_link())
         profile_dto = SmProfileDto(name=self.get_name_element().get_attribute('textContent'))
-        self._extract_json_data(profile_dto)
+        self._extract_json_data(profile_dto, True)
         self._navigate_and_wait(self.navigation_strategy.generate_basic_profile_info_link())
         self._extract_json_data(profile_dto)
         self._normalize_profile(profile_dto)
@@ -52,9 +52,16 @@ class FacebookProfileGeneralPage(AbstractFbPageObject):
         self.navigate_to(url)
         self.get_wait().until(EC.presence_of_element_located(self.get_profile_app_section()))
 
-    def _extract_json_data(self, profile_dto: SmProfileDto):
+    def _extract_json_data(self, profile_dto: SmProfileDto, oid: bool = False):
         raw_data = json.loads(self.get_profile_script().get_attribute('textContent'))
+        if oid:
+            self._extract_oid(raw_data, profile_dto)
         self._extract_data_from_nodes(raw_data, profile_dto)
+
+    def _extract_oid(self, raw_data: dict, profile_dto: SmProfileDto):
+        for search_result in recursive_dict_search(raw_data, 'user',
+                                                   lambda item: isinstance(item, dict) and "id" in item):
+            profile_dto.oid = search_result['id']
 
     def _extract_data_from_nodes(self, raw_data: dict, profile_dto: SmProfileDto):
         logger.debug('Trying to extract profile data from FB JSON found')

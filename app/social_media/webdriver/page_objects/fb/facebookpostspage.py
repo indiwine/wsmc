@@ -67,7 +67,7 @@ class FacebookPostsPage(AbstractFbPageObject):
     def _to_dto(node: FacebookPostNode) -> SmPostDto:
         return SmPostDto(
             sm_post_id=node.get_id,
-            raw_post=node.raw_node,
+            # raw_post=node.raw_node, #raw FB nodes comes at a huge expense of storage
             datetime=node.get_creation_time_dt,
             permalink=node.get_permalink,
             body=node.get_message,

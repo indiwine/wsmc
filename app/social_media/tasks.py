@@ -7,13 +7,16 @@ from social_media.webdriver import Request, Agent
 
 
 @shared_task
-def perform_sm_data_collection(suspect_id):
+def perform_sm_data_collection(suspect_id: int, with_posts: bool):
     suspect: Suspect = Suspect.objects.get(id=suspect_id)
     sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
     for sm_account in sm_accounts:
+        entities = [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE]
+        if with_posts:
+            entities.append(SocialMediaEntities.POSTS)
+
         collect_request = Request(
-            [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE, SocialMediaEntities.POSTS],
-            # [SocialMediaEntities.LOGIN, SocialMediaEntities.POSTS],
+            entities,
             sm_account.credentials,
             sm_account
         )

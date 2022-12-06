@@ -23,6 +23,7 @@ from ..osint.osintmodules import OsintModules
 
 class LinkedSmProfile(StackedInline):
     model = SmProfile
+    readonly_fields = ['id_url']
 
     def has_add_permission(self, request, obj):
         return False
@@ -46,7 +47,11 @@ class SuspectAdmin(ModelAdmin):
     list_display = ['__str__', 'score']
 
     def perform_scan(self, request: HttpRequest, object_id):
-        result: AsyncResult = perform_sm_data_collection.delay(object_id)
+        with_posts = True
+        if 'profile_only' in request.GET:
+            with_posts = False
+
+        result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
         self._send_message(request, result)
         return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 
@@ -56,6 +61,7 @@ class SuspectAdmin(ModelAdmin):
         return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 
     def perform_osint(self, request: HttpRequest, object_id):
+        # TODO: Refactor method. Move logic somewhere.
         suspect: Suspect = Suspect.objects.get(id=object_id)
         check_requests = []
 
@@ -72,7 +78,7 @@ class SuspectAdmin(ModelAdmin):
         if len(suspect_sm_accounts) > 0:
             sm_check_request = SmCheckRequest()
             for sm_account in suspect_sm_accounts:
-                sm_check_request.add_sm(sm_account.link, sm_account.credentials.social_media)
+                sm_check_request.add_sm(sm_account.fetch_bot_check_link(), sm_account.credentials.social_media)
             check_requests.append(sm_check_request)
 
         try:

@@ -42,7 +42,7 @@ class VkProfilePage(AbstractVkPageObject):
         self._navigate_if_necessary()
         self._user_id = self._extract_user_id()
         profile = self._find_profile_data()
-        return self._node_to_dto(profile)
+        return self._node_to_dto(profile, self._user_id)
 
     def _navigate_if_necessary(self):
         profile_link = self.link_strategy.get_profile_link()
@@ -107,10 +107,12 @@ class VkProfilePage(AbstractVkPageObject):
         return int(oid)
 
     @staticmethod
-    def _node_to_dto(node: VkProfileNode) -> SmProfileDto:
+    def _node_to_dto(node: VkProfileNode, oid) -> SmProfileDto:
         dto = SmProfileDto(name=node.name,
                            location=node.home_town,
                            university=node.education,
-                           birthdate=node.birthday)
+                           birthdate=node.birthday,
+                           oid=oid
+                           )
         logger.info(f'Profile info found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
         return dto
