@@ -39,6 +39,7 @@ class OkAboutProfilePage(AbstractOkPageObject):
         dto.oid = self._get_oid()
         dto.birthdate = self._get_age()
         dto.location = self._get_location()
+        dto.home_town = self._get_home_town()
         return dto
 
     def _get_oid(self) -> Optional[str]:
@@ -57,15 +58,14 @@ class OkAboutProfilePage(AbstractOkPageObject):
         except NoSuchElementException:
             return None
 
+    def _get_home_town(self) -> Optional[str]:
+        try:
+            return self.birth_location().get_property('textContent')
+        except NoSuchElementException:
+            return None
+
     def _get_location(self) -> Optional[str]:
         try:
             return self.location().get_property('textContent')
         except NoSuchElementException:
-            pass
-
-        try:
-            return self.birth_location().get_property('textContent')
-        except NoSuchElementException:
-            pass
-
-        return None
+            return None

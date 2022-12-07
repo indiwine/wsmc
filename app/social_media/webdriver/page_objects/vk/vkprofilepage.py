@@ -109,7 +109,8 @@ class VkProfilePage(AbstractVkPageObject):
     @staticmethod
     def _node_to_dto(node: VkProfileNode, oid) -> SmProfileDto:
         dto = SmProfileDto(name=node.name,
-                           location=node.home_town,
+                           location=node.location,
+                           home_town=node.home_town,
                            university=node.education,
                            birthdate=node.birthday,
                            oid=oid

@@ -9,4 +9,5 @@ class SmProfileDto:
     location: str = None
     birthdate: Union[datetime.datetime, str] = None
     university: str = None
+    home_town: str = None
     oid: str = None

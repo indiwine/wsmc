@@ -8,7 +8,7 @@ x-app-common: &common-variables
   SELENIUM_DRIVER: 'chrome'
   NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
-  DEBUG: '1'
+  DEBUG: '1' # This will be here unless we decide what to do with static files
   WSMC_USE_CELERY: ${WSMC_USE_CELERY}
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
@@ -49,8 +49,6 @@ services:
       POSTGRES_DB: "wsmc"
     volumes:
       - postgresql:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
   webdriver:
     image: selenium/standalone-chrome:105.0
     shm_size: "2g"

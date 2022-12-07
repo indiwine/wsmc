@@ -19,6 +19,15 @@ class VkProfileNode:
         return None
 
     @property
+    def location(self) -> Optional[str]:
+        if 'city' in self.raw_node:
+            result = self.raw_node['city']['title']
+            if 'country' in self.raw_node:
+                result += f", {self.raw_node['country']['title']}"
+            return result
+        return None
+
+    @property
     def education(self) -> Optional[str]:
         if 'universities' in self.raw_node and len(self.raw_node['universities']) > 0:
             university_node = self.raw_node['universities'][0]

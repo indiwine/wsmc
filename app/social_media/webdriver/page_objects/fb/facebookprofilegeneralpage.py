@@ -21,7 +21,8 @@ class FacebookProfileGeneralPage(AbstractFbPageObject):
         self._proc = {
             "education": self._extract_education,
             "current_city": self._extract_current_city,
-            "birthday": self._extract_birthday
+            "birthday": self._extract_birthday,
+            "hometown": self._extract_current_city
         }
 
     @staticmethod
@@ -79,15 +80,21 @@ class FacebookProfileGeneralPage(AbstractFbPageObject):
         profile_dto.university = place
 
     def _extract_current_city(self, node: dict, profile_dto: SmProfileDto):
+        is_home_town = node['field_type'] == 'hometown'
+        dto_field = 'location'
+        if is_home_town:
+            dto_field = 'home_town'
+
         city = node['title']['text']
         if 'ranges' in node['title']:
             range = node['title']['ranges'][0]
-            if range['entity']['category_type'] == 'REGION':
+            entity = range['entity']
+            if entity['__typename'] == 'Page' and 'profile_url' in entity:
                 city = FacebookRegionPage(self.driver) \
                     .set_navigation_strategy(self.navigation_strategy) \
-                    .get_name(range['entity']['profile_url'])
-        logger.debug(f'City found {city}')
-        profile_dto.location = city
+                    .get_name(entity['profile_url'])
+        logger.debug(f'City of type "{dto_field}" found: {city}')
+        setattr(profile_dto, dto_field, city)
 
     def _extract_birthday(self, node: dict, profile_dto: SmProfileDto):
         if profile_dto.birthdate is None:

@@ -6,12 +6,12 @@ services:
       - './app:/app'
   celery:
     image: indiwine/wsmc:latest
+    command: celery -A wsmc worker -P solo
     volumes:
       - './app:/app'
-  webdriver:
-    ports:
-      - '4444'
   postgres:
+    ports:
+      - "5432:5432"
     volumes:
       - postgresql:/var/lib/postgresql/data
 volumes:
