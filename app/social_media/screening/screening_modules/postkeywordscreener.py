@@ -41,7 +41,7 @@ class PostKeywordScreener(AbstractScreeningModule):
     def _check_against_phrases(self, post: SmPost) -> List[dict]:
         result = []
         for phrase in self._black_phrases_query_set:
-            query = SearchQuery(phrase.phrase, config=settings.PG_SEARCH_LANG)
+            query = SearchQuery(phrase.phrase, config=settings.PG_SEARCH_LANG, search_type='websearch')
             headline = SearchHeadline('body',
                                       query,
                                       config=settings.PG_SEARCH_LANG,

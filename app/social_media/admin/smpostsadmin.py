@@ -28,7 +28,7 @@ class SmPostsAdmin(ModelAdmin):
     def get_search_results(self, request, queryset: QuerySet, search_term: str):
         result = queryset
         if len(search_term) > 0:
-            query = SearchQuery(search_term, config=settings.PG_SEARCH_LANG)
+            query = SearchQuery(search_term, config=settings.PG_SEARCH_LANG, search_type='websearch')
             result = queryset.filter(search_vector=query)
 
         return result, False

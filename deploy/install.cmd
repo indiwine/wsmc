@@ -2,7 +2,7 @@
 
 docker-compose build
 echo "Wating for a while for PG to initialize"
-sleep 30
+timeout 30
 docker-compose run app python manage.py migrate
 docker-compose run app python manage.py loaddata location
 echo "Create a password for admin user:"
