@@ -3,22 +3,27 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin, EmptyFieldListFilter
 from django.contrib.postgres.search import SearchQuery
 from django.db.models import QuerySet
-from django.forms import ModelForm
 from django.utils.safestring import mark_safe
 
 from social_media.models import SmPost
 
 
-class SmPostAdminFrom(ModelForm):
-    class Meta:
-        model = SmPost
-        exclude = ['raw_post']
+# class SmPostAdminFrom(ModelForm):
+#     class Meta:
+#         model = SmPost
+#         exclude = ['raw_post']
 
 
 class SmPostsAdmin(ModelAdmin):
-    form = SmPostAdminFrom
+    # form = SmPostAdminFrom
     search_fields = ['body__search']
     actions = []
+
+    @admin.display(description='Permalink')
+    def permalink(self: SmPost):
+        return mark_safe(f'<a href="{self.permalink}" target="_blank">{self.permalink}</a>')
+
+    readonly_fields = [permalink]
 
     def get_search_results(self, request, queryset: QuerySet, search_term: str):
         result = queryset
@@ -28,7 +33,11 @@ class SmPostsAdmin(ModelAdmin):
 
         return result, False
 
-    def view_link(self):
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        result = super().get_form(request, obj, change, **kwargs)
+        return result
+
+    def view_link(self: SmPost):
         return mark_safe(f'<a href="{self.permalink}" target="_blank">{self.get_social_media_display()}</a>')
 
     view_link.short_description = 'Лінк на пост'
