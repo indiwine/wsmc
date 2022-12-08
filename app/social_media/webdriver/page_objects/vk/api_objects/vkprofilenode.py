@@ -10,7 +10,10 @@ class VkProfileNode:
 
     @property
     def name(self) -> str:
-        return f'{self.raw_node["first_name"]} {self.raw_node["last_name"]}'
+        result = f'{self.raw_node["first_name"]} {self.raw_node["last_name"]}'
+        if 'maiden_name' in self.raw_node and self.raw_node['maiden_name']:
+            result += f" ({self.raw_node['maiden_name']})"
+        return result
 
     @property
     def home_town(self) -> Optional[str]:
