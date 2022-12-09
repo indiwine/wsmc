@@ -17,7 +17,7 @@ from social_media.models import SmPost
 class SmPostsAdmin(ModelAdmin):
     # form = SmPostAdminFrom
     search_fields = ['body__search']
-    actions = []
+    actions = None
 
     @admin.display(description='Permalink')
     def permalink(self: SmPost):
@@ -32,6 +32,15 @@ class SmPostsAdmin(ModelAdmin):
             result = queryset.filter(search_vector=query)
 
         return result, False
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+
+        extra_context['show_delete'] = False  # Here
+        # extra_context['show_save'] = False
+        # extra_context['show_save_and_continue'] = False
+
+        return super().changeform_view(request, object_id, form_url, extra_context)
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         result = super().get_form(request, obj, change, **kwargs)
