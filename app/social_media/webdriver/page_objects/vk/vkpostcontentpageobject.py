@@ -35,11 +35,6 @@ class VkPostContentPageObject(AbstractVkPageObject):
 
     def to_text(self) -> Optional[str]:
         self._click_more_button()
-        try:
-            self.wall_text_node.find_element(By.ID, 'wpt211831788_417')
-            pass
-        except NoSuchElementException:
-            pass
 
         contents = [self.get_wall_post_cont()]
         if self.copy_quote:
@@ -66,7 +61,7 @@ class VkPostContentPageObject(AbstractVkPageObject):
             result += self._try_find(
                 lambda: node.find_element(By.CLASS_NAME, 'page_group_info').get_attribute('innerText')) + nl
 
-            # So called "Poster"
+            # So-called "Poster"
             result += self._try_find(
                 lambda: node.find_element(By.CLASS_NAME, 'poster__text').get_attribute('innerText')) + nl
 
@@ -88,9 +83,40 @@ class VkPostContentPageObject(AbstractVkPageObject):
         return result
 
     def _click_more_button(self):
-        self.driver.execute_script("""
+        expanded: bool = self.driver.execute_script("""
         var body_node = arguments[0]
-        body_node.getElementsByClassName('wall_post_more').forEach(el => el.click())
-        body_node.getElementsByClassName('PostTextMore').forEach(el => el.click())
-        body_node.getElementsByClassName('wall_copy_more').forEach(el => el.click())
+        function doClick(elements) {
+            elements.forEach(el => el.click())
+        }
+        
+        let elements = body_node.getElementsByClassName('PostTextMore');
+        if (elements.length > 0) {
+            doClick(elements);
+            return true;
+        }
+        
+        elements = body_node.getElementsByClassName('wall_post_more');
+        if (elements.length > 0) {
+            doClick(elements);
+            return true;
+        }
+        
+        elements = body_node.getElementsByClassName('wall_copy_more');
+        if (elements.length > 0) {
+            doClick(elements);
+            return false;
+        }
+        
+        return true
+        
         """, self.wall_text_node)
+
+        def wait_for_copy_more(driver):
+            try:
+                self.copy_quote.find_element(By.CSS_SELECTOR, ':scope > .copy_quote')
+                return True
+            except NoSuchElementException:
+                return False
+
+        if not expanded:
+            self.get_wait().until(wait_for_copy_more)

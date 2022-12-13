@@ -2,13 +2,14 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.loader import render_to_string
 
-from social_media.models import ScreeningDetail
+from social_media.models import ScreeningDetail, SmPost
 from .helpers import LinkTypes, generate_link_for_model_object
 
 
 class ScreeningDetailAdmin(ModelAdmin):
     actions = None
     list_display_links = None
+    ordering = ['id']
 
     def formatted_content_object(self: ScreeningDetail):
         return generate_link_for_model_object(LinkTypes.CHANGE, self.content_object, self.content_type.name)
@@ -20,7 +21,17 @@ class ScreeningDetailAdmin(ModelAdmin):
             'item': self
         })
 
-    list_display = ['module', formatted_content_object, formatted_result]
+    formatted_result.short_description = "Результат"
+
+    def date_of_object(self: ScreeningDetail):
+        if isinstance(self.content_object, SmPost):
+            return self.content_object.datetime
+
+        return None
+
+    date_of_object.short_description = 'Дата'
+
+    list_display = ['object_id', 'module', formatted_content_object, date_of_object, formatted_result]
 
     def has_add_permission(self, request):
         return False

@@ -1,14 +1,13 @@
-{% for check_result in item.result %}
-    <div class="screening-result-pk">
-        <p>Знайдено фразу "<i>{{ check_result.request }}</i>":</p>
+<div class="screening-result-post screening-result-pk-wrapper">
+    {% for check_result in item.result %}
+        <div class="screening-result-pk">
+            <div class="title">Знайдено фразу "<i>{{ check_result.request }}</i>"</div>
 
-        <div class="headline screening-result-quotes">
-        {% autoescape off %}
-            {{ check_result.headline|linebreaks }}
-        {% endautoescape %}
-
+            <div class="headline screening-result-quotes">
+                {% autoescape off %}
+                    {{ check_result.headline|linebreaks }}
+                {% endautoescape %}
+            </div>
         </div>
-
-
-    </div>
-{% endfor %}
+    {% endfor %}
+</div>
