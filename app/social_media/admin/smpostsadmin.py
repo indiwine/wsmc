@@ -8,22 +8,16 @@ from django.utils.safestring import mark_safe
 from social_media.models import SmPost
 
 
-# class SmPostAdminFrom(ModelForm):
-#     class Meta:
-#         model = SmPost
-#         exclude = ['raw_post']
-
-
 class SmPostsAdmin(ModelAdmin):
-    # form = SmPostAdminFrom
     search_fields = ['body__search']
-    actions = []
+    actions = None
+    ordering = ['-datetime']
 
     @admin.display(description='Permalink')
     def permalink(self: SmPost):
         return mark_safe(f'<a href="{self.permalink}" target="_blank">{self.permalink}</a>')
 
-    readonly_fields = [permalink]
+    fields = [permalink, 'profile', 'suspect', 'social_media', 'datetime', 'body']
 
     def get_search_results(self, request, queryset: QuerySet, search_term: str):
         result = queryset
@@ -33,9 +27,14 @@ class SmPostsAdmin(ModelAdmin):
 
         return result, False
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
-        result = super().get_form(request, obj, change, **kwargs)
-        return result
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+
+        extra_context['show_delete'] = False  # Here
+        # extra_context['show_save'] = False
+        # extra_context['show_save_and_continue'] = False
+
+        return super().changeform_view(request, object_id, form_url, extra_context)
 
     def view_link(self: SmPost):
         return mark_safe(f'<a href="{self.permalink}" target="_blank">{self.get_social_media_display()}</a>')

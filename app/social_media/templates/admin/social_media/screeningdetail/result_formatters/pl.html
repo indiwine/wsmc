@@ -1,13 +1,15 @@
-{% if item.result.found_location %}
-    <div>Локація ідентифікована як: "<span>{{ item.result.found_location }}</span>"</div>
+<div class="screening-result-post">
+    {% if item.result.found_location %}
+        <div>Локація ідентифікована як: "<span>{{ item.result.found_location }}</span>"</div>
 
-    <div>
-        {% for mathc in item.result.match %}
-            <p>Співпадіння з "<b>{{ mathc.location }}</b>", підозрілість збільшено на {{ mathc.score }}</p>
-        {% endfor %}
-    </div>
+        <div>
+            {% for mathc in item.result.match %}
+                <div>Співпадіння з "<b>{{ mathc.location }}</b>", підозрілість збільшено на {{ mathc.score }}</div>
+            {% endfor %}
+        </div>
 
 
-{% else %}
-    <div>Локація не може бути ідентифікована або не знайдена</div>
-{% endif %}
+    {% else %}
+        <div>Локація не може бути ідентифікована або не знайдена</div>
+    {% endif %}
+</div>

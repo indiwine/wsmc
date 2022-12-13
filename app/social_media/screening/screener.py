@@ -18,7 +18,7 @@ class Screener:
         return self.request.score
 
     def _build_chain(self) -> AbstractScreeningModule:
-        return PostKeywordScreener().set_next(ProfileLocationScreener())
+        return ProfileLocationScreener().set_next(PostKeywordScreener())
 
     @staticmethod
     def build(suspect: Suspect) -> Screener:

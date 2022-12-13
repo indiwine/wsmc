@@ -8,6 +8,9 @@ from ..social_media import SocialMediaTypes
 
 
 class SmPost(Model):
+    permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512, editable=False)
+    profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
+                         help_text="Профіль зв'язаний з цим постом")
     suspect = ForeignKey(Suspect, on_delete=CASCADE, verbose_name='Людина')
     sm_post_id = CharField(max_length=25000, help_text='ID поста в соціальній мережі', verbose_name='ID',
                            editable=False)
@@ -15,11 +18,9 @@ class SmPost(Model):
     datetime = DateTimeField(verbose_name='Час створення', help_text='Час коли пост було створено в соціальній мережі')
 
     body = TextField(null=True, verbose_name='Текст')
-    permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512, editable=False)
+
     raw_post = JSONField(null=True, editable=False)
     search_vector = SearchVectorField('body', editable=False)
-    profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
-                         help_text="Профіль зв'язаний з цим постом")
 
     def __str__(self):
         post = self.sm_post_id[0:20]
