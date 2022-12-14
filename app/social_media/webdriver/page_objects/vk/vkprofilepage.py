@@ -19,11 +19,16 @@ logger = logging.getLogger(__name__)
 
 
 class VkProfilePage(AbstractVkPageObject):
+    VK_USER_GET = 'users.get'
     _user_id: Optional[int] = None
 
     @staticmethod
     def profile_container_locator():
         return By.ID, 'profile_redesigned'
+
+    @staticmethod
+    def tab_placeholder():
+        return By.CLASS_NAME, 'TabItemSkeleton__placeholder'
 
     def wall_link(self):
         return self.driver.find_element(By.XPATH, '//div[@id="profile_wall"]//li[@class="_wall_tab_own"]/a[@href]')
@@ -40,6 +45,7 @@ class VkProfilePage(AbstractVkPageObject):
         logger.debug('Collecting profile information')
         self.clear_requests()
         self._navigate_if_necessary()
+        self.get_wait().until(EC.none_of(EC.presence_of_element_located(self.tab_placeholder())))
         self._user_id = self._extract_user_id()
         profile = self._find_profile_data()
         return self._node_to_dto(profile, self._user_id)
@@ -51,17 +57,36 @@ class VkProfilePage(AbstractVkPageObject):
             self.get_wait().until(EC.presence_of_element_located(self.profile_container_locator()))
 
     def _find_profile_data(self) -> VkProfileNode:
+        profile_found = self._try_extract_prefetch_cache()
+        if profile_found:
+            return profile_found
+
         for body in self.request_iterator():
             profile_found = self._process_request(body)
             if profile_found:
                 return profile_found
-        raise WsmcWebDriverProfileException('Cannot find profile inforamtions')
+        raise WsmcWebDriverProfileException('Cannot find profile information')
+
+    def _try_extract_prefetch_cache(self) -> Optional[VkProfileNode]:
+        logger.debug('Trying to find profile data using prefetch cache method')
+        prefetch_data = self.driver.execute_script('return window.cur.apiPrefetchCache')
+        if prefetch_data and isinstance(prefetch_data, list):
+            for item in prefetch_data:
+                if item['method'] == self.VK_USER_GET:
+                    user_data = self._process_user_node(item['response'])
+                    if user_data:
+                        logger.debug('Prefetch cache method succeed')
+                        return VkProfileNode(user_data)
+        logger.debug('Prefetch cache method failed')
+        return None
 
     def _process_request(self, raw_json: str) -> Optional[VkProfileNode]:
+        logger.debug('Trying to find profile data using XHR method')
         raw_data = json.loads(raw_json)
-        for node in recursive_dict_search(raw_data, 'users.get'):
+        for node in recursive_dict_search(raw_data, self.VK_USER_GET):
             user_data = self._process_user_node(node)
             if user_data:
+                logger.debug('XHR method succeed')
                 return VkProfileNode(user_data)
 
         return None
