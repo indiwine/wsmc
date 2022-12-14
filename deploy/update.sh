@@ -16,6 +16,6 @@ echo "Setting back up"
 docker-compose up -d
 
 echo "Cleaning"
-docker image prune
+docker image prune -f
 
 echo "All done"
