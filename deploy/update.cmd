@@ -8,6 +8,7 @@ docker-compose stop
 
 echo "Pulling update"
 docker-compose pull app
+docker-compose pull celery
 
 echo "Applying migrations"
 docker-compose run --rm app python manage.py migrate
