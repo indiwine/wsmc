@@ -10,3 +10,7 @@ class OsintDetail(Model):
     sub_module = CharField(max_length=128, null=True, default=None)
     result = JSONField()
 
+    class Meta:
+        verbose_name = 'OSINT Деталі'
+        verbose_name_plural = 'OSINT Деталі'
+

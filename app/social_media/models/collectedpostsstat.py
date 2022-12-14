@@ -57,6 +57,8 @@ class CollectedPostsStat(Model):
         return self.date == current_month
 
     class Meta:
+        verbose_name = 'Статистика ФБ'
+        verbose_name_plural = 'Статистика ФБ'
         indexes = [
             Index(fields=['suspect_account', 'date', 'finished'])
         ]
