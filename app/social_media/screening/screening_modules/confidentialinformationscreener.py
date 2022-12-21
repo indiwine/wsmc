@@ -34,7 +34,7 @@ ExtractionCb = Callable[[Match], ConfidentialInformation]
 
 class ConfidentialInformationScreener(AbstractScreeningModule):
     def __init__(self):
-        self.numbers_pattern = re.compile(r"(?:[\+\(])?(?:[\ \-\–\(\)]*\d){6,15}", re.MULTILINE)
+        self.numbers_pattern = re.compile(r"(?:[\+\(])?(?:[\ \-\–\(\)]*\d){9,15}", re.MULTILINE)
         self.iban_pattern = re.compile(self._generate_iban_pattern('11,30'), re.MULTILINE | re.IGNORECASE)
         self.credit_card_pattern = re.compile(r"\b(?:\d[\ \-]*){16}\b", re.MULTILINE)
         self.special_chars_pattern = re.compile(r"[\ \-\(\)]")
@@ -52,12 +52,15 @@ class ConfidentialInformationScreener(AbstractScreeningModule):
         for post in posts:
             confidential_information_list = self.look_for_info(post.body)
             if confidential_information_list:
-                logger.debug(f'Confidential information found: {json.dumps(confidential_information_list.__dict__, indent=2)}')
+                confidential_information_list_dict = list(
+                    map(lambda item: item.__dict__, confidential_information_list))
+                logger.debug(
+                    f'Confidential information found: {json.dumps(confidential_information_list_dict, indent=2)}')
                 detail = ScreeningDetail(
                     report=screening_request.report,
                     content_object=post,
                     module=ScreeningModules.CONFIDENTIAL_INFORMATION,
-                    result=confidential_information_list.__dict__
+                    result=confidential_information_list_dict
                 )
                 detail.save()
 
