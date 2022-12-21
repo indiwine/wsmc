@@ -1,0 +1,24 @@
+{% load render_confidential_information_type %}
+<div class="screening-result-post screening-result-pk-wrapper">
+    {% for check_result in item.result %}
+        <div class="screening-result-pk">
+            <div class="title">Знайдено "{{ check_result.type | render_confidential_information_type }}"</div>
+
+            <div class="headline screening-result-quotes">
+                <span>{{ check_result.item }}</span>
+            </div>
+
+            <div class="footer">
+                {% if check_result.isValid %}
+                    ✅ Інформація вірогідно достовірна (успішна валідація)
+                {% else %}
+                    {% if check_result.isAlike %}
+                        ⚠ Інформація схожа достовірну (не успішна валідація)
+                    {% else %}
+                        ✖ Інформація схожа за форматом
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
