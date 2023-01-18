@@ -33,19 +33,28 @@ class VkProfilePage(AbstractVkPageObject):
     def wall_link(self):
         return self.driver.find_element(By.XPATH, '//div[@id="profile_wall"]//li[@class="_wall_tab_own"]/a[@href]')
 
+    def empty_wall_link(self):
+        return self.driver.find_element(By.XPATH, '//li[@class="page_wall_no_posts"]/a[@href]')
+
     def submit_post_box(self):
         return self.driver.find_element(By.ID, 'submit_post_box')
 
+    def find_wall_link(self):
+        try:
+            return self.wall_link().get_attribute('href')
+        except NoSuchElementException:
+            return self.empty_wall_link().get_attribute('href')
+
     def go_to_wall(self):
         self._navigate_if_necessary()
-        self.navigate_to(self.wall_link().get_attribute('href'))
+        self.navigate_to(self.find_wall_link())
         return VkProfileWallPage(self.driver, self.link_strategy)
 
     def collect_profile(self) -> SmProfileDto:
         logger.debug('Collecting profile information')
         self.clear_requests()
         self._navigate_if_necessary()
-        self.get_wait().until(EC.none_of(EC.presence_of_element_located(self.tab_placeholder())))
+        self.get_wait().until(EC.invisibility_of_element_located(self.tab_placeholder()))
         self._user_id = self._extract_user_id()
         profile = self._find_profile_data()
         return self._node_to_dto(profile, self._user_id)
@@ -102,8 +111,7 @@ class VkProfilePage(AbstractVkPageObject):
     def _extract_user_id(self) -> int:
         oid = self._try_get_user_id_from_submit_box()
         if oid is None:
-            pass
-        oid = self._try_get_user_id_from_wall_link()
+            oid = self._try_get_user_id_from_wall_link()
 
         logger.debug(f'Found user id: {oid}')
         return oid
@@ -122,7 +130,7 @@ class VkProfilePage(AbstractVkPageObject):
         logger.debug('Trying to find VK user id using wall link method')
 
         pattern = re.compile(r"\/wall(?P<oid>\d+)")
-        wall_link = self.wall_link().get_attribute('href')
+        wall_link = self.find_wall_link()
         match = pattern.search(wall_link)
 
         if match is None:

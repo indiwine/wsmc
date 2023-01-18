@@ -2,6 +2,7 @@ import logging
 import urllib.parse
 from typing import Generator
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -20,14 +21,36 @@ class VkProfileWallPage(AbstractVkPageObject):
     def last_page_link(self):
         return self.driver.find_element(By.CSS_SELECTOR, '#fw_pages > a.pg_lnk:last-child')
 
+    @staticmethod
+    def page_wall_posts_locator():
+        return By.ID, 'page_wall_posts'
+
+    @staticmethod
+    def message_page_locator():
+        return By.CLASS_NAME, 'message_page'
+
     def wait_for_posts(self):
-        self.get_wait().until(EC.presence_of_element_located((By.ID, 'page_wall_posts')))
+        self.get_wait().until(
+            EC.any_of(
+                EC.presence_of_element_located(self.page_wall_posts_locator()),
+                EC.presence_of_element_located(self.message_page_locator())
+            )
+        )
+
+        try:
+            self.driver.find_element(*self.page_wall_posts_locator())
+            return True
+        except NoSuchElementException:
+            return False
 
     def collect_posts(self, offset: int) -> Generator[SmPostDto, None, None]:
         logger.debug(f'Collecting posts for offset: {offset}')
         self.clear_requests()
         self.navigate_to(self.link_strategy.add_offset(self.driver.current_url, offset))
-        self.wait_for_posts()
+        has_posts = self.wait_for_posts()
+
+        if not has_posts:
+            return
 
         for post_node in self.posts():
             yield VkPostPageObject(self.driver, self.link_strategy, post_node).collect()

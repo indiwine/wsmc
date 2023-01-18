@@ -17,31 +17,32 @@ class VkPostsCollector(AbstractCollector):
         if request.can_process_entity(SocialMediaEntities.POSTS):
             sm_profile = self.get_sm_profile(request)
             wall = VkProfilePage(request.driver, VkLinkBuilder.build(request.social_media_account.link)).go_to_wall()
-            wall.wait_for_posts()
-            self._max_offset = wall.get_max_offset()
+            has_posts = wall.wait_for_posts()
+            if has_posts:
+                self._max_offset = wall.get_max_offset()
 
-            offset = 0
-            try:
-                new_posts = 0
-                for offset in self._offset_generator(request, lambda: new_posts):
-
-                    # resetting at each new offset
+                offset = 0
+                try:
                     new_posts = 0
-                    for post in wall.collect_posts(offset):
-                        _, created = SmPost.objects.update_or_create(sm_post_id=post.sm_post_id,
-                                                                     profile=sm_profile,
-                                                                     social_media=post.social_media,
-                                                                     defaults={
-                                                                         **asdict(post),
-                                                                         'profile': sm_profile,
-                                                                         'suspect': request.social_media_account.suspect
-                                                                     }
-                                                                     )
-                        if created:
-                            new_posts += 1
-            finally:
-                VkPostStat.objects.update_or_create(suspect_social_media=request.social_media_account,
-                                                    defaults={'last_offset': offset})
+                    for offset in self._offset_generator(request, lambda: new_posts):
+
+                        # resetting at each new offset
+                        new_posts = 0
+                        for post in wall.collect_posts(offset):
+                            _, created = SmPost.objects.update_or_create(sm_post_id=post.sm_post_id,
+                                                                         profile=sm_profile,
+                                                                         social_media=post.social_media,
+                                                                         defaults={
+                                                                             **asdict(post),
+                                                                             'profile': sm_profile,
+                                                                             'suspect': request.social_media_account.suspect
+                                                                         }
+                                                                         )
+                            if created:
+                                new_posts += 1
+                finally:
+                    VkPostStat.objects.update_or_create(suspect_social_media=request.social_media_account,
+                                                        defaults={'last_offset': offset})
 
         return super().handle(request)
 
