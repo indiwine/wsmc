@@ -8,6 +8,5 @@ class SocialMediaConfig(AppConfig):
     verbose_name = 'WSMC'
 
     def ready(self):
-        load_models()
-        #//
+        # load_models()
         pass

@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% load pil_to_datauri %}
+
+{% block content %}
+    <div>
+        <form method="post" action="{{ form_url }}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Відправити">
+        </form>
+    </div>
+    
+    {% if check_results %}
+    {% for result in check_results %}
+        <img src="{{ result.img|pil_to_datauri }}">
+    {% endfor %}
+    
+    {% endif %}
+{% endblock %}

@@ -3,8 +3,11 @@ from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, StackedInline
 from django.http import HttpRequest
 from django.shortcuts import redirect
+from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.safestring import mark_safe
+from django.forms import Form, IntegerField, ImageField, ClearableFileInput
+from PIL import Image
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
 from social_media.tasks import perform_sm_data_collection, perform_screening
@@ -15,6 +18,7 @@ from telegram_connection.interaction.email_check.emailcheckrequest import EmailC
 from telegram_connection.interaction.name_check.namecheckrequest import NameCheckRequest
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckRequest
+from ..ai.loader import get_model
 from .helpers import LinkTypes
 from .helpers import generate_url_for_model, generate_url_for_model_object
 from ..osint.holehe_connector.holeheagent import HoleheAgent
@@ -39,6 +43,10 @@ class LinkedSmAccounts(StackedInline):
     model = SuspectSocialMediaAccount
     extra = 1
 
+
+class VataDetectorDemoForm(Form):
+    probability = IntegerField(label='Поріг впевненості (%)', min_value=1, max_value=99, initial=50)
+    images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
 
 class SuspectAdmin(ModelAdmin):
     inlines = [LinkedSmAccounts, LinkedSmProfile]
@@ -109,6 +117,41 @@ class SuspectAdmin(ModelAdmin):
 
         return redirect(generate_url_for_model(LinkTypes.CHANGELIST, OsintDetail, params={"report_id": report.id}))
 
+
+    def detector_demo(self, request: HttpRequest):
+        check_results = None
+        if request.method == 'POST':
+            form = VataDetectorDemoForm(request.POST, request.FILES)
+            if form.is_valid():
+                pr = form.cleaned_data['probability'] / 100
+                img_paths = []
+                check_results = []
+                for uploaded_file in form.files.getlist('images'):
+                    img_path = uploaded_file.temporary_file_path()
+
+                    img_paths.append(img_path)
+                    check_results.append({
+                        'img': img_path,
+                        'boxes': None
+                    })
+                # model = get_model()
+                # predictions = model.predict(img_paths, pr)
+                # for i, prediction in enumerate(predictions):
+                #     check_results[i]['boxes'] = prediction
+
+        else:
+            form = VataDetectorDemoForm()
+        context = {
+            "title": "Ватний детектор",
+            "form_url": request.get_full_path(),
+            "form": form,
+            "check_results": check_results,
+            **self.admin_site.each_context(request),
+        }
+
+        return TemplateResponse(
+            request, 'admin/social_media/suspect/detector_demo.html', context)
+
     def _send_message(self, request: HttpRequest, result: AsyncResult):
         self.message_user(request,
                           mark_safe(f'Задача "{result.task_id}" поставлена в чергу зі сатусом "{result.state}"'),
@@ -123,7 +166,9 @@ class SuspectAdmin(ModelAdmin):
             path('<path:object_id>/perform-screening', self.perform_screening,
                  name='%s_%s_perform_screening' % (opts.app_label, opts.model_name)),
             path('<path:object_id>/perform-osint', self.perform_osint,
-                 name='%s_%s_perform_osint' % (opts.app_label, opts.model_name))
+                 name='%s_%s_perform_osint' % (opts.app_label, opts.model_name)),
+            path('detector-demo', self.detector_demo,
+                 name='%s_%s_detector_demo' % (opts.app_label, opts.model_name))
         ]
         return ursl + additional_urls
 
