@@ -1,13 +1,15 @@
+import uuid
+
+import json
 from celery.result import AsyncResult
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, StackedInline
+from django.forms import Form, IntegerField, ImageField, ClearableFileInput
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.safestring import mark_safe
-from django.forms import Form, IntegerField, ImageField, ClearableFileInput
-from PIL import Image
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
 from social_media.tasks import perform_sm_data_collection, perform_screening
@@ -18,9 +20,9 @@ from telegram_connection.interaction.email_check.emailcheckrequest import EmailC
 from telegram_connection.interaction.name_check.namecheckrequest import NameCheckRequest
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckRequest
-from ..ai.loader import get_model
 from .helpers import LinkTypes
 from .helpers import generate_url_for_model, generate_url_for_model_object
+from ..ai.loader import get_model
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
 
@@ -47,6 +49,7 @@ class LinkedSmAccounts(StackedInline):
 class VataDetectorDemoForm(Form):
     probability = IntegerField(label='Поріг впевненості (%)', min_value=1, max_value=99, initial=50)
     images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
+
 
 class SuspectAdmin(ModelAdmin):
     inlines = [LinkedSmAccounts, LinkedSmProfile]
@@ -117,7 +120,6 @@ class SuspectAdmin(ModelAdmin):
 
         return redirect(generate_url_for_model(LinkTypes.CHANGELIST, OsintDetail, params={"report_id": report.id}))
 
-
     def detector_demo(self, request: HttpRequest):
         check_results = None
         if request.method == 'POST':
@@ -134,10 +136,10 @@ class SuspectAdmin(ModelAdmin):
                         'img': img_path,
                         'boxes': None
                     })
-                # model = get_model()
-                # predictions = model.predict(img_paths, pr)
-                # for i, prediction in enumerate(predictions):
-                #     check_results[i]['boxes'] = prediction
+                model = get_model()
+                predictions = model.predict(img_paths, pr)
+                for i, prediction in enumerate(predictions):
+                    check_results[i]['boxes'] = json.dumps(self._convert_prediction_to_w3c(prediction))
 
         else:
             form = VataDetectorDemoForm()
@@ -151,6 +153,29 @@ class SuspectAdmin(ModelAdmin):
 
         return TemplateResponse(
             request, 'admin/social_media/suspect/detector_demo.html', context)
+
+    @staticmethod
+    def _convert_prediction_to_w3c(prediction):
+        result = []
+        for item in prediction:
+            result.append({
+                "@context": "http://www.w3.org/ns/anno.jsonld",
+                "id": f"#{uuid.uuid4()}",
+                "type": "Annotation",
+                "body": [{
+                    "type": "TextualBody",
+                    "value": f'{item["label"]}: {round(item["pr"], 2)}'
+                }],
+                "target": {
+                    "selector": {
+                        "type": "FragmentSelector",
+                        "conformsTo": "http://www.w3.org/TR/media-frags/",
+                        "value": f"xywh=pixel:{item['x']},{item['y']},{item['width']},{item['height']}"
+                    }
+                }
+            })
+
+        return result
 
     def _send_message(self, request: HttpRequest, result: AsyncResult):
         self.message_user(request,

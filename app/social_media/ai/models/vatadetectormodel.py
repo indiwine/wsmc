@@ -81,7 +81,7 @@ class VataDetectorModel(BasicModel):
             clipped_prediction = bounding_box.clip_to_image(prediction, input_img, self.BBOX_FORMAT)
             rel = bounding_box.convert_format(clipped_prediction, self.BBOX_FORMAT, 'rel_yxyx', input_img)
             resized_prediction = bounding_box.convert_format(rel, 'rel_yxyx', self.BBOX_FORMAT,
-                                                             image_shape=(*orig_size, 3))
+                                                             image_shape=(orig_size[1], orig_size[0], 3))
             resized_predictions.append(resized_prediction)
         return resized_predictions
 

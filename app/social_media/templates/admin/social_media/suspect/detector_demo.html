@@ -3,6 +3,12 @@
 {% load pil_to_datauri %}
 
 {% block content %}
+    <!-- CSS stylesheet -->
+    <link rel="stylesheet" href="{% static 'admin/css/suspect/annotorious.min.css' %}">
+
+    <!-- JS -->
+    <script src="{% static 'admin/js/annotorious.min.js' %}"></script>
+
     <div>
         <form method="post" action="{{ form_url }}" enctype="multipart/form-data">
             {% csrf_token %}
@@ -10,11 +16,42 @@
             <input type="submit" value="Відправити">
         </form>
     </div>
-    
+
     {% if check_results %}
-    {% for result in check_results %}
-        <img src="{{ result.img|pil_to_datauri }}">
-    {% endfor %}
-    
+        {% for result in check_results %}
+            <div>
+                <img class="annotated-image"
+                     src="{{ result.img|pil_to_datauri }}"
+                     data-annotations="{{ result.boxes }}"
+                     style="max-width: 800px">
+            </div>
+
+        {% endfor %}
+
     {% endif %}
+    <script>
+        (function () {
+            for (const elem of document.getElementsByClassName('annotated-image')) {
+                var anno = Annotorious.init({
+                    image: elem, // image element or ID,
+                    readOnly: true,
+                    formatter: function (annotation) {
+
+
+                        return {
+                            'style': 'stroke-width:2; stroke: red'
+                        }
+
+                    }
+                });
+                const annotations = JSON.parse(elem.dataset.annotations)
+                for (const an of annotations) {
+                    anno.addAnnotation(an);
+                }
+            }
+
+
+        })()
+    </script>
+
 {% endblock %}
