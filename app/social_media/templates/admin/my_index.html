@@ -1,0 +1,18 @@
+{% extends "admin/index.html" %}
+{% block sidebar %}
+    {{ block.super }}
+
+    <style>
+    .featured-content {
+        background: var(--darkened-bg);
+        clear: both;
+        padding: 10px;
+    }
+    </style>
+<div class="featured-content">
+    <div>
+        <a href="{% url 'admin:social_media_suspect_detector_demo' %}">Ватний Детектор &alpha;</a>
+    </div>
+</div>
+
+{% endblock %}

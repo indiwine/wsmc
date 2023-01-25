@@ -77,6 +77,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'wsmc.wsgi.application'
 
+
+FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
+
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 

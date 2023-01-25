@@ -11,5 +11,7 @@ from .smpostsadmin import SmPostsAdmin
 from .smprofileadmin import SmProfileAdmin
 from .suspectadmin import SuspectAdmin
 
+
+admin.site.index_template = 'admin/my_index.html'
 admin.site.site_header = 'WSMC - Wartime Social Media Crawler'
 admin.site.site_title = 'WSMC - Wartime Social Media Crawler'
