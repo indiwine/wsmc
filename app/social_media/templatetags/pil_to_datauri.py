@@ -9,7 +9,7 @@ register = template.Library()
 
 @register.filter
 def pil_to_datauri(value: str):
-    img = Image.open(value)
+    img = Image.open(value).convert('RGB')
     im_file = BytesIO()
     img.save(im_file, format="JPEG")
     img.close()

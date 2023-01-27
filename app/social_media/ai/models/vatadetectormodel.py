@@ -47,7 +47,11 @@ class VataDetectorModel(BasicModel):
     def predict(self, images: List[str], confidence: float = 0.5):
         prediction_decoder = self.get_predication_decoder(confidence)
         input_arr, original_sizes = self._read_images(images)
-        raw_predictions = self._model.predict(input_arr)
+        raw_predictions = self._model.predict(input_arr,
+                                              batch_size=8,
+                                              use_multiprocessing=True,
+                                              workers=8
+                                              )
         predictions = prediction_decoder(input_arr, raw_predictions)
         predictions = self._normalize_predictions(predictions, input_arr, original_sizes)
         return self._convert_predictions(predictions)
