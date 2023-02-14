@@ -34,23 +34,23 @@ class VataDetectorModel(BasicModel):
     _model: Optional[keras.Model] = None
 
     def load(self):
-        logger.debug(f'Tring to load model from "{self.MODEL_FILES_PATH}"')
+        logger.debug(f'Trying to load model from "{self.MODEL_FILES_PATH}"')
         self._model = keras.models.load_model(self.MODEL_FILES_PATH,
-                                              compile=False,
+                                              compile=True,
                                               custom_objects={'COCOMeanAveragePrecision': COCOMeanAveragePrecision,
                                                               'COCORecall': COCORecall,
                                                               })
-        self._model.compile()
+        # self._model.compile()
         logger.info(f'AI model "{self._model.name}" loaded successfully')
         self._model.summary()
 
-    def predict(self, images: List[str], confidence: float = 0.5):
-        prediction_decoder = self.get_predication_decoder(confidence)
+    def predict(self, images: List[str], confidence: float = 0.5, iou: float = 0.5):
+        prediction_decoder = self.get_predication_decoder(confidence, iou)
         input_arr, original_sizes = self._read_images(images)
         raw_predictions = self._model.predict(input_arr,
-                                              batch_size=8,
-                                              use_multiprocessing=True,
-                                              workers=8
+                                              batch_size=4,
+                                              # use_multiprocessing=True,
+                                              # workers=8
                                               )
         predictions = prediction_decoder(input_arr, raw_predictions)
         predictions = self._normalize_predictions(predictions, input_arr, original_sizes)
@@ -90,6 +90,7 @@ class VataDetectorModel(BasicModel):
         return resized_predictions
 
     def _read_images(self, images: List[str]):
+        # TODO(Illia): Make a proper data loading here
         input_arr = []
         original_sizes = []
         for img_path in images:

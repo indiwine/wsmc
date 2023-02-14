@@ -48,6 +48,7 @@ class LinkedSmAccounts(StackedInline):
 
 class VataDetectorDemoForm(Form):
     probability = IntegerField(label='Поріг впевненості (%)', min_value=1, max_value=99, initial=50)
+    iou = IntegerField(label='IoU', min_value=1, max_value=99, initial=50)
     images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
 
 
@@ -126,6 +127,7 @@ class SuspectAdmin(ModelAdmin):
             form = VataDetectorDemoForm(request.POST, request.FILES)
             if form.is_valid():
                 pr = form.cleaned_data['probability'] / 100
+                iou = form.cleaned_data['iou'] / 100
                 img_paths = []
                 check_results = []
                 for uploaded_file in form.files.getlist('images'):
@@ -137,7 +139,7 @@ class SuspectAdmin(ModelAdmin):
                         'boxes': None
                     })
                 model = get_model()
-                predictions = model.predict(img_paths, pr)
+                predictions = model.predict(img_paths, pr, iou)
                 for i, prediction in enumerate(predictions):
                     check_results[i]['boxes'] = json.dumps(self._convert_prediction_to_w3c(prediction))
 
