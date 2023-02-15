@@ -19,9 +19,8 @@ RUN cd /tmp/ && \
 
 WORKDIR /app
 COPY requirements.txt /app/
-RUN pip install -r requirements.txt && \
-    pip cache remove * && \
-    pip cache purge
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 COPY . /app/
 
 CMD python manage.py runserver 0.0.0.0:8000

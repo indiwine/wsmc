@@ -34,7 +34,9 @@ services:
     image: indiwine/wsmc:latest
     hostname: 'celery'
     command: celery -A wsmc worker
-    environment: *common-variables
+    environment:
+      <<: *common-variables
+      WSMC_LOAD_AI: 0
     depends_on:
       - redis
       - postgres
@@ -50,7 +52,7 @@ services:
     volumes:
       - postgresql:/var/lib/postgresql/data
   webdriver:
-    image: selenium/standalone-chrome:105.0
+    image: selenium/standalone-chrome:110.0
     shm_size: "2g"
     environment:
       SE_VNC_NO_PASSWORD: 1
