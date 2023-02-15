@@ -1,21 +1,35 @@
 import logging
+import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple, Literal
 
 import keras_cv
-import numpy as np
 import tensorflow as tf
-from PIL import Image
 from keras_cv import bounding_box
 from keras_cv.metrics import COCOMeanAveragePrecision, COCORecall
 from tensorflow import keras
 
 from .basicmodel import BasicModel
+from .utils.imagepredictionsequence import ImagePredictionSequence
+from .utils.imagesizesequence import ImageSizeSequence
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class VataPredictionItem:
+    x: int
+    y: int
+    width: int
+    height: int
+    label: Literal['z', 'v', 'colorado', 'russian_flag']
+    pr: float
+
+
 class VataDetectorModel(BasicModel):
+    """ Vata23 model to find russian symbols """
+
     MODEL_FILES_PATH = Path(__file__).resolve().parent.parent / 'model_files/vata-detector'
 
     LABELS = [
@@ -31,48 +45,82 @@ class VataDetectorModel(BasicModel):
 
     BBOX_FORMAT = 'xywh'
 
+    BATCH_SIZE = 4
+
     _model: Optional[keras.Model] = None
 
+    @property
+    def name(self) -> str:
+        return self._model.name
+
     def load(self):
+        """
+        Loads model into memory
+        """
         logger.debug(f'Trying to load model from "{self.MODEL_FILES_PATH}"')
         self._model = keras.models.load_model(self.MODEL_FILES_PATH,
-                                              compile=True,
+                                              compile=False,
                                               custom_objects={'COCOMeanAveragePrecision': COCOMeanAveragePrecision,
                                                               'COCORecall': COCORecall,
                                                               })
-        # self._model.compile()
         logger.info(f'AI model "{self._model.name}" loaded successfully')
         self._model.summary()
 
-    def predict(self, images: List[str], confidence: float = 0.5, iou: float = 0.5):
+    def predict(self, images: List[str], confidence: float = 0.5, iou: float = 0.5) -> List[List[VataPredictionItem]]:
+        """
+        Make predictions
+        @param images: list of paths to images
+        @param confidence: a float value in the range [0, 1]. All boxes with confidence
+        below this value will be discarded
+        @param iou: a float value in the range [0, 1] representing the minimum
+        IoU threshold for two boxes to be considered same for suppression.
+        @return: predictions per images. index in images list are corresponding to index in resulting list
+        """
+        logger.debug(f'Starting prediction')
+        t0 = time.perf_counter()
+
         prediction_decoder = self.get_predication_decoder(confidence, iou)
         input_arr, original_sizes = self._read_images(images)
-        raw_predictions = self._model.predict(input_arr,
-                                              batch_size=4,
-                                              # use_multiprocessing=True,
-                                              # workers=8
-                                              )
-        predictions = prediction_decoder(input_arr, raw_predictions)
-        predictions = self._normalize_predictions(predictions, input_arr, original_sizes)
-        return self._convert_predictions(predictions)
+        logger.debug('Images loaded, predicting...')
 
-    def _convert_predictions(self, predictions):
-        def cast_to(x, type=tf.int32):
-            return tf.cast(x, type).numpy().item()
+        raw_predictions = self._model.predict(input_arr,
+                                              batch_size=self.BATCH_SIZE,
+                                              use_multiprocessing=True,
+                                              workers=4
+                                              )
+        logger.debug('Prediction done, decoding...')
+        processed_predictions = []
+
+        for i, imgs in enumerate(input_arr):
+            raw_prediction_slice = raw_predictions[i * self.BATCH_SIZE:(i + 1) * self.BATCH_SIZE]
+            sizes_slice = original_sizes[i]
+            predictions = prediction_decoder(imgs, raw_prediction_slice)
+            predictions = self._normalize_predictions(predictions, imgs, sizes_slice)
+            processed_predictions = processed_predictions + predictions
+
+        processed_predictions = self._convert_predictions(processed_predictions)
+
+        logger.debug(f'Prediction took: {time.perf_counter() - t0}')
+        return processed_predictions
+
+    def _convert_predictions(self, predictions) -> List[List[VataPredictionItem]]:
+        def cast_to(tensor, target_type=tf.int32):
+            return tf.cast(tensor, target_type).numpy().item()
 
         result = []
         for boxes in predictions:
             converted_boxes = []
             for box in boxes:
                 x, y, width, height, label, pr = box
-                converted_boxes.append({
-                    'x': cast_to(x),
-                    'y': cast_to(y),
-                    'width': cast_to(width),
-                    'height': cast_to(height),
-                    'label': self.CLASS_MAPPING[cast_to(label)],
-                    'pr': cast_to(pr, tf.float32)
-                })
+                item = VataPredictionItem(
+                    x=cast_to(x),
+                    y=cast_to(y),
+                    width=cast_to(width),
+                    height=cast_to(height),
+                    label=self.CLASS_MAPPING[cast_to(label)],
+                    pr=cast_to(pr, tf.float32)
+                )
+                converted_boxes.append(item)
 
             result.append(converted_boxes)
         return result
@@ -89,20 +137,10 @@ class VataDetectorModel(BasicModel):
             resized_predictions.append(resized_prediction)
         return resized_predictions
 
-    def _read_images(self, images: List[str]):
-        # TODO(Illia): Make a proper data loading here
-        input_arr = []
-        original_sizes = []
-        for img_path in images:
-            with open(img_path, "rb") as f:
-                pil_img = Image.open(f)
-                original_sizes.append(pil_img.size)
-                pil_img.close()
-
-            img = keras.utils.load_img(img_path, target_size=self.IMAGE_SIZE)
-            input_arr.append(keras.utils.img_to_array(img))
-
-        return np.array(input_arr), original_sizes
+    def _read_images(self, images: List[str]) -> Tuple[ImagePredictionSequence, ImageSizeSequence]:
+        generator = ImagePredictionSequence(images, self.BATCH_SIZE, self.IMAGE_SIZE)
+        size_sequence = ImageSizeSequence(images, self.BATCH_SIZE)
+        return generator, size_sequence
 
     def get_predication_decoder(self, confidence: float = 0.5,
                                 iou: float = 0.5) -> keras_cv.layers.NmsPredictionDecoder:

@@ -1,6 +1,7 @@
-import uuid
-
 import json
+import uuid
+from typing import List
+
 from celery.result import AsyncResult
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, StackedInline
@@ -23,6 +24,7 @@ from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckReque
 from .helpers import LinkTypes
 from .helpers import generate_url_for_model, generate_url_for_model_object
 from ..ai.loader import get_model
+from ..ai.models.vatadetectormodel import VataPredictionItem
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
 
@@ -123,6 +125,7 @@ class SuspectAdmin(ModelAdmin):
 
     def detector_demo(self, request: HttpRequest):
         check_results = None
+        model = get_model()
         if request.method == 'POST':
             form = VataDetectorDemoForm(request.POST, request.FILES)
             if form.is_valid():
@@ -138,7 +141,6 @@ class SuspectAdmin(ModelAdmin):
                         'img': img_path,
                         'boxes': None
                     })
-                model = get_model()
                 predictions = model.predict(img_paths, pr, iou)
                 for i, prediction in enumerate(predictions):
                     check_results[i]['boxes'] = json.dumps(self._convert_prediction_to_w3c(prediction))
@@ -146,10 +148,11 @@ class SuspectAdmin(ModelAdmin):
         else:
             form = VataDetectorDemoForm()
         context = {
-            "title": "Ватний детектор",
+            "title": mark_safe("Ватний детектор &beta;"),
             "form_url": request.get_full_path(),
             "form": form,
             "check_results": check_results,
+            "model_name": model.name,
             **self.admin_site.each_context(request),
         }
 
@@ -157,7 +160,7 @@ class SuspectAdmin(ModelAdmin):
             request, 'admin/social_media/suspect/detector_demo.html', context)
 
     @staticmethod
-    def _convert_prediction_to_w3c(prediction):
+    def _convert_prediction_to_w3c(prediction: List[VataPredictionItem]) -> List[dict]:
         result = []
         for item in prediction:
             result.append({
@@ -166,13 +169,14 @@ class SuspectAdmin(ModelAdmin):
                 "type": "Annotation",
                 "body": [{
                     "type": "TextualBody",
-                    "value": f'{item["label"]}: {round(item["pr"], 2)}'
+                    "value": f'{item.label}: {round(item.pr * 100)}%',
+                    "label": item.label
                 }],
                 "target": {
                     "selector": {
                         "type": "FragmentSelector",
                         "conformsTo": "http://www.w3.org/TR/media-frags/",
-                        "value": f"xywh=pixel:{item['x']},{item['y']},{item['width']},{item['height']}"
+                        "value": f"xywh=pixel:{item.x},{item.y},{item.width},{item.height}"
                     }
                 }
             })

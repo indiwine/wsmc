@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 from .ai.loader import load_models
 
 
@@ -8,4 +9,5 @@ class SocialMediaConfig(AppConfig):
     verbose_name = 'WSMC'
 
     def ready(self):
-        load_models()
+        if settings.WSMC_LOAD_AI:
+            load_models()

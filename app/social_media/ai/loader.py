@@ -11,4 +11,6 @@ def load_models():
 
 
 def get_model() -> VataDetectorModel:
+    if VataDetectorModel not in _models:
+        raise RuntimeError("AI models haven't been loaded. Check 'WSMC_LOAD_AI' env var.")
     return _models[VataDetectorModel]

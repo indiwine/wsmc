@@ -9,6 +9,7 @@ x-app-common: &common-variables
   NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
   DEBUG: '1' # This will be here unless we decide what to do with static files
+  WSMC_LOAD_AI: ${WSMC_LOAD_AI}
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
