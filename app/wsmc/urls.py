@@ -13,11 +13,24 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import re
+
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path
-# from telegram_connection.admin import CustomAdminSite
-# admin.site.__class__ = CustomAdminSite
+from django.urls import path, re_path
+from django.views.static import serve
 
 urlpatterns = [
+    # ====== WARNING! ========
+    # Do not use this config anywhere near the internet!
+    re_path(
+        r"^%s(?P<path>.*)$" % re.escape(settings.STATIC_URL.lstrip("/")), serve,
+        kwargs={'document_root': settings.STATIC_ROOT}
+    ),
+    re_path(
+        r"^%s(?P<path>.*)$" % re.escape(settings.MEDIA_URL.lstrip("/")), serve,
+        kwargs={'document_root': settings.MEDIA_ROOT}
+    ),
+    # ====== WARNING! ========
     path('', admin.site.urls),
 ]

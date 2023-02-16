@@ -1,2 +1,7 @@
-deploy/db
 .env
+
+app/storage/*
+!app/storage/.gitkeep
+
+app/static/*
+!app/static/.gitkeep

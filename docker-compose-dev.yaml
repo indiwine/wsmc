@@ -1,14 +1,20 @@
 version: '3.8'
 services:
   app:
+    environment:
+      DEBUG: '1'
     build: './app'
     volumes:
       - './app:/app'
+      - './app/storage:/app/storage'
   celery:
     image: indiwine/wsmc:latest
     command: celery -A wsmc worker -P solo
+    environment:
+      DEBUG: '1'
     volumes:
       - './app:/app'
+      - './app/storage:/app/storage'
   postgres:
     ports:
       - "5432:5432"

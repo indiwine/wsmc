@@ -20,7 +20,6 @@ class VkPostsCollector(AbstractCollector):
             has_posts = wall.wait_for_posts()
             if has_posts:
                 self._max_offset = wall.get_max_offset()
-
                 offset = 0
                 try:
                     new_posts = 0

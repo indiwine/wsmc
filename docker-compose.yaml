@@ -8,8 +8,8 @@ x-app-common: &common-variables
   SELENIUM_DRIVER: 'chrome'
   NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
-  DEBUG: '1' # This will be here unless we decide what to do with static files
   WSMC_LOAD_AI: ${WSMC_LOAD_AI}
+  TF_CPP_MIN_LOG_LEVEL: 2
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
@@ -25,6 +25,7 @@ services:
       <<: *telegram-vars
     volumes:
       - tdlib:/tmp/.tdlib_files/
+      - wsmc-storage:/app/storage
     depends_on:
       - postgres
       - webdriver
@@ -34,9 +35,10 @@ services:
     image: indiwine/wsmc:latest
     hostname: 'celery'
     command: celery -A wsmc worker
+    volumes:
+      - wsmc-storage:/app/storage
     environment:
       <<: *common-variables
-      WSMC_LOAD_AI: 0
     depends_on:
       - redis
       - postgres
@@ -62,3 +64,4 @@ services:
 volumes:
   postgresql:
   tdlib:
+  wsmc-storage:

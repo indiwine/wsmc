@@ -12,3 +12,5 @@ class SmPostDto:
     body: Optional[str] = None
     permalink: Optional[str] = None
     raw_post: Optional[dict] = None
+
+    # images: Optional[List[]] = None

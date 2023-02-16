@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from .abstractvkpageobject import AbstractVkPageObject
+from .vkpostmediagridpageobject import VkPostMediaGridPageObject
 from ...link_builders.vk.strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 
 
@@ -16,6 +17,9 @@ class VkPostContentPageObject(AbstractVkPageObject):
 
     def get_wall_post_cont(self):
         return self.wall_text_node.find_element(By.CLASS_NAME, 'wall_post_cont')
+
+    def get_media_grid(self):
+        return self.wall_text_node.find_element(By.CLASS_NAME, 'MediaGrid')
 
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy, wall_text_node: WebElement):
         super().__init__(driver, link_strategy)
@@ -32,6 +36,12 @@ class VkPostContentPageObject(AbstractVkPageObject):
             return cb().strip()
         except NoSuchElementException:
             return ''
+
+    def fetch_media_grid(self) -> Optional[VkPostMediaGridPageObject]:
+        try:
+            return VkPostMediaGridPageObject(self.driver, self.link_strategy, self.get_media_grid())
+        except NoSuchElementException:
+            return None
 
     def to_text(self) -> Optional[str]:
         self._click_more_button()
