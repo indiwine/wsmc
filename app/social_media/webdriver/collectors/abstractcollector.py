@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 from abc import ABC, abstractmethod
-from dataclasses import asdict
+from dataclasses import asdict, fields, Field, is_dataclass
+from typing import Callable
 
 from ..request import Request
 from ...models import SmProfile
@@ -43,5 +45,36 @@ class AbstractCollector(Collector):
 
     @staticmethod
     def assign_dto_to_obj(dto, model):
+        """
+        @param dto:
+        @param model:
+        """
         for key, value in asdict(dto).items():
             setattr(model, key, value)
+
+    @classmethod
+    def as_dict_fields_filter(cls, obj, condition: Callable[[Field], bool], dict_factory=dict):
+        if is_dataclass(obj):
+            result = []
+            for f in fields(obj):
+                if condition(f):
+                    value = cls.as_dict_fields_filter(getattr(obj, f.name), condition, dict_factory)
+                    result.append((f.name, value))
+            return dict_factory(result)
+        elif isinstance(obj, tuple) and hasattr(obj, '_fields'):
+            return type(obj)(*[cls.as_dict_fields_filter(v, condition, dict_factory) for v in obj])
+        elif isinstance(obj, (list, tuple)):
+            return type(obj)(cls.as_dict_fields_filter(v, condition, dict_factory) for v in obj)
+        elif isinstance(obj, dict):
+            return type(obj)((cls.as_dict_fields_filter(k, condition, dict_factory),
+                              cls.as_dict_fields_filter(v, condition, dict_factory))
+                             for k, v in obj.items())
+        else:
+            return copy.deepcopy(obj)
+
+    @classmethod
+    def as_dict_for_model(cls, obj):
+        def conditional_filter(field: Field) -> bool:
+            return not ('transient' in field.metadata and field.metadata['transient'])
+        return cls.as_dict_fields_filter(obj, conditional_filter)
+

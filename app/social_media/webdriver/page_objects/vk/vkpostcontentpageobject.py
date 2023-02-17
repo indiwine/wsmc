@@ -37,7 +37,7 @@ class VkPostContentPageObject(AbstractVkPageObject):
         except NoSuchElementException:
             return ''
 
-    def fetch_media_grid(self) -> Optional[VkPostMediaGridPageObject]:
+    def get_media_grid_page_object(self) -> Optional[VkPostMediaGridPageObject]:
         try:
             return VkPostMediaGridPageObject(self.driver, self.link_strategy, self.get_media_grid())
         except NoSuchElementException:

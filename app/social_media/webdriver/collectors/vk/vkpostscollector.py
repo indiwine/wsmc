@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import Generator, Optional, Callable
 
 from social_media.models import VkPostStat, SmPost
@@ -32,7 +31,7 @@ class VkPostsCollector(AbstractCollector):
                                                                          profile=sm_profile,
                                                                          social_media=post.social_media,
                                                                          defaults={
-                                                                             **asdict(post),
+                                                                             **self.as_dict_for_model(post),
                                                                              'profile': sm_profile,
                                                                              'suspect': request.social_media_account.suspect
                                                                          }

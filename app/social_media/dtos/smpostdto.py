@@ -1,6 +1,8 @@
 import datetime as datetime
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
+
+from social_media.dtos.smpostimagedto import SmPostImageDto
 
 
 @dataclass
@@ -13,4 +15,6 @@ class SmPostDto:
     permalink: Optional[str] = None
     raw_post: Optional[dict] = None
 
-    # images: Optional[List[]] = None
+    images: Optional[List[SmPostImageDto]] = field(default=None, metadata={'transient': True})
+
+

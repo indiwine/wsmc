@@ -12,3 +12,7 @@ class WsmcWebDriverProfileException(WsmcWebdriverException):
 
 class WsmcWebDriverPostException(WsmcWebdriverException):
     pass
+
+
+class WsmcWebDriverPostImageException(WsmcWebDriverPostException):
+    pass

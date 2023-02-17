@@ -24,20 +24,28 @@ class VkPostPageObject(AbstractVkPageObject):
         return self.post_node.find_element(By.CLASS_NAME, 'wall_text')
 
     def post_date(self):
-        return self.post_node.find_element(By.CLASS_NAME, 'post_date')
+        return self.post_node.find_element(By.CSS_SELECTOR, 'time.PostHeaderSubtitle__item')
 
     def post_link(self):
-        return self.post_node.find_element(By.CLASS_NAME, 'post_link')
+        return self.post_node.find_element(By.CSS_SELECTOR, 'a.PostHeaderSubtitle__link')
 
     def collect(self) -> SmPostDto:
         dto = SmPostDto(
             datetime=self._get_post_time(),
             sm_post_id=self._get_post_id(),
             social_media=SocialMediaTypes.VK.value,
-            permalink=self._get_permalink(),
-            body=VkPostContentPageObject(self.driver, self.link_strategy, self.wall_text()).to_text()
+            permalink=self._get_permalink()
         )
 
+        post_content = VkPostContentPageObject(self.driver, self.link_strategy, self.wall_text())
+
+        media_grid = post_content.get_media_grid_page_object()
+        if media_grid:
+            images = media_grid.extract_images()
+            if len(images) > 0:
+                dto.images = images
+
+        dto.body = post_content.to_text()
         logger.info(f'VK post found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
         return dto
 

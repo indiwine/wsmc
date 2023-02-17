@@ -65,9 +65,10 @@ class SuspectAdmin(ModelAdmin):
         if 'profile_only' in request.GET:
             with_posts = False
 
-        result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
-        self._send_message(request, result)
-        return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
+        perform_sm_data_collection(object_id, with_posts)
+        # result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
+        # self._send_message(request, result)
+        # return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 
     def perform_screening(self, request: HttpRequest, object_id):
         result: AsyncResult = perform_screening.delay(object_id)
