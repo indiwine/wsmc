@@ -61,7 +61,7 @@ class VkPostsCollector(AbstractCollector):
             **self.as_dict_for_model(image),
             'post': post
         })
-        image.id = saved_image
+        image.id = saved_image.id
         image.created = created
 
     def _offset_generator(self, request: Request, new_amount_cb: Callable[[], int]) -> Generator[int, None, None]:

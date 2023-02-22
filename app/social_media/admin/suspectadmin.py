@@ -2,7 +2,9 @@ import json
 import uuid
 from typing import List
 
+import asyncio
 from celery.result import AsyncResult
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, StackedInline
 from django.forms import Form, IntegerField, ImageField, ClearableFileInput
@@ -61,12 +63,13 @@ class SuspectAdmin(ModelAdmin):
     readonly_fields = ['score']
     list_display = ['__str__', 'score']
 
-    async def perform_scan(self, request: HttpRequest, object_id):
+    def perform_scan(self, request: HttpRequest, object_id):
         with_posts = True
         if 'profile_only' in request.GET:
             with_posts = False
 
-        await collect_and_process(object_id, with_posts)
+        asyncio.run(collect_and_process(object_id, with_posts), debug=settings.DEBUG)
+
         # perform_sm_data_collection(object_id, with_posts)
         # result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
         # self._send_message(request, result)

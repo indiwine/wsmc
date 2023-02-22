@@ -9,10 +9,10 @@ class VataPredictionPostImagesFilter(BasePostProcessFilter):
     def __init__(self):
         self.model = get_model()
 
-    @sync_to_async
-    def __call__(self, task: PostProcessTask) -> PostProcessTask:
+    async def __call__(self, task: PostProcessTask) -> PostProcessTask:
         images = task.flatten_post_images()
-        predictions = self.model.predict([img.tmpLocation for img in images])
+        predictions = await sync_to_async(self.model.predict, thread_sensitive=False)(
+            [img.tmpLocation for img in images])
 
         for i, img_predictions in enumerate(predictions):
             images[i].prediction = img_predictions

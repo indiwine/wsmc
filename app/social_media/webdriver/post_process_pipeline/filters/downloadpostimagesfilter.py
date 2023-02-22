@@ -35,10 +35,10 @@ class DownloadPostImagesFilter(BasePostProcessFilter):
         logger.debug(f'Downloading image: {image}')
         async with aiohttp.ClientSession(headers={'user-agen': self.ua}) as session:
             async with session.get(image.url) as r:
-                with tempfile.NamedTemporaryFile(suffix=mimetypes.guess_extension(r.headers.get('content-type'))) as fd:
+                with tempfile.NamedTemporaryFile(suffix=mimetypes.guess_extension(r.headers.get('content-type')),
+                                                 delete=False) as fd:
+                    image.tmpLocation = fd.name
                     async for chunk in r.content.iter_chunked(1000):
                         fd.write(chunk)
-
                     fd.close()
-                    image.tmpLocation = fd.name
                     logger.debug(f'Downloading done: {image}')
