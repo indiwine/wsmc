@@ -76,7 +76,7 @@ class VataDetectorModel(BasicModel):
         IoU threshold for two boxes to be considered same for suppression.
         @return: predictions per images. index in images list are corresponding to index in resulting list
         """
-        logger.debug(f'Starting prediction')
+        logger.debug(f'Starting prediction of {len(images)} image(s)')
         t0 = time.perf_counter()
 
         prediction_decoder = self.get_predication_decoder(confidence, iou)

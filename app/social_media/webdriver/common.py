@@ -1,7 +1,7 @@
 import urllib.parse
 from datetime import date
 from time import mktime
-from typing import Union, List, Callable, Any, Optional, Generator
+from typing import Union, List, Callable, Any, Optional, Generator, TypeVar
 from urllib.parse import ParseResult
 
 from dateparser import parse
@@ -70,3 +70,12 @@ def date_time_parse(date_str: str, **kwargs):
                      'TIMEZONE': timezone.get_current_timezone().__str__(),
                      'RETURN_AS_TIMEZONE_AWARE': True
                  })
+
+
+T = TypeVar('T')
+
+
+def chunks_list(lst: List[T], n: int) -> Generator[List[T], None, None]:
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]

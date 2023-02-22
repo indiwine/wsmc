@@ -7,6 +7,7 @@ from .screeningdetail import ScreeningDetail
 from .screeningreport import ScreeningReport
 from .smcredential import SmCredential
 from .smpost import SmPost
+from .smpostimage import SmPostImage
 from .smprofile import SmProfile
 from .suspect import Suspect
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount

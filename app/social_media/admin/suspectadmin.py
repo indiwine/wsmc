@@ -13,7 +13,7 @@ from django.urls import path
 from django.utils.safestring import mark_safe
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
-from social_media.tasks import perform_sm_data_collection, perform_screening
+from social_media.tasks import perform_screening
 from telegram_connection.admin_pages import CONFIRM_PAGE
 from telegram_connection.exceptions import AccountNotLoggedIn
 from telegram_connection.interaction.builder import BotBuilder
@@ -27,6 +27,7 @@ from ..ai.loader import get_model
 from ..ai.models.vatadetectormodel import VataPredictionItem
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
+from ..webdriver.management import collect_and_process
 
 
 class LinkedSmProfile(StackedInline):
@@ -60,12 +61,13 @@ class SuspectAdmin(ModelAdmin):
     readonly_fields = ['score']
     list_display = ['__str__', 'score']
 
-    def perform_scan(self, request: HttpRequest, object_id):
+    async def perform_scan(self, request: HttpRequest, object_id):
         with_posts = True
         if 'profile_only' in request.GET:
             with_posts = False
 
-        perform_sm_data_collection(object_id, with_posts)
+        await collect_and_process(object_id, with_posts)
+        # perform_sm_data_collection(object_id, with_posts)
         # result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
         # self._send_message(request, result)
         # return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))

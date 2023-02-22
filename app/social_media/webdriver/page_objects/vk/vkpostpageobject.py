@@ -46,7 +46,7 @@ class VkPostPageObject(AbstractVkPageObject):
                 dto.images = images
 
         dto.body = post_content.to_text()
-        logger.info(f'VK post found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
+        # logger.info(f'VK post found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
         return dto
 
     def _get_post_time(self):

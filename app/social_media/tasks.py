@@ -1,27 +1,16 @@
-from celery import shared_task
+import asyncio
 
-from social_media.models import Suspect, SuspectSocialMediaAccount
+from celery import shared_task
+from django.conf import settings
+
+from social_media.models import Suspect
 from social_media.screening.screener import Screener
-from social_media.social_media import SocialMediaEntities
-from social_media.webdriver import Request, Agent
+from .webdriver.management import collect_and_process
 
 
 @shared_task
 def perform_sm_data_collection(suspect_id: int, with_posts: bool):
-    suspect: Suspect = Suspect.objects.get(id=suspect_id)
-    sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
-    for sm_account in sm_accounts:
-        entities = [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE]
-        if with_posts:
-            entities.append(SocialMediaEntities.POSTS)
-
-        collect_request = Request(
-            entities,
-            sm_account.credentials,
-            sm_account
-        )
-        agent = Agent(collect_request)
-        agent.run()
+    asyncio.run(collect_and_process(suspect_id, with_posts), debug=settings.DEBUG)
 
 
 @shared_task

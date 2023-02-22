@@ -15,6 +15,7 @@ class SmPostDto:
     permalink: Optional[str] = None
     raw_post: Optional[dict] = None
 
+    id: Optional[int] = field(default=None, metadata={'transient': True})
     images: Optional[List[SmPostImageDto]] = field(default=None, metadata={'transient': True})
 
 

@@ -22,3 +22,6 @@ geopy==2.3.0
 Shapely==1.8.5.post1
 cryptography==39.0.1
 redis==4.5.1
+pyee==9.0.4
+aiohttp==3.8.4
+fake-useragent==1.1.1

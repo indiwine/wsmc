@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, List
 
+from pyee import EventEmitter
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from .driverbuilder import DriverBuilder
@@ -14,10 +15,11 @@ class Request:
     _driver: Optional[WebDriver] = None
 
     def __init__(self, entities: List[SocialMediaEntities], credentials: SmCredential,
-                 social_media_account: SuspectSocialMediaAccount = None):
+                 social_media_account: SuspectSocialMediaAccount = None, ee: EventEmitter = None):
         self.entities = entities
         self.credentials = credentials
         self.social_media_account: Optional[SuspectSocialMediaAccount] = social_media_account
+        self.ee = ee
 
     def __str__(self):
         return f'Request: "{self.credentials.social_media}", [{self.entities}]'
