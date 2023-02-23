@@ -4,11 +4,11 @@ from .smpost import SmPost
 
 
 class SmPostImage(Model):
-    post = ForeignKey(SmPost, on_delete=CASCADE, editable=False)
+    post = ForeignKey(SmPost, on_delete=CASCADE)
     oid = CharField(max_length=2512, editable=False)
     url = URLField(null=True, editable=False)
-    permalink = URLField(null=True, editable=False)
-    image = ImageField(upload_to='post_images', null=True, default=None, editable=False)
+    permalink = URLField(null=True)
+    image = ImageField(upload_to='post_images', null=True, default=None)
     prediction = JSONField(null=True, default=None, editable=False)
 
     class Meta:

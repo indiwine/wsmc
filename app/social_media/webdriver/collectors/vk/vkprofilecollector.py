@@ -11,8 +11,5 @@ class VkProfileCollector(AbstractCollector):
             profile_dto = VkProfilePage(request.driver, VkLinkBuilder.build(request.social_media_account.link))\
                 .collect_profile()
 
-            sm_profile = self.get_or_create_sm_profile(request)
-            self.assign_dto_to_obj(profile_dto, sm_profile)
-            sm_profile.save()
-
+            self.persist_sm_profile(profile_dto, request)
         return super().handle(request)

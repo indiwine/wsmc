@@ -10,8 +10,6 @@ class OkProfileCollector(AbstractCollector):
         if request.can_process_entity(SocialMediaEntities.PROFILE):
             profile_dto = OkAboutProfilePage(request.driver,
                                              OkLinkBuilder.build(request.social_media_account.link)).collect_data()
-            sm_profile = self.get_or_create_sm_profile(request)
-            self.assign_dto_to_obj(profile_dto, sm_profile)
-            sm_profile.save()
+            self.persist_sm_profile(profile_dto, request)
 
         super().handle(request)

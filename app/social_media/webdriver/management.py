@@ -18,13 +18,12 @@ from ..dtos.smpostdto import SmPostDto
 
 logger = logging.getLogger(__name__)
 
-POST_BATCH_SIZE = 10
+POST_BATCH_SIZE = 50
 
 
 async def collect_and_process(suspect_id: int, with_posts: bool):
     event_emitter = EventEmitter()
     await asyncio.gather(data_processing(event_emitter), data_collection(suspect_id, with_posts, event_emitter))
-    # await asyncio.gather(data_processing(event_emitter))
 
 
 @sync_to_async
@@ -55,10 +54,6 @@ async def data_processing(ee: EventEmitter):
                   DownloadPostImagesFilter(),
                   VataPredictionPostImagesFilter(),
                   PersistPostImagesFilter())
-    # pipeline.pipe(
-    #               DownloadPostImagesFilter(),
-    #
-    # )
 
     finish = False
     posts: List[SmPostDto] = []
@@ -72,18 +67,22 @@ async def data_processing(ee: EventEmitter):
 
     @ee.on('post')
     def post_handler(post: SmPostDto):
-        posts.append(post)
+        if post.images:
+            posts.append(post)
 
     @ee.on('finish')
     def finish_handler():
-        logger.info('Finished signal received')
+        logger.info('Pipeline: Finished signal received')
         nonlocal finish
         finish = True
 
     while True:
         new_image_count = count_new_images_in_posts()
 
-        if (finish and new_image_count > 0) or (not finish and new_image_count >= POST_BATCH_SIZE):
+        if finish or (not finish and new_image_count >= POST_BATCH_SIZE):
+            if new_image_count == 0:
+                return
+
             logger.info('Activating pipeline...')
 
             freeze_posts = posts.copy()

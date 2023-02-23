@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from dataclasses import asdict, fields, Field, is_dataclass
-from typing import Callable
+from dataclasses import fields, Field, is_dataclass
+from typing import Callable, Tuple
 
 from ..request import Request
-from ...models import SmProfile
+from ...dtos import SmProfileDto
+from ...dtos.smpostdto import SmPostDto
+from ...dtos.smpostimagedto import SmPostImageDto
+from ...models import SmProfile, SmPost, SmPostImage
 
 
 class Collector(ABC):
@@ -32,25 +35,44 @@ class AbstractCollector(Collector):
             return self._next_collector.handle(request)
         return None
 
+    def persist_post(self, post: SmPostDto, sm_profile: SmProfile, request: Request) -> Tuple[SmPost, bool]:
+        saved_post, created = SmPost.objects.update_or_create(sm_post_id=post.sm_post_id,
+                                                              profile=sm_profile,
+                                                              social_media=post.social_media,
+                                                              defaults={
+                                                                  **self.as_dict_for_model(post),
+                                                                  'profile': sm_profile,
+                                                                  'suspect': request.social_media_account.suspect
+                                                              })
+        post.id = saved_post.id
+        if post.images:
+            for image in post.images:
+                self.persist_image(image, saved_post)
+
+        request.ee.emit('post', post)
+
+        return saved_post, created
+
+    def persist_image(self, image: SmPostImageDto, post: SmPost):
+        saved_image, created = SmPostImage.objects.update_or_create(post=post, oid=image.oid, defaults={
+            **self.as_dict_for_model(image),
+            'post': post
+        })
+        image.id = saved_image.id
+        image.created = created
+
+    def persist_sm_profile(self, sm_profile: SmProfileDto, request: Request):
+        return SmProfile.objects.update_or_create(credentials=request.credentials,
+                                                  suspect=request.social_media_account.suspect,
+                                                  defaults={
+                                                      **self.as_dict_for_model(sm_profile),
+                                                      'credentials': request.credentials,
+                                                      'suspect': request.social_media_account.suspect
+                                                  })
+
     def get_sm_profile(self, request: Request):
         return SmProfile.objects.get(credentials=request.credentials,
                                      suspect=request.social_media_account.suspect)
-
-    def get_or_create_sm_profile(self, request) -> SmProfile:
-        try:
-            sm_profile = self.get_sm_profile(request)
-        except SmProfile.DoesNotExist:
-            sm_profile = SmProfile(credentials=request.credentials, suspect=request.social_media_account.suspect)
-        return sm_profile
-
-    @staticmethod
-    def assign_dto_to_obj(dto, model):
-        """
-        @param dto:
-        @param model:
-        """
-        for key, value in asdict(dto).items():
-            setattr(model, key, value)
 
     @classmethod
     def as_dict_fields_filter(cls, obj, condition: Callable[[Field], bool], dict_factory=dict):
@@ -76,5 +98,5 @@ class AbstractCollector(Collector):
     def as_dict_for_model(cls, obj):
         def conditional_filter(field: Field) -> bool:
             return not ('transient' in field.metadata and field.metadata['transient'])
-        return cls.as_dict_fields_filter(obj, conditional_filter)
 
+        return cls.as_dict_fields_filter(obj, conditional_filter)

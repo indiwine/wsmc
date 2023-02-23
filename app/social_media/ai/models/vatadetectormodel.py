@@ -6,6 +6,7 @@ from typing import Optional, List, Tuple, Literal
 
 import keras_cv
 import tensorflow as tf
+from dataclasses_json import dataclass_json
 from keras_cv import bounding_box
 from keras_cv.metrics import COCOMeanAveragePrecision, COCORecall
 from tensorflow import keras
@@ -17,6 +18,7 @@ from .utils.imagesizesequence import ImageSizeSequence
 logger = logging.getLogger(__name__)
 
 
+@dataclass_json
 @dataclass
 class VataPredictionItem:
     x: int

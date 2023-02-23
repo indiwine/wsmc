@@ -26,6 +26,7 @@ pyee==9.0.4
 aiohttp==3.8.4
 fake-useragent==1.1.1
 Faker==17.0.0
+dataclasses-json==0.5.7
 ## The following requirements were added by pip freeze:
 absl-py==1.4.0
 amqp==5.1.1

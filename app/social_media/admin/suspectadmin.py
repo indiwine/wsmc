@@ -1,8 +1,6 @@
-import json
-import uuid
-from typing import List
-
 import asyncio
+import json
+
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib import admin, messages
@@ -24,9 +22,8 @@ from telegram_connection.interaction.name_check.namecheckrequest import NameChec
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckRequest
 from .helpers import LinkTypes
-from .helpers import generate_url_for_model, generate_url_for_model_object
+from .helpers import generate_url_for_model, generate_url_for_model_object, convert_vata_prediction_to_w3c
 from ..ai.loader import get_model
-from ..ai.models.vatadetectormodel import VataPredictionItem
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
 from ..webdriver.management import collect_and_process
@@ -149,7 +146,7 @@ class SuspectAdmin(ModelAdmin):
                     })
                 predictions = model.predict(img_paths, pr, iou)
                 for i, prediction in enumerate(predictions):
-                    check_results[i]['boxes'] = json.dumps(self._convert_prediction_to_w3c(prediction))
+                    check_results[i]['boxes'] = json.dumps(convert_vata_prediction_to_w3c(prediction))
 
         else:
             form = VataDetectorDemoForm()
@@ -164,30 +161,6 @@ class SuspectAdmin(ModelAdmin):
 
         return TemplateResponse(
             request, 'admin/social_media/suspect/detector_demo.html', context)
-
-    @staticmethod
-    def _convert_prediction_to_w3c(prediction: List[VataPredictionItem]) -> List[dict]:
-        result = []
-        for item in prediction:
-            result.append({
-                "@context": "http://www.w3.org/ns/anno.jsonld",
-                "id": f"#{uuid.uuid4()}",
-                "type": "Annotation",
-                "body": [{
-                    "type": "TextualBody",
-                    "value": f'{item.label}: {round(item.pr * 100)}%',
-                    "label": item.label
-                }],
-                "target": {
-                    "selector": {
-                        "type": "FragmentSelector",
-                        "conformsTo": "http://www.w3.org/TR/media-frags/",
-                        "value": f"xywh=pixel:{item.x},{item.y},{item.width},{item.height}"
-                    }
-                }
-            })
-
-        return result
 
     def _send_message(self, request: HttpRequest, result: AsyncResult):
         self.message_user(request,

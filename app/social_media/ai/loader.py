@@ -5,12 +5,13 @@ _models = {}
 
 # TODO: Add real logic here
 def load_models():
-    inst = VataDetectorModel()
-    inst.load()
-    _models[VataDetectorModel] = inst
+    if VataDetectorModel not in _models:
+        inst = VataDetectorModel()
+        inst.load()
+        _models[VataDetectorModel] = inst
 
 
 def get_model() -> VataDetectorModel:
     if VataDetectorModel not in _models:
-        raise RuntimeError("AI models haven't been loaded. Check 'WSMC_LOAD_AI' env var.")
+        load_models()
     return _models[VataDetectorModel]

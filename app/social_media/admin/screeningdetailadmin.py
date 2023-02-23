@@ -44,8 +44,9 @@ class ScreeningDetailAdmin(ModelAdmin):
 
     class Media:
         css = {
-            'all': ('admin/css/screeningdetail/result-formatting.css',)
+            'all': ('admin/css/screeningdetail/result-formatting.css', 'admin/css/suspect/annotorious.min.css',)
         }
+        js = ('admin/js/annotorious.min.js', 'admin/js/annotations.js')
 
 
 admin.site.register(ScreeningDetail, ScreeningDetailAdmin)
