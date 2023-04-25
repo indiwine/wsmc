@@ -5,10 +5,14 @@ from .osintdetail import OsintDetail
 from .osintreport import OsintReport
 from .screeningdetail import ScreeningDetail
 from .screeningreport import ScreeningReport
+from .smcomment import SmComment
 from .smcredential import SmCredential
+from .smgroup import SmGroup
+from .smlikes import SmLikes
 from .smpost import SmPost
 from .smpostimage import SmPostImage
 from .smprofile import SmProfile
 from .suspect import Suspect
+from .suspect_group import SuspectGroup
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from .vkpoststat import VkPostStat

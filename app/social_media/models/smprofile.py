@@ -1,16 +1,18 @@
 from typing import Optional
 
 from django.contrib import admin
-from django.db.models import Model, ForeignKey, RESTRICT, CASCADE, CharField, DateField, Index
+from django.db.models import Model, ForeignKey, RESTRICT, CASCADE, CharField, DateField, Index, BooleanField, SET_NULL
 
 from .smcredential import SmCredential
-from .suspect import Suspect
+from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from ..social_media import SocialMediaTypes
 
 
 class SmProfile(Model):
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
-    suspect = ForeignKey(Suspect, on_delete=CASCADE)
+
+    # TODO Removal
+    # suspect = ForeignKey(Suspect, null=True, on_delete=CASCADE)
 
     oid = CharField(max_length=512, null=True, verbose_name='ID', help_text='ID користувача в соціальній мережі')
     name = CharField(max_length=512, verbose_name="Ім'я", help_text="Ім'я як вказано в соціальній мережі")
@@ -20,8 +22,12 @@ class SmProfile(Model):
     birthdate = DateField(null=True, verbose_name="Дата народження",
                           help_text='Може бути вказаний поточний рік у випадку якщо рік не вказан в соц мережі')
 
+    was_collected = BooleanField(default=False)
+
+    suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True)
+
     def __str__(self):
-        return f'{self.suspect.__str__()} у {self.credentials.get_social_media_display()}'
+        return f'{self.name} у {self.credentials.get_social_media_display()}'
 
     @admin.display(description='ID URL', empty_value='-')
     def id_url(self) -> Optional[str]:
@@ -42,5 +48,5 @@ class SmProfile(Model):
         verbose_name = 'Профіль'
         verbose_name_plural = 'Профілі'
         indexes = [
-            Index(fields=['suspect', 'oid'])
+            Index(fields=['credentials', 'oid', 'was_collected'])
         ]

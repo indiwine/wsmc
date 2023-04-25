@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from typing import List
 
 from asgiref.sync import sync_to_async
@@ -82,7 +83,7 @@ async def data_processing(ee: EventEmitter):
         if finish or (not finish and new_image_count >= POST_BATCH_SIZE):
             if new_image_count == 0:
                 return
-
+            t0 = time.perf_counter()
             logger.info('Activating pipeline...')
 
             freeze_posts = posts.copy()
@@ -91,6 +92,6 @@ async def data_processing(ee: EventEmitter):
 
             await pipeline.execute(PostProcessTask(posts=freeze_posts))
 
-            logger.info('Pipeline finished')
+            logger.info(f'Pipeline finished, took: {time.perf_counter() - t0}')
         else:
             await asyncio.sleep(0.25)

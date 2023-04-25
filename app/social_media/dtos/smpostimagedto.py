@@ -8,6 +8,7 @@ from social_media.ai.models.vatadetectormodel import VataPredictionItem
 class SmPostImageDto:
     oid: str
     url: Optional[str] = None
+    permalink: Optional[str] = None
 
     prediction: Optional[List[VataPredictionItem]] = None
 
