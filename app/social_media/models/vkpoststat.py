@@ -1,10 +1,12 @@
 from django.db.models import Model, CASCADE, PositiveIntegerField, OneToOneField
 
-from social_media.models.suspectsocialmediaaccount import SuspectSocialMediaAccount
+from .suspect_group import SuspectGroup
+from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 
 
 class VkPostStat(Model):
-    suspect_social_media = OneToOneField(SuspectSocialMediaAccount, on_delete=CASCADE)
+    suspect_social_media = OneToOneField(SuspectSocialMediaAccount, on_delete=CASCADE, null=True)
+    suspect_group = OneToOneField(SuspectGroup, on_delete=CASCADE, null=True)
     last_offset = PositiveIntegerField()
 
     class Meta:

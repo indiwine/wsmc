@@ -14,11 +14,18 @@ logger = logging.getLogger(__name__)
 class Request:
     _driver: Optional[WebDriver] = None
 
-    def __init__(self, entities: List[SocialMediaEntities], credentials: SmCredential,
-                 social_media_account: SuspectSocialMediaAccount = None, ee: EventEmitter = None):
+    def __init__(self,
+                 entities: List[SocialMediaEntities],
+                 credentials: SmCredential,
+                 social_media_account: SuspectSocialMediaAccount = None,
+                 ee: EventEmitter = None):
+
         self.entities = entities
+
         self.credentials = credentials
+
         self.social_media_account: Optional[SuspectSocialMediaAccount] = social_media_account
+
         self.ee = ee
 
     def __str__(self):

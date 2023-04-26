@@ -30,6 +30,10 @@ class AbstractPageObject(ABC):
         return WebDriverWait(self.driver, timeout, poll_frequency)
 
     def navigate_to(self, location: str) -> None:
+        """
+        Navigate to a given location
+        @param location:
+        """
         logger.info(f'Navigating to {location}')
         self.driver.get(location)
 
@@ -55,6 +59,25 @@ class AbstractPageObject(ABC):
             rect.right <= (window.innerWidth || document.documentElement.clientWidth) 
         );
         """, css_selector)
+
+    def remove_element(self, element: WebElement) -> None:
+        """
+        Remove given element from the DOM
+        @param element:
+        """
+        self.driver.execute_script(
+            "arguments[0].remove()",
+            element
+        )
+
+    def is_element_has_class(self, element: WebElement, class_name: str) -> bool:
+        """
+        Check whenever element has a css class
+        @param element: web element to check
+        @param class_name: class name (without a leading dot)
+        @return: True if the given class is set for an element, False otherwise
+        """
+        return self.driver.execute_script(f"return arguments[0].classList.contains('{class_name}')", element)
 
     def request_iterator(self) -> Generator[str, None, None]:
         logger.debug(f'Iterating true {len(self.driver.requests)} requests')

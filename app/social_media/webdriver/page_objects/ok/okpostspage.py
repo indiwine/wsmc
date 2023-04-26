@@ -58,14 +58,7 @@ class OkPostsPage(AbstractOkPageObject):
                 yield dto
             except WsmcWebDriverPostException:
                 pass
-            self._clear_post(node)
-
-
-    def _clear_post(self, node: WebElement):
-        self.driver.execute_script(
-            "arguments[0].remove()",
-            node
-        )
+            self.remove_element(node)
 
     def _wait_until_timeline_settles(self):
         self.get_wait().until(

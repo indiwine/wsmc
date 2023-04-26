@@ -2,12 +2,16 @@ import datetime as datetime
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-from social_media.dtos.smpostimagedto import SmPostImageDto
+from .authordto import AuthorDto
+from .smpostimagedto import SmPostImageDto
 
 
 @dataclass
 class SmPostDto:
     datetime: datetime.datetime
+
+    author: AuthorDto = field(metadata={'transient': True})
+
     sm_post_id: str = None
     social_media: str = None
 
@@ -17,5 +21,3 @@ class SmPostDto:
 
     id: Optional[int] = field(default=None, metadata={'transient': True})
     images: Optional[List[SmPostImageDto]] = field(default=None, metadata={'transient': True})
-
-

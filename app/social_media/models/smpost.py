@@ -13,17 +13,19 @@ from ..social_media import SocialMediaTypes
 class SmPost(Model):
     permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512, editable=False)
 
-    profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
-                         help_text="Профіль зв'язаний з цим постом")
-    """ Author of the post """
+    author_type = ForeignKey(ContentType, on_delete=CASCADE, null=True, related_name='author')
+    author_id = PositiveIntegerField(verbose_name='', null=True)
+    author_object = GenericForeignKey('author_type', 'author_id')
 
-    origin_type = ForeignKey(ContentType, on_delete=CASCADE)
+    origin_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='origin')
     origin_id = PositiveIntegerField(verbose_name='')
     origin_object = GenericForeignKey('origin_type', 'origin_id')
     """Post origin, typically group or user """
 
     # TODO: Removal
     # suspect = ForeignKey(Suspect, on_delete=CASCADE, verbose_name='Людина')
+    profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
+                         help_text="Профіль зв'язаний з цим постом")
 
     likes = GenericRelation(SmLikes,
                             object_id_field='parent_id',
@@ -32,7 +34,9 @@ class SmPost(Model):
 
     sm_post_id = CharField(max_length=25000, help_text='ID поста в соціальній мережі', verbose_name='ID',
                            editable=False)
+
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
+
     datetime = DateTimeField(verbose_name='Час створення', help_text='Час коли пост було створено в соціальній мережі')
 
     body = TextField(null=True, verbose_name='Текст')
@@ -48,14 +52,16 @@ class SmPost(Model):
         return f'Пост {post}'
 
     class Meta:
+        unique_together = ['sm_post_id', 'social_media']
         indexes = [
             Index(fields=[
                 'sm_post_id',
                 'social_media',
-                'profile',
                 'datetime',
                 'origin_type',
-                'origin_id'
+                'origin_id',
+                'author_type',
+                'author_id'
             ]),
             GinIndex(
                 SearchVector('search_vector', config='russian'),

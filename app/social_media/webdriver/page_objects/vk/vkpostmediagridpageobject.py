@@ -1,6 +1,7 @@
 import json
 from typing import List, Optional
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -40,10 +41,20 @@ class VkPostMediaGridPageObject(AbstractVkPageObject):
         img_options = json.loads(img_options)
         locations: dict = img_options['temp']
         img_url = None
+
+        # Parsing quality options (this should work most of the time)
         for quality in IMG_QUALITIES:
             if quality in locations:
                 img_url = locations[quality]
                 break
+
+        # We haven't image yet. Falling back to img tag
+        if not img_url:
+            try:
+                img_node = element.find_element(By.CSS_SELECTOR, 'img[src]')
+                img_url = img_node.get_attribute('src')
+            except NoSuchElementException:
+                pass
 
         if img_url is None:
             raise WsmcWebDriverPostImageException('Cannot find url for photo')

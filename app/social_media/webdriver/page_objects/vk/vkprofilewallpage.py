@@ -43,7 +43,7 @@ class VkProfileWallPage(AbstractVkPageObject):
         except NoSuchElementException:
             return False
 
-    def collect_posts(self, offset: int) -> Generator[SmPostDto, None, None]:
+    def collect_posts(self, offset: int) -> Generator[VkPostPageObject, None, None]:
         logger.debug(f'Collecting posts for offset: {offset}')
         self.clear_requests()
         self.navigate_to(self.link_strategy.add_offset(self.driver.current_url, offset))
@@ -53,7 +53,7 @@ class VkProfileWallPage(AbstractVkPageObject):
             return
 
         for post_node in self.posts():
-            yield VkPostPageObject(self.driver, self.link_strategy, post_node).collect()
+            yield VkPostPageObject(self.driver, self.link_strategy, post_node)
 
     def get_max_offset(self) -> int:
         parse_result = urllib.parse.urlparse(self.last_page_link().get_attribute('href'))
