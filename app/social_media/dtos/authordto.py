@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -11,3 +11,5 @@ class AuthorDto:
     oid: str
     name: str
     url: str
+
+    is_group: bool = field(metadata={'transient': True})

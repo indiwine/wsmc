@@ -1,6 +1,8 @@
 class WsmcWebdriverException(Exception):
     pass
 
+class WscmWebdriverRetryFailedException(WsmcWebdriverException):
+    pass
 
 class WsmcWebDriverLoginError(WsmcWebdriverException):
     pass
@@ -13,6 +15,8 @@ class WsmcWebDriverProfileException(WsmcWebdriverException):
 class WsmcWebDriverGroupException(WsmcWebdriverException):
     pass
 
+class WsmcStopPostCollection(WsmcWebdriverException):
+    pass
 
 class WsmcWebDriverPostException(WsmcWebdriverException):
     pass

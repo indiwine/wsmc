@@ -13,6 +13,11 @@ x-app-common: &common-variables
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+x-selenium-nodes: &selenium-nodes
+  SE_EVENT_BUS_HOST: 'webdriver'
+  SE_EVENT_BUS_PUBLISH_PORT: 4442
+  SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+  SE_VNC_NO_PASSWORD: 1
 
 services:
   app:
@@ -34,7 +39,7 @@ services:
   celery:
     image: indiwine/wsmc:latest
     hostname: 'celery'
-    command: celery -A wsmc worker
+    command: celery -A wsmc worker --concurrency=3
     volumes:
       - wsmc-storage:/app/storage
     environment:
@@ -53,14 +58,54 @@ services:
       POSTGRES_DB: "wsmc"
     volumes:
       - postgresql:/var/lib/postgresql/data
-  webdriver:
-    image: selenium/standalone-chrome:110.0
+
+  chrome-01:
+    image: selenium/node-chrome:112.0
     shm_size: "2g"
+    depends_on:
+      - webdriver
     environment:
-      SE_VNC_NO_PASSWORD: 1
+      <<: *selenium-nodes
     ports:
       - "7900:7900"
-      - "5900:5900"
+
+  chrome-02:
+    image: selenium/node-chrome:112.0
+    shm_size: "2g"
+    depends_on:
+      - webdriver
+    environment:
+      <<: *selenium-nodes
+    ports:
+      - "7901:7900"
+
+  chrome-03:
+    image: selenium/node-chrome:112.0
+    shm_size: "2g"
+    depends_on:
+      - webdriver
+    environment:
+      <<: *selenium-nodes
+    ports:
+      - "7902:7900"
+
+#  chrome-04:
+#    image: selenium/node-chrome:112.0
+#    shm_size: "2g"
+#    depends_on:
+#      - webdriver
+#    environment:
+#      <<: *selenium-nodes
+#    ports:
+#      - "7903:7900"
+
+  webdriver:
+    image: selenium/hub:4.9.0
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+
 volumes:
   postgresql:
   tdlib:

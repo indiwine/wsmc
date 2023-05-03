@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.contrib import admin
-from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL
+from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
 
 from .smcredential import SmCredential
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
@@ -14,21 +14,23 @@ class SmProfile(Model):
     # TODO Removal
     # suspect = ForeignKey(Suspect, null=True, on_delete=CASCADE)
 
-    # TODO: Remove null
-    oid = CharField(max_length=512, null=True, verbose_name='ID', help_text='ID користувача в соціальній мережі')
+    oid = CharField(max_length=512, verbose_name='ID', help_text='ID користувача в соціальній мережі')
     name = CharField(max_length=512, verbose_name="Ім'я", help_text="Ім'я як вказано в соціальній мережі")
     university = CharField(max_length=512, null=True, verbose_name='Освіта')
     location = CharField(max_length=512, null=True, verbose_name='Місце проживання')
     home_town = CharField(max_length=512, null=True, verbose_name='Місце народження')
     birthdate = DateField(null=True, verbose_name="Дата народження",
                           help_text='Може бути вказаний поточний рік у випадку якщо рік не вказан в соц мережі')
+    country = CharField(max_length=512, null=True)
+    domain = CharField(max_length=512, null=True)
+    metadata = JSONField(null=True)
+
 
     was_collected = BooleanField(default=False)
 
     suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True)
 
-    # TODO: Remove null
-    social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа', null=True)
+    social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
     def __str__(self):
         return f'{self.name} у {self.credentials.get_social_media_display()}'

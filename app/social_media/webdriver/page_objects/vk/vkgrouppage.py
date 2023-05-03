@@ -6,6 +6,7 @@ from social_media.dtos import SmGroupDto
 from .abstractvkpageobject import AbstractVkPageObject
 from .vkprofilewallpage import VkProfileWallPage
 from ...exceptions import WsmcWebDriverGroupException
+from social_media.social_media import SocialMediaTypes
 
 
 class VkGroupPage(AbstractVkPageObject):
@@ -23,17 +24,21 @@ class VkGroupPage(AbstractVkPageObject):
         return self.driver.find_element(By.CSS_SELECTOR, '.page_block ._wall_tab_own a')
 
     def go_to_group(self):
-        self.navigate_to(self.link_strategy.get_profile_link())
+        url = self.link_strategy.get_group_link()
+        if self.driver.current_url != url:
+            self.navigate_to(url)
 
     def collect_group(self) -> SmGroupDto:
         self.go_to_group()
         return SmGroupDto(
             permalink=self.permalink(),
             name=self.meta_title().get_attribute('content'),
-            oid=self._extract_id()
+            oid=self._extract_id(),
+            social_media=SocialMediaTypes.VK
         )
 
     def go_to_wall(self):
+        self.go_to_group()
         self.navigate_to(self.profile_wall_link().get_attribute('href'))
         return VkProfileWallPage(self.driver, self.link_strategy)
 

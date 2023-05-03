@@ -1,6 +1,8 @@
 import logging
+from datetime import datetime
 from typing import Tuple, List, Optional
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -36,6 +38,7 @@ class VkPostPageObject(AbstractVkPageObject):
         return self.post_node.find_element(By.CLASS_NAME, 'PostButtonReactionsContainer')
 
     def collect(self) -> SmPostDto:
+        logger.debug('Collecting post')
         dto = SmPostDto(
             datetime=self.get_post_time(),
             sm_post_id=self.get_post_id(),
@@ -53,10 +56,13 @@ class VkPostPageObject(AbstractVkPageObject):
 
     def get_post_author(self):
         author_header = self.post_header_author_link()
+        oid, is_group = self.parse_oid(author_header.get_attribute('data-from-id'))
+
         return AuthorDto(
-            oid=author_header.get_attribute('data-from-id'),
+            oid=oid,
             name=author_header.get_property('innerText'),
-            url=author_header.get_attribute('href')
+            url=author_header.get_attribute('href'),
+            is_group=is_group
         )
 
     def get_post_content_object(self) -> VkPostContentPageObject:
@@ -79,7 +85,19 @@ class VkPostPageObject(AbstractVkPageObject):
         return post_content.to_text(), images_result
 
     def get_post_time(self):
-        return date_time_parse(self.post_date().get_attribute('textContent'))
+        post_date_element = self.post_date()
+        try:
+            sub_element = self.post_date().find_element(By.CSS_SELECTOR, '[time]')
+            time_attr = sub_element.get_attribute('time')
+
+            if time_attr:
+                logger.debug(f'post time found using timestamp')
+                return datetime.fromtimestamp(int(time_attr))
+        except NoSuchElementException:
+            pass
+
+        logger.debug(f'Processing relative post time')
+        return date_time_parse(post_date_element.get_attribute('textContent'))
 
     def get_post_id(self) -> str:
         return self.post_node.get_attribute('data-post-id')

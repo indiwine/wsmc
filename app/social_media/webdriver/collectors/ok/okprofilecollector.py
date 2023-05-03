@@ -9,7 +9,7 @@ class OkProfileCollector(AbstractCollector):
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.PROFILE):
             profile_dto = OkAboutProfilePage(request.driver,
-                                             OkLinkBuilder.build(request.social_media_account.link)).collect_data()
+                                             OkLinkBuilder.build(request.suspect_identity.link)).collect_data()
             self.persist_sm_profile(profile_dto, request)
 
         super().handle(request)

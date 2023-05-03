@@ -13,9 +13,10 @@ from ..social_media import SocialMediaTypes
 class SmPost(Model):
     permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512, editable=False)
 
-    author_type = ForeignKey(ContentType, on_delete=CASCADE, null=True, related_name='author')
-    author_id = PositiveIntegerField(verbose_name='', null=True)
+    author_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='author')
+    author_id = PositiveIntegerField(verbose_name='')
     author_object = GenericForeignKey('author_type', 'author_id')
+    """Post author"""
 
     origin_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='origin')
     origin_id = PositiveIntegerField(verbose_name='')
@@ -24,8 +25,8 @@ class SmPost(Model):
 
     # TODO: Removal
     # suspect = ForeignKey(Suspect, on_delete=CASCADE, verbose_name='Людина')
-    profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
-                         help_text="Профіль зв'язаний з цим постом")
+    # profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
+    #                      help_text="Профіль зв'язаний з цим постом")
 
     likes = GenericRelation(SmLikes,
                             object_id_field='parent_id',

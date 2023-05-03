@@ -1,8 +1,10 @@
 import logging
+import re
 import socket
 from enum import Enum
 
 from django.conf import settings
+from fake_useragent import UserAgent
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
@@ -17,6 +19,15 @@ class SeleniumDriverTypeEnum(Enum):
     CHROME = 'chrome'
 
 
+def grp(pat, txt):
+    r = re.search(pat, txt)
+    if r:
+        ver_number = r.group(1)
+        return int(ver_number.replace('.', ''))
+
+    return '&'
+
+
 class DriverBuilder:
     @staticmethod
     def build():
@@ -26,7 +37,9 @@ class DriverBuilder:
         options = DriverBuilder._get_driver_options(selected_driver)
         capabilities = options.to_capabilities()
         seleniumwire_options = {
-            "addr": socket.gethostname()
+            "addr": socket.gethostname(),
+            'request_storage': 'memory',
+            'request_storage_max_size': 100
         }
         logger.debug(f'Webdriver executor: {settings.WSMC_WEBDRIVER_URL}')
         driver = webdriver.Remote(command_executor=settings.WSMC_WEBDRIVER_URL,
@@ -35,7 +48,11 @@ class DriverBuilder:
                                   desired_capabilities=capabilities,
                                   seleniumwire_options=seleniumwire_options
                                   )
+
+        driver.set_page_load_timeout(settings.WSMC_SELENIUM_WAIT_TIMEOUT)
+
         driver.scopes = [
+            # '.*\.(jpg|jpeg|png|gif|bmp).*',
             '.*facebook\.com/api/graphql.*',
             '.*api\.vk\.com/method/execute.*'
         ]
@@ -53,19 +70,28 @@ class DriverBuilder:
     @staticmethod
     def _get_driver_options(selected_driver: SeleniumDriverTypeEnum) -> ArgOptions:
         if selected_driver == SeleniumDriverTypeEnum.CHROME:
+            user_agent_faker = UserAgent(browsers=['edge', 'chrome', 'safari', 'opera'])
+            user_agent_faker.update()
+            ua = user_agent_faker.chrome
+            logger.debug(f'UA: {ua}')
+
             options = ChromeOptions()
             prefs = {
                 "profile.default_content_setting_values.notifications": 2,
-                # "profile.managed_default_content_settings.images": 2
+                "profile.managed_default_content_settings.images": 2,
+                'intl.accept_languages': settings.WSMC_WEBDRIVER_LOCALE
             }
             options.add_experimental_option('prefs', prefs)
             options.add_argument(f'--lang={settings.WSMC_WEBDRIVER_LOCALE}')
 
             options.add_argument("--disable-blink-features")
+            # options.add_argument(f'user-agent={ua}')
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_experimental_option("excludeSwitches", ["enable-automation"])
             options.add_experimental_option('useAutomationExtension', False)
             options.add_argument("start-maximized")
+            options.add_extension('/app/social_media/webdriver/uBlock-Origin.crx')
+            options.add_extension('/app/social_media/webdriver/Privacy-Pass.crx')
         else:
             options = FirefoxOptions()
 

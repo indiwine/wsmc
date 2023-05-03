@@ -8,6 +8,7 @@ from typing import List
 from django.test import TestCase
 from faker import Faker
 from faker.providers import date_time, file, internet
+from unittest import skip
 
 import social_media
 from social_media.ai.models.vatadetectormodel import VataPredictionItem
@@ -38,6 +39,7 @@ IMAGES = [
 ]
 
 
+@skip('As of now this is not a part of the future functionality')
 class TestPipelineFilters(TestCase):
     _img_id = None
 

@@ -8,7 +8,7 @@ from ...request import Request
 class VkProfileCollector(AbstractCollector):
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.PROFILE):
-            profile_dto = VkProfilePage(request.driver, VkLinkBuilder.build(request.social_media_account.link))\
+            profile_dto = VkProfilePage(request.driver, VkLinkBuilder.build(request.suspect_identity.link))\
                 .collect_profile()
 
             self.persist_sm_profile(profile_dto, request)

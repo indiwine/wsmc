@@ -7,5 +7,6 @@ class SmGroupDto:
     permalink: str
     oid: str
     name: str
+    social_media: str
 
     id: Optional[int] = field(default=None, metadata={'transient': True})

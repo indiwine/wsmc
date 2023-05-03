@@ -12,9 +12,9 @@ class FbPostsCollector(AbstractCollector):
             sm_profile = self.get_sm_profile(request)
 
             page = FacebookPostsPage(request.driver) \
-                .set_navigation_strategy(FbLinkBuilder.build_strategy(request.social_media_account.link))
+                .set_navigation_strategy(FbLinkBuilder.build_strategy(request.suspect_identity.link))
 
-            for stats in CollectedPostsStat.objects.posts_to_check_generator(request.social_media_account):
+            for stats in CollectedPostsStat.objects.posts_to_check_generator(request.suspect_identity):
                 for post_dto in page.collect_posts(stats.date):
                     self.persist_post(post_dto, sm_profile, request)
 

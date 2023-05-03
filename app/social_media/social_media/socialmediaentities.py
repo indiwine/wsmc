@@ -6,3 +6,4 @@ class SocialMediaEntities(Enum):
     PROFILE = 'profile'
     POSTS = 'posts'
     GROUP = 'group'
+    UNKNOWN_PROFILES = 'unknown_profiles'

@@ -6,7 +6,7 @@ from typing import List
 from asgiref.sync import sync_to_async
 from pyee.base import EventEmitter
 
-from social_media.models import Suspect, SuspectSocialMediaAccount
+from social_media.models import Suspect, SuspectSocialMediaAccount, SuspectGroup
 from social_media.social_media import SocialMediaEntities
 from social_media.webdriver import Request, Agent
 from .post_process_pipeline.filters.downloadpostimagesfilter import DownloadPostImagesFilter
@@ -20,6 +20,54 @@ from ..dtos.smpostdto import SmPostDto
 logger = logging.getLogger(__name__)
 
 POST_BATCH_SIZE = 50
+
+
+def collect_groups(suspect_group_id: int):
+    suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
+    collect_request = Request(
+        [
+            SocialMediaEntities.LOGIN,
+            SocialMediaEntities.GROUP,
+            SocialMediaEntities.POSTS
+        ],
+        suspect_group.credentials,
+        suspect_group
+    )
+
+    collect_request.load_latest = False
+    collect_request.post_limit = 1000
+    agent = Agent(collect_request)
+    agent.run()
+
+    # retry_count = 0
+    # while True:
+    #     if retry_count >= 10:
+    #         break
+    #
+    #     retry_count += 1
+    #     agent = Agent(collect_request)
+    #
+    #     try:
+    #         agent.run()
+    #         break
+    #     except WebDriverException as e:
+    #         logger.error('Error while running agent', exc_info=e)
+    #         agent.close_driver()
+    #         time.sleep(5)
+
+
+def collect_unknown_profiles(suspect_group_id: int):
+    suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
+    collect_request = Request(
+        [
+            SocialMediaEntities.LOGIN,
+            SocialMediaEntities.UNKNOWN_PROFILES
+        ],
+        suspect_group.credentials,
+    )
+
+    agent = Agent(collect_request)
+    agent.run()
 
 
 async def collect_and_process(suspect_id: int, with_posts: bool):

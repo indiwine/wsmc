@@ -3,15 +3,20 @@ services:
   app:
     environment:
       DEBUG: '1'
+      TEST_VK_LOGIN: ${TEST_VK_LOGIN}
+      TEST_VK_PASSWORD: ${TEST_VK_PASSWORD}
     build: './app'
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'
+  redis:
+    ports:
+      - "6379:6379"
   celery:
     image: indiwine/wsmc:latest
-    command: celery -A wsmc worker -P solo
+#    command: celery -A wsmc worker -P solo
     environment:
-      DEBUG: '1'
+      DEBUG: '0'
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'

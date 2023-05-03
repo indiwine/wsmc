@@ -29,7 +29,8 @@ class VkProfileWallPage(AbstractVkPageObject):
     def message_page_locator():
         return By.CLASS_NAME, 'message_page'
 
-    def wait_for_posts(self):
+    def wait_for_posts(self) -> bool:
+
         self.get_wait().until(
             EC.any_of(
                 EC.presence_of_element_located(self.page_wall_posts_locator()),
@@ -47,9 +48,11 @@ class VkProfileWallPage(AbstractVkPageObject):
         logger.debug(f'Collecting posts for offset: {offset}')
         self.clear_requests()
         self.navigate_to(self.link_strategy.add_offset(self.driver.current_url, offset))
+        logger.debug('Navigation done. Waiting for posts to appear.')
         has_posts = self.wait_for_posts()
 
         if not has_posts:
+            logger.debug('No posts on page present!')
             return
 
         for post_node in self.posts():

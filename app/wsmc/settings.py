@@ -196,7 +196,7 @@ WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
 
 # Wait timeout in seconds
-WSMC_SELENIUM_WAIT_TIMEOUT = 120
+WSMC_SELENIUM_WAIT_TIMEOUT = 30
 
 WSMC_WEBDRIVER_LOCALE = 'ru_RU'
 PG_SEARCH_LANG = 'pg_catalog.russian'
@@ -209,3 +209,7 @@ TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
 
+
+# Test setting
+TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
+TEST_VK_PASSWORD = os.environ.get('TEST_VK_PASSWORD', '')

@@ -1,3 +1,5 @@
 from .vklogincollector import VkLoginCollector
 from .vkpostscollector import VkPostsCollector
 from .vkprofilecollector import VkProfileCollector
+from .vksecondaryprofilescollector import VkSecondaryProfilesCollector
+from .vkgroupcollector import VkGroupCollector

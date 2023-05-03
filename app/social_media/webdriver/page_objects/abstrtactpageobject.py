@@ -1,20 +1,28 @@
 import logging
 from abc import ABC
 from functools import partial
-from typing import Generator, Optional, Callable
+from time import sleep
+from typing import Generator, Optional, Callable, TypeVar, List, Type
 
 from django.conf import settings
+from selenium.common import TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait, POLL_FREQUENCY
 from seleniumwire.utils import decode
 from seleniumwire.webdriver import Remote
 
+from social_media.webdriver.exceptions import WscmWebdriverRetryFailedException
+
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T')
 
 
 class AbstractPageObject(ABC):
     # Number of loops without change before timeline will be consigned "settled"
     _TIMELINE_LOOP_SETTLED_COUNT = 10
+
+    NAVIGATE_MAX_RETRY_COUNT = 10
 
     _is_eop_inited: bool = False
     _eop_last_height: int = 0
@@ -34,8 +42,52 @@ class AbstractPageObject(ABC):
         Navigate to a given location
         @param location:
         """
-        logger.info(f'Navigating to {location}')
-        self.driver.get(location)
+        self.retry_action(lambda: self.driver.get(location))
+
+    def retry_action(self,
+                     action: Callable[[], T],
+                     max_retry_count: int = 10,
+                     on_fail: Optional[Callable] = None,
+                     additional_exceptions: List[Type[Exception]] = None,
+                     cooldown_time: Optional[int] = None
+                     ) -> T:
+        """
+        Basic action that can be repeated up to `max_retry_count` after a refresh action
+
+        Action is expecting to raise a selenium TimeoutException
+        @param cooldown_time: optional number of seconds between attempts
+        @param additional_exceptions: List exceptions eligible for retry (selenium.common.TimeoutException is always present)
+        @param action: callback
+        @param max_retry_count: maximum number retries
+        @param on_fail: Called one time at first error
+        @return:
+        """
+
+        exceptions_to_wait: List[Type[Exception]] = [TimeoutException]
+        if additional_exceptions:
+            exceptions_to_wait += additional_exceptions
+
+        retry_count = 0
+        while True:
+            retry_count += 1
+            try:
+                if retry_count > 1:
+                    logger.info(f'Action failed. Retry num: {retry_count}')
+                return action()
+            except tuple(exceptions_to_wait) as e:
+                if retry_count == 1 and on_fail:
+                    on_fail()
+
+                if retry_count >= max_retry_count:
+                    raise WscmWebdriverRetryFailedException('Retry max count reached')
+
+                if cooldown_time:
+                    logger.error(f'Action failed... reloading page in {cooldown_time}s', exc_info=e)
+                    sleep(cooldown_time)
+                else:
+                    logger.error('Action failed... reloading page', exc_info=e)
+
+                self.driver.refresh()
 
     def clear_requests(self) -> None:
         logger.debug('Clearing fetched requests')
@@ -86,7 +138,7 @@ class AbstractPageObject(ABC):
             if response and response.status_code == 200:
                 yield decode(response.body, response.headers.get('Content-Encoding', 'identity')).decode()
             else:
-                logger.error('No response', response)
+                logger.error('No response')
         self.clear_requests()
 
     def init_end_of_page_count(self):

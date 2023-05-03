@@ -9,7 +9,7 @@ class FbProfileCollector(AbstractCollector):
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.PROFILE):
             profile_dto = FacebookProfileGeneralPage(request.driver) \
-                .set_navigation_strategy(FbLinkBuilder.build_strategy(request.social_media_account.link)) \
+                .set_navigation_strategy(FbLinkBuilder.build_strategy(request.suspect_identity.link)) \
                 .collect_profile()
             self.persist_sm_profile(profile_dto, request)
 

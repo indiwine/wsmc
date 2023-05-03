@@ -1,5 +1,7 @@
 from typing import Generator
 
+import logging
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,8 +10,12 @@ from social_media.dtos import AuthorDto
 from .abstractvkpageobject import AbstractVkPageObject
 from ...link_builders.vk.strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 
+logger = logging.getLogger(__name__)
+
 
 class VkPostFansBoxPageObject(AbstractVkPageObject):
+    LIKE_LOAD_TIMEOUT = 30
+
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy, fans_box: WebElement):
         super().__init__(driver, link_strategy)
         self.fans_box = fans_box
@@ -38,7 +44,6 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         self.get_wait().until(EC.all_of(
             EC.invisibility_of_element_located((By.CSS_SELECTOR, '.wk_wiki_content.box_loading'))),
             EC.visibility_of_element_located(self.fan_rows_locator())
-
         )
 
     def close(self):
@@ -63,14 +68,20 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         if not btn.is_displayed():
             return False
         btn.click()
-        self.get_wait().until(EC.presence_of_element_located(self.fan_rows_locator()))
+        try:
+            self.get_wait().until(EC.presence_of_element_located(self.fan_rows_locator()))
+        except TimeoutException as e:
+            logger.debug('Timeout while loading likes', exc_info=e)
+            return False
         return True
 
-    @staticmethod
-    def fan_row_to_author_dro(fan_row: WebElement) -> AuthorDto:
+    @classmethod
+    def fan_row_to_author_dro(cls, fan_row: WebElement) -> AuthorDto:
         fan_link = fan_row.find_element(By.CLASS_NAME, 'fans_fan_lnk')
+        oid, is_group = cls.parse_oid(fan_row.get_attribute('data-id'))
         return AuthorDto(
-            oid=fan_row.get_attribute('data-id'),
+            oid=oid,
             name=fan_link.get_property('innerText'),
-            url=fan_link.get_attribute('href')
+            url=fan_link.get_attribute('href'),
+            is_group=is_group
         )

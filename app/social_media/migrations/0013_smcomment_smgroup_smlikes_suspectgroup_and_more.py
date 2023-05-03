@@ -12,7 +12,7 @@ def append_origin_to_posts(apps: Apps, schema_editor: BaseDatabaseSchemaEditor):
     content_type_model = apps.get_model('contenttypes', 'contenttype')
     suspect_social_media_model = apps.get_model('social_media', 'suspectsocialmediaaccount')
 
-    content_type_item = content_type_model.objects.get_for_model(posts_model)
+    content_type_item = content_type_model.objects.get_for_model(profile_model)
 
     for profile in profile_model.objects.all().iterator():
         profile.suspect_social_media = suspect_social_media_model.objects.get(
