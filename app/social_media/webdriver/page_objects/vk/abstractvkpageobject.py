@@ -1,13 +1,11 @@
 import logging
-from time import sleep
 from typing import Tuple
-
-from selenium.common import JavascriptException
 
 from ..abstrtactpageobject import AbstractPageObject
 from ...link_builders.vk.strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 
 logger = logging.getLogger(__name__)
+
 
 class AbstractVkPageObject(AbstractPageObject):
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy):

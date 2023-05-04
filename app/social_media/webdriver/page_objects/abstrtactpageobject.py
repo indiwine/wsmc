@@ -1,6 +1,8 @@
+import datetime
 import logging
 from abc import ABC
 from functools import partial
+from pathlib import Path
 from time import sleep
 from typing import Generator, Optional, Callable, TypeVar, List, Type
 
@@ -79,6 +81,7 @@ class AbstractPageObject(ABC):
                     on_fail()
 
                 if retry_count >= max_retry_count:
+                    self.save_screenshot('max_retry_reached')
                     raise WscmWebdriverRetryFailedException('Retry max count reached')
 
                 if cooldown_time:
@@ -88,6 +91,23 @@ class AbstractPageObject(ABC):
                     logger.error('Action failed... reloading page', exc_info=e)
 
                 self.driver.refresh()
+
+    def save_screenshot(self, prefix: str = '') -> Optional[Path]:
+        dir_path = Path(f'{settings.MEDIA_ROOT}/{settings.WSMC_SELENIUM_SCREENSHOT_DIR}')
+        dir_path.mkdir(exist_ok=True)
+
+        now = datetime.datetime.now()
+        if prefix:
+            prefix += '_'
+
+        file_name = dir_path / f'{prefix}{now.strftime("%d-%m-%Y_%H-%M-%S")}.png'
+
+        try:
+            self.driver.save_screenshot(str(file_name))
+            return file_name
+        except Exception as e:
+            logger.error('Error occurred while creating screenshot', exc_info=e)
+            return None
 
     def clear_requests(self) -> None:
         logger.debug('Clearing fetched requests')

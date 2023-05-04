@@ -1,6 +1,8 @@
 import logging
 from typing import Generator, Optional, Callable, Tuple
 
+from selenium.common import ElementNotInteractableException
+
 from social_media.models import VkPostStat, SmPost
 from social_media.social_media import SocialMediaEntities
 from ..abstractcollector import AbstractCollector
@@ -57,12 +59,13 @@ class VkPostsCollector(AbstractCollector):
             post_item = None
 
             for post_page_object in wall.collect_posts(offset):
-                post_dto = post_page_object.collect()
+                post_item = None
 
-                if SmPost.objects.filter(sm_post_id=post_dto.sm_post_id,
-                                         social_media=post_dto.social_media).exists():
-                    logger.info(f'Post already collected, skipping: {post_dto}')
-                    continue
+                post_dto = post_page_object.collect()
+                # if SmPost.objects.filter(sm_post_id=post_dto.sm_post_id,
+                #                          social_media=post_dto.social_media).exists():
+                #     logger.info(f'Post already collected, skipping: {post_dto}')
+                #     continue
 
                 post_item, is_new = self.persist_post(post_dto, self.request_origin, request)
 
@@ -75,7 +78,10 @@ class VkPostsCollector(AbstractCollector):
                 if is_new:
                     new_count += 1
 
-        wall.retry_action(collect_posts_action, on_fail=lambda: post_item.delete() if post_item else False)
+        wall.retry_action(action=collect_posts_action,
+                          on_fail=lambda: post_item.delete() if post_item else False,
+                          additional_exceptions=[ElementNotInteractableException]
+                          )
 
         if request.post_limit and self.post_count >= request.post_limit:
             raise WsmcStopPostCollection()

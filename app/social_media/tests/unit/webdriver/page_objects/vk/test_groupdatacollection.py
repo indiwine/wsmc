@@ -2,6 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.test import SimpleTestCase
+from pathlib import Path
 
 from social_media.dtos import SmGroupDto, SmPostDto, SmPostImageDto, AuthorDto, SmProfileDto, SmProfileMetadata
 from social_media.social_media import SocialMediaTypes
@@ -26,6 +27,7 @@ class TestVkDataCollection(SimpleTestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.driver.quit()
+
 
     def test_group_info_collection(self):
         group_url = 'https://vk.com/officialpages'
@@ -142,8 +144,12 @@ class TestVkDataCollection(SimpleTestCase):
         profile_dto = profile_page_object.collect_profile()
         print(profile_dto)
 
-    def test_failing_profile(self):
+    def test_screenshot(self):
         profile_url = 'https://vk.com/id203133326'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
-        profile_dto = profile_page_object.collect_profile()
-        print(profile_dto)
+        profile_page_object.navigate_if_necessary()
+        file_path = profile_page_object.save_screenshot('test')
+
+        self.assertIsInstance(file_path, Path)
+        self.assertTrue(file_path.is_file())
+        self.assertTrue(file_path.exists())

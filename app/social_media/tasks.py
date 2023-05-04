@@ -15,7 +15,7 @@ def perform_sm_data_collection(suspect_id: int, with_posts: bool):
 
 @shared_task
 def perform_group_data_collection_task(suspect_group_id: int):
-    collect_groups(suspect_group_id) @ shared_task
+    collect_groups(suspect_group_id)
 
 
 @shared_task

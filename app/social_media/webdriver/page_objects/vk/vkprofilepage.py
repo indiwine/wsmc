@@ -58,14 +58,14 @@ class VkProfilePage(AbstractVkPageObject):
         return None
 
     def go_to_wall(self):
-        self._navigate_if_necessary()
+        self.navigate_if_necessary()
         self.navigate_to(self.find_wall_link())
         return VkProfileWallPage(self.driver, self.link_strategy)
 
     def collect_profile(self) -> SmProfileDto:
         logger.debug('Collecting profile information')
         self.clear_requests()
-        self._navigate_if_necessary()
+        self.navigate_if_necessary()
         self.get_wait().until(EC.invisibility_of_element_located(self.tab_placeholder()))
 
         self._extract_url_components()
@@ -75,7 +75,7 @@ class VkProfilePage(AbstractVkPageObject):
         profile = self._find_profile_data()
         return self._node_to_dto(profile, self._user_id)
 
-    def _navigate_if_necessary(self):
+    def navigate_if_necessary(self):
         profile_link = self.link_strategy.get_profile_link()
         if self.driver.current_url != profile_link:
             self.navigate_to(profile_link)

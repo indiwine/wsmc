@@ -34,8 +34,8 @@ def collect_groups(suspect_group_id: int):
         suspect_group
     )
 
-    collect_request.load_latest = False
-    collect_request.post_limit = 1000
+    # collect_request.load_latest = False
+    # collect_request.post_limit = 1000
     agent = Agent(collect_request)
     agent.run()
 

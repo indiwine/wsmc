@@ -156,20 +156,20 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'WARNING',
     },
     'loggers': {
         'social_media': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
         },
         'telegram_connection': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
         },
         'hpack': {
             'level': 'WARNING'
         },
         'seleniumwire': {
-            'level': 'INFO'
+            'level': 'WARNING'
         }
     }
 }
@@ -194,6 +194,7 @@ WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
 
 WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
+WSMC_SELENIUM_SCREENSHOT_DIR = 'selenium'
 
 # Wait timeout in seconds
 WSMC_SELENIUM_WAIT_TIMEOUT = 30
