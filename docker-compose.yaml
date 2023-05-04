@@ -26,8 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      <<: *common-variables
-      <<: *telegram-vars
+      <<: [ *common-variables, *telegram-vars ]
     volumes:
       - tdlib:/tmp/.tdlib_files/
       - wsmc-storage:/app/storage
@@ -89,15 +88,15 @@ services:
     ports:
       - "7902:7900"
 
-#  chrome-04:
-#    image: selenium/node-chrome:112.0
-#    shm_size: "2g"
-#    depends_on:
-#      - webdriver
-#    environment:
-#      <<: *selenium-nodes
-#    ports:
-#      - "7903:7900"
+  #  chrome-04:
+  #    image: selenium/node-chrome:112.0
+  #    shm_size: "2g"
+  #    depends_on:
+  #      - webdriver
+  #    environment:
+  #      <<: *selenium-nodes
+  #    ports:
+  #      - "7903:7900"
 
   webdriver:
     image: selenium/hub:4.9.0
