@@ -44,6 +44,9 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
 
     def likes_count(self) -> int:
         item = self.bottom_reactions_btn().get_attribute('data-reaction-counts')
+        if item is None:
+            return 0
+
         count_data = json.loads(item)
         if isinstance(count_data, dict) and '0' in count_data:
             return count_data['0']
