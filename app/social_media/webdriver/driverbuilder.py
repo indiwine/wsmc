@@ -10,6 +10,7 @@ from django.conf import settings
 from fake_useragent import UserAgent
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.options import ArgOptions
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
 from selenium.webdriver.remote.webelement import WebElement
 # from selenium import webdriver
@@ -106,6 +107,13 @@ class WsmcWebDriver(webdriver.Remote):
             self.quit()
         except Exception as e:
             logger.error('Error while quiting webdriver', exc_info=e)
+
+    def is_element_displayed_safe(self, element: WebElement) -> bool:
+        try:
+            return element.is_displayed()
+        except WebDriverException as e:
+            logger.warning('is_element_displayed_safe failed to check', exc_info=e)
+            return False
 
 
 class SeleniumDriverTypeEnum(Enum):

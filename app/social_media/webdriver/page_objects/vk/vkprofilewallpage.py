@@ -56,7 +56,7 @@ class VkProfileWallPage(AbstractVkPageObject):
             return
 
         for post_node in self.posts():
-            if not post_node.is_displayed():
+            if not self.driver.is_element_displayed_safe(post_node):
                 logger.warning('One of the posts is not visible! Skipping.')
                 continue
 
