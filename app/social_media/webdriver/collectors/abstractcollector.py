@@ -7,6 +7,7 @@ from typing import Callable, Tuple, Optional, Union
 
 from django.contrib.contenttypes.models import ContentType
 
+from ..options.baseoptions import BaseOptions
 from ..request import Request
 from ...dtos import SmProfileDto, SmGroupDto, AuthorDto
 from ...dtos.smpostdto import SmPostDto
@@ -23,13 +24,21 @@ class Collector(ABC):
     def handle(self, request: Request):
         pass
 
+    @abstractmethod
+    def set_options(self, options: BaseOptions):
+        pass
+
 
 class AbstractCollector(Collector):
     _next_collector: Collector = None
+    _options: BaseOptions = None
 
     def set_next(self, collector: Collector) -> Collector:
         self._next_collector = collector
         return self
+
+    def set_options(self, options: BaseOptions):
+        self._options = options
 
     @abstractmethod
     def handle(self, request: Request):
@@ -56,13 +65,16 @@ class AbstractCollector(Collector):
 
         return saved_post, created
 
-    def persist_like(self, like_author: AuthorDto, target: Union[SmPost, SmComment], request: Request):
+    def persist_like(self,
+                     like_author: AuthorDto,
+                     target: Union[SmPost, SmComment],
+                     request: Request) -> Optional[Tuple[SmLikes, bool]]:
         if like_author.is_group:
-            return
+            return None
 
         author, _ = self.persist_author(like_author, request)
         parent_type = ContentType.objects.get_for_model(target)
-        SmLikes.objects.get_or_create(
+        return SmLikes.objects.get_or_create(
             owner=author,
             parent_type=parent_type,
             parent_id=target.id,
@@ -72,6 +84,10 @@ class AbstractCollector(Collector):
                 'parent_id': target.id,
             }
         )
+
+    def count_likes(self, target: Union[SmPost, SmComment]) -> int:
+        parent_type = ContentType.objects.get_for_model(target)
+        return SmLikes.objects.filter(parent_type=parent_type, parent_id=target.id).count()
 
     def persist_group(self, group_dto: SmGroupDto, request: Request, suspect_group: Optional[SuspectGroup] = None) -> \
         Tuple[SmGroup, bool]:

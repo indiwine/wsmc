@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import Tuple, List, Optional
 
+from django.utils import timezone
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -38,6 +39,7 @@ class VkPostPageObject(AbstractVkPageObject):
         return self.post_node.find_element(By.CLASS_NAME, 'PostButtonReactionsContainer')
 
     def collect(self) -> SmPostDto:
+        self.driver.scroll_into_view(self.post_node)
         logger.debug('Collecting post')
         dto = SmPostDto(
             datetime=self.get_post_time(),
@@ -92,7 +94,7 @@ class VkPostPageObject(AbstractVkPageObject):
 
             if time_attr:
                 logger.debug(f'post time found using timestamp')
-                return datetime.fromtimestamp(int(time_attr))
+                return datetime.fromtimestamp(int(time_attr), tz=timezone.get_current_timezone())
         except NoSuchElementException:
             pass
 

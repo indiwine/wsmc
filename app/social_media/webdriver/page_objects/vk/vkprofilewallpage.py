@@ -46,7 +46,7 @@ class VkProfileWallPage(AbstractVkPageObject):
 
     def collect_posts(self, offset: int) -> Generator[VkPostPageObject, None, None]:
         logger.debug(f'Collecting posts for offset: {offset}')
-        self.clear_requests()
+        self.driver.clear_requests()
         self.navigate_to(self.link_strategy.add_offset(self.driver.current_url, offset))
         logger.debug('Navigation done. Waiting for posts to appear.')
         has_posts = self.wait_for_posts()
@@ -56,6 +56,10 @@ class VkProfileWallPage(AbstractVkPageObject):
             return
 
         for post_node in self.posts():
+            if not post_node.is_displayed():
+                logger.warning('One of the posts is not visible! Skipping.')
+                continue
+
             yield VkPostPageObject(self.driver, self.link_strategy, post_node)
 
     def get_max_offset(self) -> int:

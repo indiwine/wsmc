@@ -8,7 +8,9 @@ from social_media.social_media import SocialMediaEntities
 from ..abstractcollector import AbstractCollector
 from ...exceptions import WsmcStopPostCollection
 from ...link_builders.vk import VkLinkBuilder
+from ...options.vkoptions import VkOptions
 from ...page_objects.vk.vkgrouppage import VkGroupPage
+from ...page_objects.vk.vkpostpageobject import VkPostPageObject
 from ...page_objects.vk.vkprofilepage import VkProfilePage
 from ...page_objects.vk.vkprofilewallpage import VkProfileWallPage
 from ...request import Request
@@ -17,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class VkPostsCollector(AbstractCollector):
+    _options: VkOptions = None
+
     STEP: int = 20
     _max_offset: int
     request_origin = None
@@ -52,41 +56,70 @@ class VkPostsCollector(AbstractCollector):
 
     def process_posts_wall(self, request: Request, wall: VkProfileWallPage, offset: int) -> int:
         new_count = 0
-        post_item: SmPost = None
 
-        def collect_posts_action():
-            nonlocal new_count, post_item
-            post_item = None
+        def collect_posts_action() -> int:
+            nonlocal new_count
+            post_count = 0
 
             for post_page_object in wall.collect_posts(offset):
-                post_item = None
+                post_count += 1
 
                 post_dto = post_page_object.collect()
-                # if SmPost.objects.filter(sm_post_id=post_dto.sm_post_id,
-                #                          social_media=post_dto.social_media).exists():
-                #     logger.info(f'Post already collected, skipping: {post_dto}')
-                #     continue
+
+                if self._options.post_date_limit and post_dto.datetime < self._options.post_date_limit:
+                    raise WsmcStopPostCollection('Post date limit reached')
+
 
                 post_item, is_new = self.persist_post(post_dto, self.request_origin, request)
 
-                likes_generator = post_page_object.collect_likes()
-                if likes_generator:
-                    for like in likes_generator:
-                        self.persist_like(like, post_item, request)
+                self._parse_post_likes(post_page_object, post_item, request)
 
-                self.post_count += 1
                 if is_new:
                     new_count += 1
 
-        wall.retry_action(action=collect_posts_action,
-                          on_fail=lambda: post_item.delete() if post_item else False,
-                          additional_exceptions=[ElementNotInteractableException]
-                          )
 
-        if request.post_limit and self.post_count >= request.post_limit:
-            raise WsmcStopPostCollection()
+            return post_count
+
+        self.post_count += wall.retry_action(action=collect_posts_action,
+                                             additional_exceptions=[ElementNotInteractableException]
+                                             )
+
+        if self._options.post_count_limit and self.post_count >= self._options.post_count_limit:
+            raise WsmcStopPostCollection(f'Post limit of {self._options.post_count_limit} reached')
 
         return new_count
+
+    def _parse_post_likes(self,
+                          post_page_object: VkPostPageObject,
+                          post_item: SmPost,
+                          request: Request
+                          ):
+        post_reactions_object = post_page_object.get_post_reactions_object()
+        total_likes_count = post_reactions_object.likes_count()
+
+        if total_likes_count == 0:
+            return
+
+        likes_in_db = self.count_likes(post_item)
+
+        if likes_in_db == total_likes_count:
+            return
+
+        fan_box_object = post_reactions_object.open_likes_window()
+
+        for like_author in fan_box_object.collect_likes():
+
+            like_result = self.persist_like(like_author, post_item, request)
+
+            if like_result:
+                _, is_created = like_result
+
+                if is_created:
+                    likes_in_db += 1
+
+                if likes_in_db == total_likes_count:
+                    fan_box_object.close()
+                    break
 
     @staticmethod
     def _navigate_to_post_wall(request: Request) -> Tuple[VkProfileWallPage, bool]:
@@ -122,7 +155,7 @@ class VkPostsCollector(AbstractCollector):
             nonlocal page, current_offset
             page = int(current_offset / self.STEP)
 
-        if not request.load_latest:
+        if not self._options.post_do_load_latest:
             logger.debug('Skipping newest posts')
             fwd_skipped = True
             if last_offset:

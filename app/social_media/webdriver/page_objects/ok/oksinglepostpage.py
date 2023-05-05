@@ -64,7 +64,7 @@ class OkSinglePostPage(AbstractOkPageObject):
             raise WsmcWebDriverPostException(f'Post cannot be obtained, because share button is disabled.')
 
         def try_clik() -> btn:
-            self.scroll_into_view(btn)
+            self.driver.scroll_into_view(btn)
             btn.click()
             try:
                 self.get_wait(timeout=SHARE_BTN_TIMEOUT).until(

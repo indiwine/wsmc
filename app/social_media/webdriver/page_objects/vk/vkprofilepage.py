@@ -64,7 +64,7 @@ class VkProfilePage(AbstractVkPageObject):
 
     def collect_profile(self) -> SmProfileDto:
         logger.debug('Collecting profile information')
-        self.clear_requests()
+        self.driver.clear_requests()
         self.navigate_if_necessary()
         self.get_wait().until(EC.invisibility_of_element_located(self.tab_placeholder()))
 
@@ -94,7 +94,7 @@ class VkProfilePage(AbstractVkPageObject):
         if profile_found:
             return profile_found
 
-        for body in self.request_iterator():
+        for body in self.driver.request_iterator():
             profile_found = self._process_request(body)
             if profile_found:
                 return profile_found

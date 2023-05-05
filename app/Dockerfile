@@ -21,6 +21,10 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
+
+
+COPY social_media/ai/model_files/ /app/social_media/ai/model_files/
+
 COPY . /app/
 
 CMD python manage.py runserver 0.0.0.0:8000

@@ -31,7 +31,7 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         return self.fans_box.find_element(By.CSS_SELECTOR, '#likes_tab_likes > .ui_tab')
 
     def is_all_tabs_selected(self):
-        return self.is_element_has_class(self.all_likes_tab(), 'ui_tab_sel')
+        return self.driver.is_element_has_class(self.all_likes_tab(), 'ui_tab_sel')
 
     def box_close_button(self):
         return self.fans_box.find_element(By.CLASS_NAME, 'box_x_button')
@@ -57,7 +57,7 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         while True:
             for fan_row in self.get_fan_rows():
                 yield self.fan_row_to_author_dro(fan_row)
-                self.remove_element(fan_row)
+                self.driver.remove_element(fan_row)
 
             if not self._load_more_likes():
                 self.close()

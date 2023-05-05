@@ -3,17 +3,17 @@ from typing import Optional, List, Union
 
 from pyee import EventEmitter
 
-from selenium.webdriver.remote.webdriver import WebDriver
-from seleniumwire.webdriver import Remote
-from .driverbuilder import DriverBuilder
+from .driverbuilder import DriverBuilder, WsmcWebDriver
+from .options.baseoptions import BaseOptions
+from .options.vkoptions import VkOptions
 from ..models import SuspectSocialMediaAccount, SmCredential, SuspectGroup
-from ..social_media import SocialMediaEntities
+from ..social_media import SocialMediaEntities, SocialMediaTypes
 
 logger = logging.getLogger(__name__)
 
 
 class Request:
-    _driver: Optional[Remote] = None
+    _driver: Optional[WsmcWebDriver] = None
     _is_img_disabled = False
 
     post_limit = None
@@ -33,11 +33,13 @@ class Request:
 
         self.ee = ee
 
+        self.options = self.build_default_options()
+
     def __str__(self):
         return f'Request: "{self.credentials.social_media}", [{self.entities}]'
 
     @property
-    def driver(self) -> Remote:
+    def driver(self) -> WsmcWebDriver:
         if self._driver is None:
             logger.info('Building selenium driver')
             self._driver = DriverBuilder.build()
@@ -60,37 +62,20 @@ class Request:
     def get_social_media_type(self):
         return self.credentials.social_media
 
-    def disable_images(self):
+    def build_default_options(self) -> BaseOptions:
+        if self.get_social_media_type == SocialMediaTypes.VK:
+            return VkOptions()
+        elif self.get_social_media_type == SocialMediaTypes.FB:
+            raise NotImplementedError('Options for fb is not implemented')
+        elif self.get_social_media_type == SocialMediaTypes.OK:
+            raise NotImplementedError('Options for ok is not implemented')
 
-        if self._is_img_disabled:
-            return
-
-        self._is_img_disabled = True
-
-        def interceptor(request):
-            # Block PNG, JPEG and GIF images
-            logger.info(f'Interceptor: {request.path}')
-            if request.path.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp')):
-                request.abort()
-
-        self._driver.request_interceptor = interceptor
-
-    def enable_images(self):
-        if not self._is_img_disabled:
-            return
-
-        self._is_img_disabled = False
-        self._driver.request_interceptor = None
+        raise RuntimeError(f'Unknown social media type: {self.get_social_media_type}')
 
     def close_driver(self):
         if self._driver is not None:
-            logger.info('Closing selenium driver')
-            try:
-                self._driver.quit()
-            except Exception as e:
-                logger.error('Error while quiting webdriver', exc_info=e)
-            finally:
-                self._driver = None
+            self.driver.quit_safe()
+            self._driver = None
 
     def can_process_entity(self, entity: SocialMediaEntities, has_social_media_account: bool = True) -> bool:
         return self.has_entity(entity) and (not has_social_media_account or (

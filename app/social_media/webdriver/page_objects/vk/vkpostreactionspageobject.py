@@ -64,8 +64,8 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
         return fan_box_object.collect_likes()
 
     def open_likes_window(self) -> VkPostFansBoxPageObject:
+        self.driver.scroll_into_view(self.post_button_reactions_container)
         btn_node = self.bottom_reactions_btn()
-        self.scroll_into_view(btn_node)
         ActionChains(self.driver).move_to_element(btn_node).perform()
         self.get_wait().until(EC.visibility_of_element_located(self.reactions_popper_locator()))
 

@@ -148,7 +148,7 @@ class TestVkDataCollection(SimpleTestCase):
         profile_url = 'https://vk.com/id203133326'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         profile_page_object.navigate_if_necessary()
-        file_path = profile_page_object.save_screenshot('test')
+        file_path = self.driver.save_screenshot_safe('test')
 
         self.assertIsInstance(file_path, Path)
         self.assertTrue(file_path.is_file())
