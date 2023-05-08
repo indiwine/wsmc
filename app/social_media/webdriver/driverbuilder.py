@@ -89,7 +89,7 @@ class WsmcWebDriver(webdriver.Remote):
         return self.execute_script(f"return arguments[0].classList.contains('{class_name}')", element)
 
     def request_iterator(self) -> Generator[str, None, None]:
-        logger.debug(f'Iterating true {len(self.driver.requests)} requests')
+        logger.debug(f'Iterating true {len(self.requests)} requests')
         for request in self.requests:
             response = request.response
             if response and response.status_code == 200:
