@@ -9,7 +9,7 @@ from selenium.common import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait, POLL_FREQUENCY
 from seleniumwire.webdriver import Remote
 
-from social_media.webdriver.driverbuilder import WsmcWebDriver
+from social_media.webdriver.wsmcwebdriver import WsmcWebDriver
 from social_media.webdriver.exceptions import WscmWebdriverRetryFailedException
 
 logger = logging.getLogger(__name__)
@@ -83,10 +83,10 @@ class AbstractPageObject(ABC):
                     raise WscmWebdriverRetryFailedException('Retry max count reached')
 
                 if cooldown_time:
-                    logger.error(f'Action failed... reloading page in {cooldown_time}s', exc_info=e)
+                    logger.error(f'Action failed at "{self.driver.get_current_url_safe}"... reloading page in {cooldown_time}s', exc_info=e)
                     sleep(cooldown_time)
                 else:
-                    logger.error('Action failed... reloading page', exc_info=e)
+                    logger.error(f'Action failed at "{self.driver.get_current_url_safe}"... reloading page', exc_info=e)
 
                 self.driver.refresh()
 

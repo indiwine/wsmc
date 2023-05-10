@@ -11,7 +11,7 @@ from faker.providers import date_time, file, internet
 from unittest import skip
 
 import social_media
-from social_media.ai.models.vatadetectormodel import VataPredictionItem
+from social_media.ai.models.vatapredictionitem import VataPredictionItem
 from social_media.dtos.smpostdto import SmPostDto
 from social_media.dtos.smpostimagedto import SmPostImageDto
 from social_media.models import SmCredential, Suspect, SmProfile, SmPost, SmPostImage

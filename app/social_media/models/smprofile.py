@@ -25,8 +25,8 @@ class SmProfile(Model):
     domain = CharField(max_length=512, null=True)
     metadata = JSONField(null=True)
 
-
     was_collected = BooleanField(default=False)
+    # is_reviewed = BooleanField(default=False)
 
     suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True)
 

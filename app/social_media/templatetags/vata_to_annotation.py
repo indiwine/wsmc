@@ -4,7 +4,7 @@ from typing import List
 from django import template
 
 from social_media.admin.helpers import convert_vata_prediction_to_w3c
-from social_media.ai.models.vatadetectormodel import VataPredictionItem
+from social_media.ai.models.vatapredictionitem import VataPredictionItem
 
 register = template.Library()
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-from social_media.ai.models.vatadetectormodel import VataPredictionItem
+from social_media.ai.models.vatapredictionitem import VataPredictionItem
 
 
 @dataclass

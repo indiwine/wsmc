@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'social_media.apps.SocialMediaConfig',
     'telegram_connection.apps.TelegramConfig',
     'phonenumber_field',
+    'import_export'
 ]
 
 MIDDLEWARE = [
@@ -190,7 +191,8 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
 NOMINATIM_USER_AGENT = os.environ.get('NOMINATIM_USER_AGENT', 'wsmc_test_app')
 
-WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
+# WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
+WSMC_LOAD_AI = False
 
 WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')

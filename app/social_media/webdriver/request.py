@@ -3,7 +3,8 @@ from typing import Optional, List, Union
 
 from pyee import EventEmitter
 
-from .driverbuilder import DriverBuilder, WsmcWebDriver
+from .driverbuilder import DriverBuilder
+from .wsmcwebdriver import WsmcWebDriver
 from .options.baseoptions import BaseOptions
 from .options.vkoptions import VkOptions
 from ..models import SuspectSocialMediaAccount, SmCredential, SuspectGroup

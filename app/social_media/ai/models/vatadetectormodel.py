@@ -1,12 +1,10 @@
 import logging
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Tuple, Literal
+from typing import Optional, List, Tuple
 
 import keras_cv
 import tensorflow as tf
-from dataclasses_json import dataclass_json
 from keras_cv import bounding_box
 from keras_cv.metrics import COCOMeanAveragePrecision, COCORecall
 from tensorflow import keras
@@ -14,19 +12,9 @@ from tensorflow import keras
 from .basicmodel import BasicModel
 from .utils.imagepredictionsequence import ImagePredictionSequence
 from .utils.imagesizesequence import ImageSizeSequence
+from .vatapredictionitem import VataPredictionItem
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass_json
-@dataclass
-class VataPredictionItem:
-    x: int
-    y: int
-    width: int
-    height: int
-    label: Literal['z', 'v', 'colorado', 'russian_flag']
-    pr: float
 
 
 class VataDetectorModel(BasicModel):

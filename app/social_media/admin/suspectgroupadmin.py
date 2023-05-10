@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class SuspectGroupAdmin(ModelAdmin):
+    list_display = ['url', 'id']
+    ordering = ['-id']
 
     def perform_scan(self, request: HttpRequest, object_id):
         perform_group_data_collection_task.delay(object_id)

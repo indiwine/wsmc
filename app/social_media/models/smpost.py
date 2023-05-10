@@ -6,7 +6,6 @@ from django.db.models import Model, ForeignKey, CASCADE, TextField, DateTimeFiel
     Index, PositiveIntegerField
 
 from .smlikes import SmLikes
-from .smprofile import SmProfile
 from ..social_media import SocialMediaTypes
 
 

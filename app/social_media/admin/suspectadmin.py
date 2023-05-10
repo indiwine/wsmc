@@ -51,7 +51,7 @@ class LinkedSmAccounts(StackedInline):
 class VataDetectorDemoForm(Form):
     probability = IntegerField(label='Поріг впевненості (%)', min_value=1, max_value=99, initial=50)
     iou = IntegerField(label='IoU', min_value=1, max_value=99, initial=50)
-    images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
+    # images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
 
 
 class SuspectAdmin(ModelAdmin):
@@ -177,8 +177,8 @@ class SuspectAdmin(ModelAdmin):
                  name='%s_%s_perform_screening' % (opts.app_label, opts.model_name)),
             path('<path:object_id>/perform-osint', self.perform_osint,
                  name='%s_%s_perform_osint' % (opts.app_label, opts.model_name)),
-            path('detector-demo', self.detector_demo,
-                 name='%s_%s_detector_demo' % (opts.app_label, opts.model_name))
+            # path('detector-demo', self.detector_demo,
+            #      name='%s_%s_detector_demo' % (opts.app_label, opts.model_name))
         ]
         return ursl + additional_urls
 

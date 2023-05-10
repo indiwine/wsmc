@@ -7,7 +7,7 @@ from django.db.models import Model
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from social_media.ai.models.vatadetectormodel import VataPredictionItem
+from social_media.ai.models.vatapredictionitem import VataPredictionItem
 
 
 class LinkTypes(Enum):
