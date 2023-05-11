@@ -29,6 +29,9 @@ ALLOWED_HOSTS = [
     'localhost'
 ]
 
+
+
+
 # Application definition
 
 
@@ -40,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
+    'django.contrib.gis',
     'encrypted_model_fields',
     'django_celery_results',
     'social_media.apps.SocialMediaConfig',
@@ -87,12 +91,20 @@ FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHand
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': os.environ.get('POSTGRES_NAME'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': 'postgres',
         'PORT': 5432,
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get('CELERY_BROKER_URL', ''),
+        "TIMEOUT": 1800,
     }
 }
 
@@ -140,6 +152,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = 'storage/'
 MEDIA_ROOT = '/app/storage'
 
+log_level = 'DEBUG' if DEBUG else 'WARNING'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -157,11 +171,11 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': log_level,
     },
     'loggers': {
         'social_media': {
-            'level': 'WARNING',
+            'level': log_level,
         },
         'telegram_connection': {
             'level': 'WARNING',
@@ -171,7 +185,11 @@ LOGGING = {
         },
         'seleniumwire': {
             'level': 'WARNING'
-        }
+        },
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        # }
     }
 }
 

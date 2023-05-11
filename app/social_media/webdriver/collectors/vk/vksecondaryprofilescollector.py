@@ -43,5 +43,8 @@ class VkSecondaryProfilesCollector(AbstractCollector):
 
                     SmProfile.objects.filter(id=profile.id).update(was_collected=True,
                                                                    **self.as_dict_for_model(profile_dto))
+                    profile = SmProfile.objects.get(id=profile.id)
+                    if profile.identify_location():
+                        profile.save()
 
         return super().handle(request)

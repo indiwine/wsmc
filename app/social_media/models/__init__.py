@@ -12,6 +12,7 @@ from .smlikes import SmLikes
 from .smpost import SmPost
 from .smpostimage import SmPostImage
 from .smprofile import SmProfile
+from .smprofilelocationfilter import SmProfileLocationFilter
 from .suspect import Suspect
 from .suspect_group import SuspectGroup
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount

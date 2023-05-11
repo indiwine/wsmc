@@ -1,12 +1,18 @@
+import logging
 from typing import Optional
 
 from django.contrib import admin
+from django.contrib.gis.db.models import PointField
 from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
 
 from .smcredential import SmCredential
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
+from ..geo.geocoderhelper import GeoCoderHelper
 from ..social_media import SocialMediaTypes
 
+logger = logging.getLogger(__name__)
+
+LOOKUP_COUNTRY_CODES = ['UA', 'RU', 'BY', 'KZ']
 
 class SmProfile(Model):
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
@@ -32,8 +38,12 @@ class SmProfile(Model):
 
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
+    location_point = PointField(default=None, null=True)
+    location_known = BooleanField(default=False)
+    location_precise = BooleanField(default=False)
+
     def __str__(self):
-        return f'{self.name} у {self.credentials.get_social_media_display()}'
+        return self.name
 
     @admin.display(description='ID URL', empty_value='-')
     def id_url(self) -> Optional[str]:
@@ -50,6 +60,50 @@ class SmProfile(Model):
 
         return None
 
+    def identify_location(self):
+        if self.country != 'Украина':
+            return False
+
+
+        # Already known
+        if self.location_known:
+            logger.debug('Location already known')
+            return True
+
+        # We cannot found location without at least approximate
+        if not self.location and not self.home_town:
+            logger.warning('Cannot determine location without "location" or "home_town"')
+            return False
+
+        has_country = True
+        country_request = None
+        query_country_codes = None
+
+        if self.country:
+            country_request = f'{self.country}, '
+
+
+        location_query = self.location
+        if not location_query:
+            location_query = self.home_town
+
+        if country_request:
+            location_query = country_request + location_query
+        else:
+            query_country_codes = LOOKUP_COUNTRY_CODES
+
+        coder = GeoCoderHelper()
+        lookup_result = coder.geocode(query=location_query, country_codes=query_country_codes)
+        if lookup_result:
+            logger.info(f'Profile determent to be {lookup_result}')
+            self.location_point = lookup_result.point
+            self.location_known = True
+            self.location_precise = has_country
+            return True
+
+        logger.info(f'Profile location was not found')
+        return False
+
     class Meta:
         verbose_name = 'Профіль'
         verbose_name_plural = 'Профілі'
@@ -60,6 +114,8 @@ class SmProfile(Model):
                 'oid',
                 'was_collected',
                 'suspect_social_media',
-                'social_media'
+                'social_media',
+                'location_known',
+                'location_precise'
             ])
         ]

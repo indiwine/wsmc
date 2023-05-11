@@ -17,6 +17,8 @@ RUN cd /tmp/ && \
     rm -rf /tmp/td
 
 
+RUN apt-get -y install binutils libproj-dev gdal-bin
+
 WORKDIR /app
 COPY requirements.txt /app/
 RUN --mount=type=cache,target=/root/.cache/pip \
