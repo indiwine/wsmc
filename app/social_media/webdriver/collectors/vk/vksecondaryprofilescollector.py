@@ -46,5 +46,6 @@ class VkSecondaryProfilesCollector(AbstractCollector):
                     profile = SmProfile.objects.get(id=profile.id)
                     if profile.identify_location():
                         profile.save()
+            request.mark_retry_successful()
 
         return super().handle(request)

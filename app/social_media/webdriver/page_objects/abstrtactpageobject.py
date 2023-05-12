@@ -72,7 +72,8 @@ class AbstractPageObject(ABC):
             retry_count += 1
             try:
                 if retry_count > 1:
-                    logger.info(f'Action failed. Retry num: {retry_count}')
+                    logger.info(f'Action retry: {retry_count}')
+
                 return action()
             except tuple(exceptions_to_wait) as e:
                 if retry_count == 1 and on_fail:
@@ -80,7 +81,7 @@ class AbstractPageObject(ABC):
 
                 if retry_count >= max_retry_count:
                     self.driver.save_screenshot_safe('max_retry_reached')
-                    raise WscmWebdriverRetryFailedException('Retry max count reached')
+                    raise WscmWebdriverRetryFailedException(f'Retry max count reached at {self.driver.get_current_url_safe}')
 
                 if cooldown_time:
                     logger.error(f'Action failed at "{self.driver.get_current_url_safe}"... reloading page in {cooldown_time}s', exc_info=e)

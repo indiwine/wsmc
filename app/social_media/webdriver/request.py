@@ -19,6 +19,8 @@ class Request:
 
     post_limit = None
     load_latest = True
+    is_retrying = False
+    last_retry_success = False
 
     def __init__(self,
                  entities: List[SocialMediaEntities],
@@ -72,6 +74,21 @@ class Request:
             raise NotImplementedError('Options for ok is not implemented')
 
         raise RuntimeError(f'Unknown social media type: {self.get_social_media_type}')
+
+
+    def configure_for_retry(self):
+        self.last_retry_success = False
+        self.is_retrying = True
+        self.options.configure_for_retry()
+
+    def mark_retry_successful(self):
+        if self.is_retrying:
+            self.is_retrying = False
+            self.last_retry_success = True
+
+    @property
+    def was_retry_successful(self):
+        return self.last_retry_success
 
     def close_driver(self):
         if self._driver is not None:

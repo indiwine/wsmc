@@ -83,7 +83,7 @@ class VkPostsCollector(AbstractCollector):
         self.post_count += wall.retry_action(action=collect_posts_action,
                                              additional_exceptions=[ElementNotInteractableException]
                                              )
-
+        request.mark_retry_successful()
         if self._options.post_count_limit and self.post_count >= self._options.post_count_limit:
             raise WsmcStopPostCollection(f'Post limit of {self._options.post_count_limit} reached')
 

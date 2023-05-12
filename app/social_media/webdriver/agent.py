@@ -30,7 +30,10 @@ class Agent:
         """
         logger.info('Starting Agent')
 
-        for attempt in range(max_retries):
+        attempt = 0
+
+        while True:
+            attempt += 1
             try:
                 self._construct_chain().handle(self.request)
                 return
@@ -38,22 +41,26 @@ class Agent:
                 logger.warning('Selenium window was closed...')
                 return
             except (WscmWebdriverRetryFailedException, WebDriverException, WsmcWebDriverLoginError) as e:
-                self.request.driver.save_screenshot_safe(f'agent_error_attempt_{attempt + 1}')
-                if attempt == max_retries - 1:
+                self.request.driver.save_screenshot_safe(f'agent_error_attempt_{attempt}')
+                if attempt == max_retries:
                     raise
 
-                delay = base_delay * 2 ** attempt
+                if attempt > 1 and self.request.was_retry_successful:
+                    logger.warning('Resetting agent attempt count')
+                    attempt = 1
+
+                delay = base_delay * 2 ** (attempt - 1)
 
                 logger.error(
-                    f"Agent run attempt {attempt + 1} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...",
-                    exc_info=e)
+                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...")
 
-                self.request.options.configure_for_retry()
+                self.request.configure_for_retry()
 
                 self.request.close_driver()
                 time.sleep(delay)
             finally:
                 self.request.close_driver()
+
 
     def _construct_chain(self) -> Collector:
         sm_type = self.request.get_social_media_type
