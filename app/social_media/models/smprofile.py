@@ -32,7 +32,7 @@ class SmProfile(Model):
     metadata = JSONField(null=True)
 
     was_collected = BooleanField(default=False)
-    # is_reviewed = BooleanField(default=False)
+    is_reviewed = BooleanField(default=False)
 
     suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True)
 
@@ -59,6 +59,10 @@ class SmProfile(Model):
                 return f'https://ok.ru/profile/{self.oid}'
 
         return None
+
+    @property
+    def permalink(self):
+        return self.id_url()
 
     def identify_location(self):
         if self.country != 'Украина':
@@ -116,6 +120,7 @@ class SmProfile(Model):
                 'suspect_social_media',
                 'social_media',
                 'location_known',
-                'location_precise'
+                'location_precise',
+                'is_reviewed'
             ])
         ]

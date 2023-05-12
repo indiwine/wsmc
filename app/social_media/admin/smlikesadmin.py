@@ -1,15 +1,32 @@
-from django.contrib.admin import ModelAdmin
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.utils.safestring import mark_safe
+from import_export.admin import ExportMixin
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 from social_media.admin.helpers import generate_link_for_model_object, LinkTypes
 from social_media.models import SmLikes
 
 
-class SmLikesAdmin(ModelAdmin):
+class SmLikesResource(ModelResource):
+    permalink = Field()
+
+    class Meta:
+        model = SmLikes
+        fields = ('owner', 'permalink')
+        export_order = ('owner', 'permalink')
+
+    def dehydrate_permalink(self, like: SmLikes):
+        return like.parent_object.permalink
+
+
+class SmLikesAdmin(ExportMixin, ModelAdmin):
     actions = None
     list_display_links = None
-    ordering = ['id']
+    ordering = ['owner']
+
+    resource_classes = [SmLikesResource]
 
     def formatted_owner(self: SmLikes):
         return generate_link_for_model_object(LinkTypes.CHANGE, self.owner, self.owner.name)
@@ -30,5 +47,6 @@ class SmLikesAdmin(ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
 
 admin.site.register(SmLikes, SmLikesAdmin)
