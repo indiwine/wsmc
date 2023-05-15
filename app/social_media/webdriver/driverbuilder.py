@@ -37,17 +37,12 @@ class DriverBuilder:
         logger.debug(f'Building webdriver {selected_driver.name}')
         options = DriverBuilder._get_driver_options(selected_driver)
         capabilities = options.to_capabilities()
-        seleniumwire_options = {
-            "addr": socket.gethostname(),
-            'request_storage': 'memory',
-            'request_storage_max_size': 100
-        }
+
         logger.debug(f'Webdriver executor: {settings.WSMC_WEBDRIVER_URL}')
         driver = WsmcWebDriver(command_executor=settings.WSMC_WEBDRIVER_URL,
                                options=options,
                                browser_profile=DriverBuilder._get_browser_profile(selected_driver),
                                desired_capabilities=capabilities,
-                               seleniumwire_options=seleniumwire_options
                                )
 
         driver.set_page_load_timeout(settings.WSMC_SELENIUM_WAIT_TIMEOUT)

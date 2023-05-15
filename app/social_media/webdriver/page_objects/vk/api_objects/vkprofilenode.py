@@ -77,3 +77,7 @@ class VkProfileNode:
         if bdate:
             return date_time_parse(bdate)
         return None
+
+    @property
+    def oid(self) -> str:
+        return str(self.raw_node['id'])

@@ -1,4 +1,5 @@
 import logging
+import socket
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Generator
@@ -6,13 +7,30 @@ from typing import Optional, Generator
 from django.conf import settings
 from selenium.common import WebDriverException
 from selenium.webdriver.remote.webelement import WebElement
-from seleniumwire import webdriver
+from selenium.webdriver import Remote
+from seleniumwire import webdriver as seleniumwire_webdriver
 from seleniumwire.utils import decode
 
 logger = logging.getLogger(__name__)
 
+WEB_DRIVER = Remote
 
-class WsmcWebDriver(webdriver.Remote):
+class WsmcWebDriver(WEB_DRIVER):
+    SELENIUMWIRE_OPTIONS = {
+        "addr": socket.gethostname(),
+        'request_storage': 'memory',
+        'request_storage_max_size': 100
+    }
+
+    is_seleniumwire = False
+
+    def __init__(self, **kwargs):
+        if issubclass(WEB_DRIVER, seleniumwire_webdriver.Remote):
+            self.is_seleniumwire = True
+            kwargs['seleniumwire_options'] = self.SELENIUMWIRE_OPTIONS
+
+        super().__init__(**kwargs)
+
     def save_screenshot_safe(self, prefix: str = '') -> Optional[Path]:
         dir_path = Path(f'{settings.MEDIA_ROOT}/{settings.WSMC_SELENIUM_SCREENSHOT_DIR}')
         dir_path.mkdir(exist_ok=True)
@@ -31,6 +49,9 @@ class WsmcWebDriver(webdriver.Remote):
             return None
 
     def clear_requests(self) -> None:
+        if not self.is_seleniumwire:
+            logger.debug('Iterating over non selenium wire instance')
+            return
         logger.debug('Clearing fetched requests')
         del self.requests
 
@@ -81,7 +102,12 @@ class WsmcWebDriver(webdriver.Remote):
         return self.execute_script(f"return arguments[0].classList.contains('{class_name}')", element)
 
     def request_iterator(self) -> Generator[str, None, None]:
+        if not self.is_seleniumwire:
+            logger.debug('Iterating over non seleniumwire instance')
+            return
+
         logger.debug(f'Iterating true {len(self.requests)} requests')
+
         for request in self.requests:
             response = request.response
             if response and response.status_code == 200:

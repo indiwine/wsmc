@@ -135,7 +135,7 @@ class TestVkDataCollection(SimpleTestCase):
                 twitter='durov'
             )
         )
-
+        print(profile_dto)
         self.assertEqual(profile_dto, expected_dto)
 
     def test_disabled_profile(self):

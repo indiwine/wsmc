@@ -73,7 +73,7 @@ class VkProfilePage(AbstractVkPageObject):
         # self._user_id = self._extract_user_id()
 
         profile = self._find_profile_data()
-        return self._node_to_dto(profile, self._user_id)
+        return self._node_to_dto(profile)
 
     def navigate_if_necessary(self):
         profile_link = self.link_strategy.get_profile_link()
@@ -197,13 +197,13 @@ class VkProfilePage(AbstractVkPageObject):
         self._user_domain = path_component
 
     @staticmethod
-    def _node_to_dto(node: VkProfileNode, oid) -> SmProfileDto:
+    def _node_to_dto(node: VkProfileNode) -> SmProfileDto:
         dto = SmProfileDto(name=node.name,
                            location=node.location,
                            home_town=node.home_town,
                            university=node.education,
                            birthdate=node.birthday,
-                           oid=str(oid),
+                           oid=node.oid,
                            country=node.country,
                            domain=node.domain
                            )
