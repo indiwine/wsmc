@@ -2,7 +2,7 @@ import logging
 import socket
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Generator
+from typing import Optional, Generator, List, Union
 
 from django.conf import settings
 from selenium.common import WebDriverException
@@ -82,13 +82,15 @@ class WsmcWebDriver(WEB_DRIVER):
         );
         """, css_selector)
 
-    def remove_element(self, element: WebElement) -> None:
+    def remove_element(self, element: Union[WebElement, List[WebElement]]) -> None:
         """
         Remove given element from the DOM
         @param element:
         """
         self.execute_script(
-            "arguments[0].remove()",
+            "let stagedForRemoval = arguments[0];"
+            "if(!Array.isArray(stagedForRemoval)) { stagedForRemoval = [arguments[0]] }"
+            "stagedForRemoval.forEach(item => item.remove());",
             element
         )
 

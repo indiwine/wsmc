@@ -55,9 +55,11 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             self.switch_to_all_likes_tab()
 
         while True:
-            for fan_row in self.get_fan_rows():
+            fan_rows = self.get_fan_rows()
+            for fan_row in fan_rows:
                 yield self.fan_row_to_author_dro(fan_row)
-                self.driver.remove_element(fan_row)
+
+            self.driver.remove_element(fan_rows)
 
             if not self._load_more_likes():
                 self.close()
