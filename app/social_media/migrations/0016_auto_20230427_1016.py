@@ -13,7 +13,7 @@ def append_additional_data(apps: Apps, schema_editor: BaseDatabaseSchemaEditor):
 
     content_type_smprofile_item = content_type_model.objects.get_for_model(sm_profile_model)
 
-    for profile in sm_profile_model.objects.all():
+    for profile in sm_profile_model.objects.all().iterator():
         if not profile.oid:
             # sm_post_model.objects.filter(profile=profile).delete()
             profile.delete()

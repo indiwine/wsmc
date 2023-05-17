@@ -1,3 +1,4 @@
+import html
 from datetime import datetime
 from typing import Optional
 
@@ -13,10 +14,12 @@ class VkProfileNode:
         result = f'{self.raw_node["first_name"]} {self.raw_node["last_name"]}'
         if 'maiden_name' in self.raw_node and self.raw_node['maiden_name']:
             result += f" ({self.raw_node['maiden_name']})"
-        return result
+        return html.unescape(result)
 
-    def _get_prop_if_truthful(self, prop_name: str) -> Optional[any]:
+    def _get_prop_if_truthful(self, prop_name: str, unescape = True) -> Optional[any]:
         if prop_name in self.raw_node and self.raw_node[prop_name]:
+            if unescape:
+                return html.unescape(self.raw_node[prop_name])
             return self.raw_node[prop_name]
 
         return None
@@ -47,16 +50,16 @@ class VkProfileNode:
 
     @property
     def location(self) -> Optional[str]:
-        city_node = self._get_prop_if_truthful('city')
+        city_node = self._get_prop_if_truthful('city', False)
         if city_node:
-            return city_node['title']
+            return html.unescape(city_node['title'])
         return None
 
     @property
     def country(self) -> Optional[str]:
-        country_node = self._get_prop_if_truthful('country')
+        country_node = self._get_prop_if_truthful('country', False)
         if country_node:
-            return country_node['title']
+            return html.unescape(country_node['title'])
 
         return None
 
@@ -68,7 +71,7 @@ class VkProfileNode:
             if 'faculty_name' in university_node:
                 result += f' {university_node["faculty_name"]}'
 
-            return result
+            return html.unescape(result)
         return None
 
     @property

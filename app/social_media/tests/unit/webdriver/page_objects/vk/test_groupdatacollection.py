@@ -153,3 +153,22 @@ class TestVkDataCollection(SimpleTestCase):
         self.assertIsInstance(file_path, Path)
         self.assertTrue(file_path.is_file())
         self.assertTrue(file_path.exists())
+
+    def test_non_standard_chars(self):
+        profile_url = 'https://vk.com/id296682879'
+        expected_dto = SmProfileDto(
+            oid='296682879',
+            birthdate=date_time_parse('28.07.1985'),
+            name='Гарик Балоян',
+            country='Армения',
+            domain='id296682879',
+            location=None,
+            university='ՇՊՀ (ШГУ им. Налбандяна, бывш. ԳՊՄԻ Մ.Նալբանդյանի անվան, ГГПИ им. Налбандяна) Սոցիալական գիտությունների և իրավունքի ֆակուլտետը (Факультет социальных наук и права)',
+            home_town='Петропавловск-Камчатский🌋',
+            metadata=None
+        )
+
+        profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
+        profile_dto = profile_page_object.collect_profile()
+        print(profile_dto)
+        self.assertEqual(profile_dto, expected_dto)
