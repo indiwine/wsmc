@@ -14,12 +14,13 @@ from .abstractvkpageobject import AbstractVkPageObject
 from .api_objects.vkprofilenode import VkProfileNode
 from .vkprofilewallpage import VkProfileWallPage
 from ...common import recursive_dict_search
-from ...exceptions import WsmcWebDriverProfileException
+from ...exceptions import WsmcWebDriverProfileException, WsmcWebDriverProfileNotFoundException
 
 logger = logging.getLogger(__name__)
 
 
 class VkProfilePage(AbstractVkPageObject):
+    NOT_FOUND_TITLE = '404 Not Found'
     VK_USER_GET = 'users.get'
     _user_id: Optional[int] = None
     _user_domain: Optional[str] = None
@@ -63,10 +64,19 @@ class VkProfilePage(AbstractVkPageObject):
         return VkProfileWallPage(self.driver, self.link_strategy)
 
     def collect_profile(self) -> SmProfileDto:
+        """
+        @raise WsmcWebDriverProfileNotFoundException
+        @return:
+        """
         logger.debug('Collecting profile information')
         self.driver.clear_requests()
         self.navigate_if_necessary()
-        self.get_wait().until(EC.invisibility_of_element_located(self.tab_placeholder()))
+        print(self.driver.title)
+        self.get_wait().until(EC.any_of(
+            EC.invisibility_of_element_located(self.tab_placeholder()),
+            EC.title_is(self.NOT_FOUND_TITLE)
+        ))
+
 
         self._extract_url_components()
 
@@ -76,11 +86,20 @@ class VkProfilePage(AbstractVkPageObject):
         return self._node_to_dto(profile)
 
     def navigate_if_necessary(self):
+        """
+        @raise WsmcWebDriverProfileNotFoundException
+        """
         profile_link = self.link_strategy.get_profile_link()
         if self.driver.current_url != profile_link:
             self.navigate_to(profile_link)
 
-            self.get_wait().until(EC.presence_of_element_located(self.profile_container_locator()))
+            self.get_wait().until(EC.any_of(
+                EC.presence_of_element_located(self.profile_container_locator()),
+                EC.title_is(self.NOT_FOUND_TITLE)
+            ))
+
+            if self.driver.title == self.NOT_FOUND_TITLE:
+                raise WsmcWebDriverProfileNotFoundException(f'Profile "{self.driver.get_current_url_safe}" not found')
 
     def _find_profile_data(self) -> VkProfileNode:
         profile_found = self._try_extract_prefetch_cache()

@@ -11,6 +11,9 @@ class WsmcWebDriverLoginError(WsmcWebdriverException):
 class WsmcWebDriverProfileException(WsmcWebdriverException):
     pass
 
+class WsmcWebDriverProfileNotFoundException(WsmcWebdriverException):
+    pass
+
 
 class WsmcWebDriverGroupException(WsmcWebdriverException):
     pass

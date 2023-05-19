@@ -171,7 +171,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': log_level,
+        'level': 'WARNING',
     },
     'loggers': {
         'social_media': {

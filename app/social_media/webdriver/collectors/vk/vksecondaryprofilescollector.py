@@ -4,7 +4,7 @@ from django.db import transaction
 
 from social_media.models import SmProfile
 from ..abstractcollector import AbstractCollector
-from ...exceptions import WsmcWebDriverProfileException
+from ...exceptions import WsmcWebDriverProfileException, WsmcWebDriverProfileNotFoundException
 from ...link_builders.vk import VkLinkBuilder
 from ...page_objects.vk.vkprofilepage import VkProfilePage
 from ...request import Request
@@ -34,18 +34,24 @@ class VkSecondaryProfilesCollector(AbstractCollector):
                 for profile in profiles:
                     logger.debug(f'Collecting profile {profile}')
                     profile_page_object = VkProfilePage(request.driver, VkLinkBuilder.build(profile.id_url()))
-                    profile_dto = profile_page_object.retry_action(
-                        action=lambda: profile_page_object.collect_profile(),
-                        cooldown_time=COOLDOWN_SECONDS,
-                        additional_exceptions=[WsmcWebDriverProfileException],
-                        max_retry_count=MAX_RETRY_COUNT
-                    )
 
-                    SmProfile.objects.filter(id=profile.id).update(was_collected=True,
-                                                                   **self.as_dict_for_model(profile_dto))
-                    profile = SmProfile.objects.get(id=profile.id)
-                    if profile.identify_location():
-                        profile.save()
+                    try:
+                        profile_dto = profile_page_object.retry_action(
+                            action=lambda: profile_page_object.collect_profile(),
+                            cooldown_time=COOLDOWN_SECONDS,
+                            additional_exceptions=[WsmcWebDriverProfileException],
+                            max_retry_count=MAX_RETRY_COUNT
+                        )
+                        SmProfile.objects.filter(id=profile.id).update(was_collected=True,
+                                                                       **self.as_dict_for_model(profile_dto))
+                        profile = SmProfile.objects.get(id=profile.id)
+                        if profile.identify_location():
+                            profile.save()
+                    except WsmcWebDriverProfileNotFoundException as e:
+                        logger.warning(f'Profile not exists', exc_info=e)
+                        SmProfile.objects.filter(id=profile.id).update(was_collected=True)
+
+
             request.mark_retry_successful()
 
         return super().handle(request)

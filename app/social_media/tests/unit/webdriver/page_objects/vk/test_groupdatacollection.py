@@ -8,6 +8,7 @@ from social_media.dtos import SmGroupDto, SmPostDto, SmPostImageDto, AuthorDto, 
 from social_media.social_media import SocialMediaTypes
 from social_media.webdriver.common import date_time_parse
 from social_media.webdriver.driverbuilder import DriverBuilder
+from social_media.webdriver.exceptions import WsmcWebDriverProfileNotFoundException
 from social_media.webdriver.link_builders.vk.vklinkbuilder import VkLinkBuilder
 from social_media.webdriver.page_objects.vk.vkgrouppage import VkGroupPage
 from social_media.webdriver.page_objects.vk.vkloginpage import VkLoginPage
@@ -172,3 +173,8 @@ class TestVkDataCollection(SimpleTestCase):
         profile_dto = profile_page_object.collect_profile()
         print(profile_dto)
         self.assertEqual(profile_dto, expected_dto)
+
+    def test_not_found_profile(self):
+        profile_url = 'https://vk.com/id729303074'
+        profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
+        self.assertRaises(WsmcWebDriverProfileNotFoundException, profile_page_object.collect_profile)
