@@ -71,7 +71,6 @@ class VkProfilePage(AbstractVkPageObject):
         logger.debug('Collecting profile information')
         self.driver.clear_requests()
         self.navigate_if_necessary()
-        print(self.driver.title)
         self.get_wait().until(EC.any_of(
             EC.invisibility_of_element_located(self.tab_placeholder()),
             EC.title_is(self.NOT_FOUND_TITLE)
