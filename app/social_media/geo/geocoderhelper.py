@@ -1,6 +1,7 @@
 import dataclasses
 import hashlib
 import logging
+from time import sleep
 from typing import Optional, Union, List, Callable
 
 import geopy.exc
@@ -42,26 +43,18 @@ class GeoCoderHelper:
 
         cache_item = cache.get(cache_key)
 
-        lookup_result: Optional[Union[Location, False]] = None
-
         if cache_item is None:
-            for attempt in range(max_retries):
-                try:
-                    lookup_result = self.restartable_gecode(lambda: self.get_geocoder_inst().geocode(
-                        query=query,
-                        geometry='wkt',
-                        language='ru',
-                        country_codes=country_codes
-                    ), delay=delay, max_retries=max_retries)
 
+                lookup_result = self.restartable_gecode(lambda: self.get_geocoder_inst().geocode(
+                    query=query,
+                    geometry='wkt',
+                    language='ru',
+                    country_codes=country_codes
+                ), delay=delay, max_retries=max_retries)
+                if not lookup_result:
+                    lookup_result = False
 
-                    if not lookup_result:
-                        lookup_result = False
-
-                    cache.set(cache_key, lookup_result, 24 * 60 * 60)
-                except geopy.exc.GeocoderUnavailable:
-
-                    logger.error('Geocoder attempt failed failed')
+                cache.set(cache_key, lookup_result, 24 * 60 * 60)
 
 
         else:
@@ -85,6 +78,7 @@ class GeoCoderHelper:
                     raise
 
                 logger.error(f'Geocoder attempt {attempt + 1} failed failed, retry in {delay}s')
+                sleep(delay)
     @staticmethod
     def normalize_to_multipolygon(lookup: GeoCoderLookup):
         if not lookup.geometry:
