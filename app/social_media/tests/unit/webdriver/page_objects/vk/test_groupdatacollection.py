@@ -43,6 +43,11 @@ class TestVkDataCollection(SimpleTestCase):
         group_dto = group_page_object.collect_group()
         self.assertIsInstance(group_dto, SmGroupDto)
         self.assertEqual(group_dto, expected_dto)
+
+    def test_club_group_info(self):
+        group_url = 'https://vk.com/chvk.vaqner'
+        group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(group_url))
+        group_dto = group_page_object.collect_group()
         print(group_dto)
 
     def test_post_info_collection(self):

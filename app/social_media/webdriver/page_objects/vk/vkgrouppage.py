@@ -43,9 +43,9 @@ class VkGroupPage(AbstractVkPageObject):
         return VkProfileWallPage(self.driver, self.link_strategy)
 
     def _extract_id(self) -> str:
-        pattern = re.compile(r"\/public(?P<oid>\d+)")
+        pattern = re.compile(r"\/(?:public|club)(?P<oid>\d+)")
         match = pattern.search(self.permalink())
         if match is None:
-            raise WsmcWebDriverGroupException(f'Cannot locate "/public" in url: "{self.permalink()}"')
+            raise WsmcWebDriverGroupException(f'Cannot locate group ID in url: "{self.permalink()}"')
 
         return match.group('oid')
