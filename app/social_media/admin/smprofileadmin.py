@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis.admin import GISModelAdmin
+from django.contrib.gis.db.models import Union
 from django.db.models import QuerySet, OuterRef, Subquery, Exists, Count
+from django.db.models.expressions import RawSQL
 from django.shortcuts import redirect
 from import_export.admin import ExportMixin
 from import_export.fields import Field
@@ -32,9 +34,8 @@ class ProfileLocationPreciseFilter(SimpleListFilter):
 
     def queryset(self, request, queryset: QuerySet):
         if self.value():
-            polygon_subquery = SmProfileLocationFilter.objects.get(id=self.value()).locations.filter(
-                pol__intersects=OuterRef('location_point'))
-            return queryset.filter(Exists(polygon_subquery))
+            polygon_subquery = SmProfileLocationFilter.objects.get(id=self.value()).locations.aggregate(Union('pol'))['pol__union']
+            return queryset.filter(location_point__intersects=polygon_subquery)
 
 
 class SmProfileResource(ModelResource):
