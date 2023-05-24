@@ -22,7 +22,7 @@ class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
 
     STEP: int = 20
-    _max_offset: int
+
     request_origin = None
 
     post_count = 0
@@ -37,12 +37,12 @@ class VkPostsCollector(AbstractCollector):
                 logger.debug('Wall has no posts: nothing to do')
                 return
 
-            self._max_offset = wall.get_max_offset()
+            max_offset = wall.get_max_offset()
 
             offset = 0
             try:
                 new_posts = 0
-                for offset in self.offset_generator(request, lambda: new_posts):
+                for offset in self.offset_generator(request, lambda: new_posts, max_offset):
                     # resetting at each new offset
                     new_posts = self.process_posts_wall(request, wall, offset)
 
@@ -138,7 +138,7 @@ class VkPostsCollector(AbstractCollector):
             return {'suspect_group': request.suspect_identity}
         return {'suspect_social_media', request.suspect_identity}
 
-    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int]) -> Generator[int, None, None]:
+    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[int, None, None]:
         last_offset: Optional[int] = None
         current_offset: int = 0
 
@@ -162,7 +162,7 @@ class VkPostsCollector(AbstractCollector):
                 current_offset = last_offset
             update_page_num()
 
-        while current_offset <= self._max_offset:
+        while current_offset <= max_offset:
             logger.debug(f'Generated offset: {current_offset}')
             yield current_offset
             new_posts = new_amount_cb()
