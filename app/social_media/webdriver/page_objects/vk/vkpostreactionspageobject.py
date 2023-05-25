@@ -1,10 +1,12 @@
 import json
+from typing import Generator, List, Optional
 
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 
+from social_media.dtos import AuthorDto
 from .abstractvkpageobject import AbstractVkPageObject
 from .vkpostfansboxpageobject import VkPostFansBoxPageObject
 from ...exceptions import WsmcWebDriverPostLikesException
@@ -56,12 +58,12 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
 
         raise WsmcWebDriverPostLikesException(f'Likes count data does not match any known format: "{item}"')
 
-    def collect_likes(self):
+    def open_likes_modal_and_collect(self) -> Optional[Generator[List[AuthorDto], None, None]]:
         if self.likes_count() <= 0:
             return None
 
         fan_box_object = self.open_likes_window()
-        return fan_box_object.collect_likes()
+        return fan_box_object.generate_likes()
 
     def open_likes_window(self) -> VkPostFansBoxPageObject:
         self.driver.scroll_into_view(self.post_button_reactions_container)

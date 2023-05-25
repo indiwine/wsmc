@@ -50,12 +50,12 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         self.box_close_button().click()
         self.get_wait().until(EC.invisibility_of_element(self.fans_box))
 
-    def collect_likes(self) -> Generator[AuthorDto, None, None]:
+    def generate_likes(self) -> Generator[List[AuthorDto], None, None]:
         if not self.is_all_tabs_selected():
             self.switch_to_all_likes_tab()
 
         while True:
-            yield from self.browser_based_extraction()
+            yield self._browser_based_extraction()
 
             if not self._load_more_likes():
                 self.close()
@@ -73,14 +73,16 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             return False
         return True
 
-    def pure_selenium_extraction(self):
+    def _pure_selenium_extraction(self) -> List[AuthorDto]:
         fan_rows = self.get_fan_rows()
+        results = []
         for fan_row in fan_rows:
-            yield self.fan_row_to_author_dro(fan_row)
+            results.append(self.fan_row_to_author_dro(fan_row))
 
         self.driver.remove_element(fan_rows)
+        return results
 
-    def browser_based_extraction(self):
+    def _browser_based_extraction(self) -> List[AuthorDto]:
         fan_rows = self.get_fan_rows()
 
         like_objects: List[Dict] = self.driver.execute_script("""
@@ -101,14 +103,18 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             return items;
         """, fan_rows)
 
+        result = []
+
         for like_obj in like_objects:
             oid, is_group = self.parse_oid(like_obj['id'])
-            yield AuthorDto(
+            result.append(AuthorDto(
                 oid=oid,
                 is_group=is_group,
                 name=like_obj['name'],
                 url=like_obj['url']
-            )
+            ))
+
+        return result
 
 
 

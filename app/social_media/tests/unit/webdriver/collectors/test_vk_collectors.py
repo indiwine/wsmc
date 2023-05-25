@@ -1,5 +1,4 @@
 import cProfile
-from pstats import Stats
 from unittest.mock import MagicMock
 
 from django.conf import settings
@@ -32,10 +31,10 @@ class TestVkCollectors(TestCase):
     def tearDown(self):
         """finish any test"""
         self.pr.dump_stats('vk_collect.pstat')
-        p = Stats(self.pr)
-        p.strip_dirs()
-        p.sort_stats('cumtime')
-        p.print_stats()
+        # p = Stats(self.pr)
+        # p.strip_dirs()
+        # p.sort_stats('cumtime')
+        # p.print_stats()
 
     def create_agent(self, request: Request, chain_obj: Collector):
         run_agent = Agent(request)

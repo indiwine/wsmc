@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from dataclasses import fields, Field, is_dataclass
-from typing import Callable, Tuple, Optional, Union
+from typing import Callable, Tuple, Optional, Union, List
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -84,6 +84,64 @@ class AbstractCollector(Collector):
                 'parent_id': target.id,
             }
         )
+
+    def batch_persist_likes(self,
+                            like_authors: List[AuthorDto],
+                            target: Union[SmPost, SmComment],
+                            request: Request):
+        authors = filter(lambda item: not item.is_group, like_authors)
+        authors = self.batch_persist_profiles(list(authors), request)
+
+        parent_type = ContentType.objects.get_for_model(target)
+
+        existing_likes = SmLikes.objects.filter(
+            owner_id__in=list(authors),
+            parent_type=parent_type,
+            parent_id=target.id
+        )
+
+        likes_to_create = []
+        for author_id in authors:
+            found_like = list(filter(lambda item: item.owner_id == author_id, existing_likes))
+            if not found_like:
+                likes_to_create.append(
+                    SmLikes(
+                        owner_id=author_id,
+                        parent_type=parent_type,
+                        parent_id=target.id
+                    )
+                )
+
+        if likes_to_create:
+            SmLikes.objects.bulk_create(likes_to_create, ignore_conflicts=True)
+
+        return len(existing_likes), len(likes_to_create)
+
+    def batch_persist_profiles(self, like_authors: List[AuthorDto], request: Request):
+        all_oids = list(map(lambda author_dto: author_dto.oid, like_authors))
+        db_profiles = SmProfile.objects.filter(oid__in=all_oids, social_media=request.get_social_media_type)
+
+        existing_profiles = []
+        profiles_to_create = []
+        for like_author in like_authors:
+            found_profiles = list(filter(lambda item: item.oid == like_author.oid, db_profiles))
+            if len(found_profiles) > 0:
+                existing_profiles += found_profiles
+            else:
+                profiles_to_create.append(
+                    SmProfile(
+                        social_media=request.get_social_media_type,
+                        credentials=request.credentials,
+                        oid=like_author.oid,
+                        name=like_author.name
+                    )
+                )
+        if profiles_to_create:
+            existing_profiles += SmProfile.objects.bulk_create(profiles_to_create, ignore_conflicts=True)
+        return SmProfile.objects.filter(
+            oid__in=all_oids,
+            social_media=request.get_social_media_type
+        ).values_list('id', flat=True)
 
     def count_likes(self, target: Union[SmPost, SmComment]) -> int:
         parent_type = ContentType.objects.get_for_model(target)

@@ -1,8 +1,8 @@
 import datetime
+from pathlib import Path
 
 from django.conf import settings
 from django.test import SimpleTestCase
-from pathlib import Path
 
 from social_media.dtos import SmGroupDto, SmPostDto, SmPostImageDto, AuthorDto, SmProfileDto, SmProfileMetadata
 from social_media.social_media import SocialMediaTypes
@@ -15,6 +15,8 @@ from social_media.webdriver.page_objects.vk.vkloginpage import VkLoginPage
 from social_media.webdriver.page_objects.vk.vkprofilepage import VkProfilePage
 from social_media.webdriver.page_objects.vk.vksinglepostpage import VkSinglePostPage
 
+DO_LOGIN = False
+
 
 class TestVkDataCollection(SimpleTestCase):
 
@@ -22,13 +24,13 @@ class TestVkDataCollection(SimpleTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.driver = DriverBuilder.build()
-        VkLoginPage(cls.driver, VkLinkBuilder.build('')).perform_login(user_name=settings.TEST_VK_LOGIN,
-                                                                       password=settings.TEST_VK_PASSWORD)
+        if DO_LOGIN:
+            VkLoginPage(cls.driver, VkLinkBuilder.build('')).perform_login(user_name=settings.TEST_VK_LOGIN,
+                                                                           password=settings.TEST_VK_PASSWORD)
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.driver.quit()
-
 
     def test_group_info_collection(self):
         group_url = 'https://vk.com/officialpages'
@@ -82,7 +84,7 @@ class TestVkDataCollection(SimpleTestCase):
         del post_reactions_object
 
         post_dto = post_object.collect()
-        likes = list(post_object.collect_likes())
+        likes = post_object.collect_likes_flat()
         print(post_dto)
         print(likes)
 
@@ -117,7 +119,8 @@ class TestVkDataCollection(SimpleTestCase):
             self.assertIsInstance(post_dto, SmPostDto)
             post_reactions_object = post_object.get_post_reactions_object()
             total_likes = post_reactions_object.likes_count()
-            post_likes = list(post_object.collect_likes())
+            post_likes = post_object.collect_likes_flat()
+            # TODO: Add likes assertion
             posts.append(post_dto)
 
         print(posts)

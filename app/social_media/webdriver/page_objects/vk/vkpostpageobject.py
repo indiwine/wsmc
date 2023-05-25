@@ -1,6 +1,7 @@
+import itertools
 import logging
 from datetime import datetime
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Generator
 
 from django.utils import timezone
 from selenium.common import NoSuchElementException
@@ -53,8 +54,15 @@ class VkPostPageObject(AbstractVkPageObject):
 
         return dto
 
-    def collect_likes(self):
-        return self.get_post_reactions_object().collect_likes()
+    def collect_likes(self) -> Optional[Generator[List[AuthorDto], None, None]]:
+        return self.get_post_reactions_object().open_likes_modal_and_collect()
+
+    def collect_likes_flat(self) -> Optional[List[AuthorDto]]:
+        likes_gen = self.collect_likes()
+        if not likes_gen:
+            return None
+
+        return list(itertools.chain(*likes_gen))
 
     def get_post_author(self):
         author_header = self.post_header_author_link()

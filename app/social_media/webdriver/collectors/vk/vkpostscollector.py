@@ -45,14 +45,21 @@ class VkPostsCollector(AbstractCollector):
                 for offset in self.offset_generator(request, lambda: new_posts, max_offset):
                     # resetting at each new offset
                     new_posts = self.process_posts_wall(request, wall, offset)
+                    self._update_offset(request, offset)
 
             except WsmcStopPostCollection:
                 pass
             finally:
-                VkPostStat.objects.update_or_create(**self.get_vk_post_stat_kwargs(request),
-                                                    defaults={'last_offset': offset})
+                self._update_offset(request, offset)
 
         return super().handle(request)
+
+    def _update_offset(self, request: Request, offset: int):
+        try:
+            VkPostStat.objects.update_or_create(**self.get_vk_post_stat_kwargs(request),
+                                                defaults={'last_offset': offset})
+        except Exception as e:
+            logger.error('Cannot save VkPostStat object due to error', exc_info=e)
 
     def process_posts_wall(self, request: Request, wall: VkProfileWallPage, offset: int) -> int:
         new_count = 0
@@ -105,19 +112,13 @@ class VkPostsCollector(AbstractCollector):
 
         fan_box_object = post_reactions_object.open_likes_window()
 
-        for like_author in fan_box_object.collect_likes():
+        for like_authors in fan_box_object.generate_likes():
+            _, new_likes_num = self.batch_persist_likes(like_authors, post_item, request)
+            likes_in_db += new_likes_num
 
-            like_result = self.persist_like(like_author, post_item, request)
-
-            if like_result:
-                _, is_created = like_result
-
-                if is_created:
-                    likes_in_db += 1
-
-                if likes_in_db == total_likes_count:
-                    fan_box_object.close()
-                    break
+            if likes_in_db == total_likes_count:
+                fan_box_object.close()
+                break
 
     @staticmethod
     def _navigate_to_post_wall(request: Request) -> Tuple[VkProfileWallPage, bool]:
