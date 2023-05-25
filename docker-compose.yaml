@@ -61,8 +61,6 @@ services:
   chrome-01:
     image: selenium/node-chrome:112.0
     shm_size: "2g"
-    depends_on:
-      - webdriver
     environment:
       <<: *selenium-nodes
     ports:
@@ -71,8 +69,6 @@ services:
   chrome-02:
     image: selenium/node-chrome:112.0
     shm_size: "2g"
-    depends_on:
-      - webdriver
     environment:
       <<: *selenium-nodes
     ports:
@@ -81,8 +77,6 @@ services:
   chrome-03:
     image: selenium/node-chrome:112.0
     shm_size: "2g"
-    depends_on:
-      - webdriver
     environment:
       <<: *selenium-nodes
     ports:
@@ -100,6 +94,8 @@ services:
 
   webdriver:
     image: selenium/hub:4.9.0
+    depends_on:
+      - chrome-01
     ports:
       - "4442:4442"
       - "4443:4443"

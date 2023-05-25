@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, List, Dict
 
 import logging
 from selenium.common import TimeoutException
@@ -55,11 +55,7 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             self.switch_to_all_likes_tab()
 
         while True:
-            fan_rows = self.get_fan_rows()
-            for fan_row in fan_rows:
-                yield self.fan_row_to_author_dro(fan_row)
-
-            self.driver.remove_element(fan_rows)
+            yield from self.browser_based_extraction()
 
             if not self._load_more_likes():
                 self.close()
@@ -76,6 +72,45 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             logger.debug('Timeout while loading likes', exc_info=e)
             return False
         return True
+
+    def pure_selenium_extraction(self):
+        fan_rows = self.get_fan_rows()
+        for fan_row in fan_rows:
+            yield self.fan_row_to_author_dro(fan_row)
+
+        self.driver.remove_element(fan_rows)
+
+    def browser_based_extraction(self):
+        fan_rows = self.get_fan_rows()
+
+        like_objects: List[Dict] = self.driver.execute_script("""
+            /**
+            * @param {Element} el
+            */
+            function _$$_wsmc_extract_like(el) {
+                const fan_link = el.getElementsByClassName('fans_fan_lnk').item(0);
+                return {
+                    id: el.dataset.id,
+                    name: fan_link.innerText,
+                    url: fan_link.href
+                }
+            }
+            
+            const items = arguments[0].map(el => _$$_wsmc_extract_like(el));
+            arguments[0].forEach(el => el.remove());
+            return items;
+        """, fan_rows)
+
+        for like_obj in like_objects:
+            oid, is_group = self.parse_oid(like_obj['id'])
+            yield AuthorDto(
+                oid=oid,
+                is_group=is_group,
+                name=like_obj['name'],
+                url=like_obj['url']
+            )
+
+
 
     @classmethod
     def fan_row_to_author_dro(cls, fan_row: WebElement) -> AuthorDto:

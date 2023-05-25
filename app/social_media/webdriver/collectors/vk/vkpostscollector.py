@@ -69,14 +69,12 @@ class VkPostsCollector(AbstractCollector):
                 if self._options.post_date_limit and post_dto.datetime < self._options.post_date_limit:
                     raise WsmcStopPostCollection('Post date limit reached')
 
-
                 post_item, is_new = self.persist_post(post_dto, self.request_origin, request)
 
                 self._parse_post_likes(post_page_object, post_item, request)
 
                 if is_new:
                     new_count += 1
-
 
             return post_count
 
@@ -138,7 +136,8 @@ class VkPostsCollector(AbstractCollector):
             return {'suspect_group': request.suspect_identity}
         return {'suspect_social_media', request.suspect_identity}
 
-    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[int, None, None]:
+    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[
+        int, None, None]:
         last_offset: Optional[int] = None
         current_offset: int = 0
 

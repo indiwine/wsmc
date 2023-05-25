@@ -1,3 +1,5 @@
+import cProfile
+from pstats import Stats
 from unittest.mock import MagicMock
 
 from django.conf import settings
@@ -22,6 +24,18 @@ class TestVkCollectors(TestCase):
             password=settings.TEST_VK_PASSWORD,
             social_media=SocialMediaTypes.VK
         )
+
+    def setUp(self) -> None:
+        self.pr = cProfile.Profile()
+        self.pr.enable()
+
+    def tearDown(self):
+        """finish any test"""
+        self.pr.dump_stats('vk_collect.pstat')
+        p = Stats(self.pr)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats()
 
     def create_agent(self, request: Request, chain_obj: Collector):
         run_agent = Agent(request)
@@ -50,11 +64,12 @@ class TestVkCollectors(TestCase):
             suspect_identity=suspect_group
         )
 
-        def mock_offset_generator(a, b):
+        def mock_offset_generator(a, b, c):
             for offset in [0]:
                 yield offset
 
         posts_collector = VkPostsCollector()
+        posts_collector.set_options(VkOptions())
         posts_collector.offset_generator = MagicMock(side_effect=mock_offset_generator)
 
         group_collector = VkGroupCollector().set_next(posts_collector)
@@ -84,7 +99,6 @@ class TestVkCollectors(TestCase):
         self.assertEqual(self.credential.id, updated_profile.credentials_id)
         self.assertIsNone(updated_profile.suspect_social_media)
 
-
     def test_post_offset_generator(self):
         posts_collector = VkPostsCollector()
 
@@ -92,7 +106,7 @@ class TestVkCollectors(TestCase):
         posts_collector.set_options(options)
 
         suspect_group = SuspectGroup.objects.create(
-            name='Test Vk Group',
+            name='Another Test Vk Group',
             url='https://vk.com/jj.crocodile',
             credentials=self.credential
         )
@@ -112,7 +126,8 @@ class TestVkCollectors(TestCase):
 
         offsets = posts_collector.offset_generator(request, new_amount, max_offset)
 
-        steps_to_offset_cb = lambda item: item * VkPostsCollector.STEP
+        def steps_to_offset_cb(item):
+            return item * VkPostsCollector.STEP
 
         # Normal flow
         expected_offsets = map(steps_to_offset_cb, range(steps + 1))
@@ -134,6 +149,7 @@ class TestVkCollectors(TestCase):
         max_offset = VkPostsCollector.STEP * steps
 
         new_amount_calls = 0
+
         def amount_cb():
             nonlocal new_amount_calls
             new_amount_calls += 1
@@ -152,11 +168,3 @@ class TestVkCollectors(TestCase):
         offsets = posts_collector.offset_generator(request, amount_cb, max_offset)
         expected_offsets = map(steps_to_offset_cb, range(collected_step, steps + 1))
         self.assertSequenceEqual(list(offsets), list(expected_offsets))
-
-
-
-
-
-
-
-
