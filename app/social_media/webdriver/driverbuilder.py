@@ -46,6 +46,7 @@ class DriverBuilder:
                                )
 
         driver.set_page_load_timeout(settings.WSMC_SELENIUM_WAIT_TIMEOUT)
+        driver.set_script_timeout(settings.WSMC_SELENIUM_SCRIPT_TIMEOUT)
 
         driver.scopes = [
             # '.*\.(jpg|jpeg|png|gif|bmp).*',

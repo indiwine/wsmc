@@ -37,7 +37,7 @@ class GeoCoderHelper:
                 query: Union[str],
                 country_codes: Union[str, List[str]] = None,
                 max_retries: int = 10,
-                delay: int = 60) -> Optional[GeoCoderLookup]:
+                delay: int = 15) -> Optional[GeoCoderLookup]:
 
         cache_key = f'nominatium_location_{hashlib.md5(query.encode()).hexdigest()}'
 
@@ -50,7 +50,7 @@ class GeoCoderHelper:
                     geometry='wkt',
                     language='ru',
                     country_codes=country_codes
-                ), delay=delay, max_retries=max_retries)
+                ), base_delay=delay, max_retries=max_retries)
                 if not lookup_result:
                     lookup_result = False
 
@@ -69,13 +69,15 @@ class GeoCoderHelper:
 
         return None
     @staticmethod
-    def restartable_gecode(cb: Callable, delay: int, max_retries: int) -> Location:
+    def restartable_gecode(cb: Callable, base_delay: int, max_retries: int) -> Location:
         for attempt in range(max_retries):
             try:
                 return cb()
             except geopy.exc.GeocoderUnavailable:
                 if (attempt + 1) == max_retries:
                     raise
+
+                delay = base_delay * 2 ** (attempt - 1)
 
                 logger.error(f'Geocoder attempt {attempt + 1} failed failed, retry in {delay}s')
                 sleep(delay)
