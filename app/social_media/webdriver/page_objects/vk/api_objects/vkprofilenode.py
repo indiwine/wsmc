@@ -2,6 +2,7 @@ import html
 from datetime import datetime
 from typing import Optional
 
+from social_media.dtos import SmProfileDto, SmProfileMetadata
 from social_media.webdriver.common import date_time_parse
 
 
@@ -26,11 +27,11 @@ class VkProfileNode:
 
     @property
     def has_meta(self):
-        return self.tv or self.twitter or self.site
+        return self.twitter or self.site
 
     @property
-    def tv(self):
-        return self._get_prop_if_truthful('tv')
+    def mobile_phone(self):
+        return self._get_prop_if_truthful('mobile_phone')
 
     @property
     def twitter(self):
@@ -84,3 +85,24 @@ class VkProfileNode:
     @property
     def oid(self) -> str:
         return str(self.raw_node['id'])
+    
+    def to_dto(self) -> SmProfileDto:
+        dto = SmProfileDto(name=self.name,
+                           location=self.location,
+                           home_town=self.home_town,
+                           university=self.education,
+                           birthdate=self.birthday,
+                           oid=self.oid,
+                           country=self.country,
+                           domain=self.domain
+                           )
+        metadata = None
+        if self.has_meta:
+            metadata = SmProfileMetadata(
+                mobile_phone=self.mobile_phone,
+                twitter=self.twitter,
+                site=self.site
+            )
+
+        dto.metadata = metadata
+        return dto

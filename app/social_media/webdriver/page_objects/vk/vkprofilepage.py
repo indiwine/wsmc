@@ -216,24 +216,6 @@ class VkProfilePage(AbstractVkPageObject):
 
     @staticmethod
     def _node_to_dto(node: VkProfileNode) -> SmProfileDto:
-        dto = SmProfileDto(name=node.name,
-                           location=node.location,
-                           home_town=node.home_town,
-                           university=node.education,
-                           birthdate=node.birthday,
-                           oid=node.oid,
-                           country=node.country,
-                           domain=node.domain
-                           )
-        metadata = None
-        if node.has_meta:
-            metadata = SmProfileMetadata(
-                tv=node.tv,
-                twitter=node.twitter,
-                site=node.site
-            )
-
-        dto.metadata = metadata
-
+        dto = node.to_dto()
         logger.info(f'Profile info found: {json.dumps(asdict(dto), indent=2, ensure_ascii=False, default=str)}')
         return dto

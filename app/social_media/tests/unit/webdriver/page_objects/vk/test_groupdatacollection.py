@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from pprint import pprint
 
 from django.conf import settings
 from django.test import SimpleTestCase
@@ -10,12 +11,13 @@ from social_media.webdriver.common import date_time_parse
 from social_media.webdriver.driverbuilder import DriverBuilder
 from social_media.webdriver.exceptions import WsmcWebDriverProfileNotFoundException
 from social_media.webdriver.link_builders.vk.vklinkbuilder import VkLinkBuilder
+from social_media.webdriver.page_objects.vk.vkapipageobject import VkApiPageObject
 from social_media.webdriver.page_objects.vk.vkgrouppage import VkGroupPage
 from social_media.webdriver.page_objects.vk.vkloginpage import VkLoginPage
 from social_media.webdriver.page_objects.vk.vkprofilepage import VkProfilePage
 from social_media.webdriver.page_objects.vk.vksinglepostpage import VkSinglePostPage
 
-DO_LOGIN = False
+DO_LOGIN = True
 
 
 class TestVkDataCollection(SimpleTestCase):
@@ -186,3 +188,10 @@ class TestVkDataCollection(SimpleTestCase):
         profile_url = 'https://vk.com/id729303074'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         self.assertRaises(WsmcWebDriverProfileNotFoundException, profile_page_object.collect_profile)
+
+    def test_profile_bulk_data(self):
+        page_object = VkApiPageObject(self.driver, VkLinkBuilder.build(''))
+        page_object.ACTIONS_PER_EXEC = 2
+        for results in page_object.bulk_users_get(['1', '296682879', '114551834', '203133326', '729303074'], 2):
+            pprint(results)
+

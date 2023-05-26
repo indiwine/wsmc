@@ -56,6 +56,7 @@ class TestVkCollectors(TestCase):
 
         request = Request(
             entities=[
+                SocialMediaEntities.LOGIN,
                 SocialMediaEntities.GROUP,
                 SocialMediaEntities.POSTS
             ],
@@ -72,7 +73,11 @@ class TestVkCollectors(TestCase):
         posts_collector.offset_generator = MagicMock(side_effect=mock_offset_generator)
 
         group_collector = VkGroupCollector().set_next(posts_collector)
-        run_agent = self.create_agent(request, group_collector)
+
+        login_collector = VkLoginCollector()
+        login_collector.set_next(group_collector)
+
+        run_agent = self.create_agent(request, login_collector)
         run_agent.run()
         saved_group = posts_collector.get_request_origin(request)
 

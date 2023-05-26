@@ -52,7 +52,9 @@ class Agent:
                 delay = base_delay * 2 ** (attempt - 1)
 
                 logger.error(
-                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...")
+                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...",
+                    exc_info=e
+                )
 
                 self.request.configure_for_retry()
 

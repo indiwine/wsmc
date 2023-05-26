@@ -8,7 +8,7 @@ from dataclasses_json import dataclass_json
 @dataclass_json
 @dataclass
 class SmProfileMetadata:
-    tv: str = None
+    mobile_phone: str = None
     twitter: str = None
     site: str = None
 
