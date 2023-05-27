@@ -29,7 +29,7 @@ class GeoCoderHelper:
     @classmethod
     def get_geocoder_inst(cls):
         if cls._GEOCODER_INST is None:
-            cls._GEOCODER_INST = Nominatim(user_agent=settings.NOMINATIM_USER_AGENT)
+            cls._GEOCODER_INST = Nominatim(user_agent=settings.NOMINATIM_USER_AGENT, timeout=60)
 
         return cls._GEOCODER_INST
 
@@ -77,7 +77,7 @@ class GeoCoderHelper:
                 if (attempt + 1) == max_retries:
                     raise
 
-                delay = base_delay * 2 ** (attempt - 1)
+                delay = base_delay * 2 ** attempt
 
                 logger.error(f'Geocoder attempt {attempt + 1} failed failed, retry in {delay}s')
                 sleep(delay)
