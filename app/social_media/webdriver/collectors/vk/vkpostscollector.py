@@ -99,7 +99,7 @@ class VkPostsCollector(AbstractCollector):
 
                 if is_new:
                     new_count += 1
-                self.do_collect_profiles(request)
+                # self.do_collect_profiles(request)
 
             return post_count
 

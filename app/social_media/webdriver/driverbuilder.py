@@ -76,7 +76,9 @@ class DriverBuilder:
             prefs = {
                 "profile.default_content_setting_values.notifications": 2,
                 "profile.managed_default_content_settings.images": 2,
-                'intl.accept_languages': settings.WSMC_WEBDRIVER_LOCALE
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False,
+                "intl.accept_languages": settings.WSMC_WEBDRIVER_LOCALE
             }
             options.add_experimental_option('prefs', prefs)
             options.add_argument(f'--lang={settings.WSMC_WEBDRIVER_LOCALE}')
