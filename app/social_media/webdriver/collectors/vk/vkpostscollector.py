@@ -8,7 +8,7 @@ from selenium.common import ElementNotInteractableException, TimeoutException
 from social_media.models import VkPostStat, SmPost, SmProfile
 from social_media.social_media import SocialMediaEntities
 from ..abstractcollector import AbstractCollector
-from ...exceptions import WsmcStopPostCollection
+from ...exceptions import WsmcStopPostCollection, WsmcWebDriverNativeApiCallTimout
 from ...link_builders.vk import VkLinkBuilder
 from ...options.vkoptions import VkOptions
 from ...page_objects.vk.vkapipageobject import VkApiPageObject
@@ -55,7 +55,7 @@ class VkPostsCollector(AbstractCollector):
 
                         if profile.identify_location():
                             profile.save()
-            except TimeoutException as e:
+            except (TimeoutException, WsmcWebDriverNativeApiCallTimout) as e:
                 logger.error(f'Collecting profiles - timeout', exc_info=e)
 
     def handle(self, request: Request):

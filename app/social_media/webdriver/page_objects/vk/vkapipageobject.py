@@ -5,6 +5,7 @@ from social_media.dtos import SmProfileDto
 from .abstractvkpageobject import AbstractVkPageObject
 from .api_objects.vkprofilenode import VkProfileNode
 from ...common import chunks_list
+from ...exceptions import WsmcWebDriverNativeApiCallTimout
 
 logger = logging.getLogger(__name__)
 
@@ -64,21 +65,40 @@ class VkApiPageObject(AbstractVkPageObject):
             const req = new XMLHttpRequest();
             req.responseType = 'json';
             
+            const timeoutCb = () => callback({ error: 'timeout' })
+            
+            const timer = setTimeout(timeoutCb, 100 * 1000);
             req.onload = () => {
+                clearTimeout(timer);
                 if ('error' in req.response) {
                     throw new Error(`Error while making Native API request: ${JSON.stringify(req.response, null, 4)}`);
                 }
                 
                 callback(req.response)
             };
+            
             req.onerror = ev => { 
-                throw new Error('Error while making request') 
+                clearTimeout(timer);
+                throw new ev;
             };
+            
+            req.ontimeout = ev => {
+                clearTimeout(timer);
+                timeoutCb();
+            }
+            
+            req.onabort = ev => {
+                clearTimeout(timer);
+                timeoutCb();
+            }
             
             req.open('POST', url);
             req.send(data);
+            
             """, exec_code, self.VK_API_VER)
         logger.debug('VK async exec done')
+        if 'error' in raw_response and raw_response['error'] == 'timeout':
+            raise WsmcWebDriverNativeApiCallTimout('Call for profiles has been timed out')
 
         for response_chunk in raw_response['response']:
             yield self.map_profile_node_to_dto(response_chunk)
