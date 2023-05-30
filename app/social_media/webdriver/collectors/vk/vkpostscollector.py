@@ -56,6 +56,7 @@ class VkPostsCollector(AbstractCollector):
                         if profile.identify_location():
                             profile.save()
             except (TimeoutException, WsmcWebDriverNativeApiCallTimout) as e:
+                self._last_profile_collected_at = int(time())
                 logger.error(f'Collecting profiles - timeout', exc_info=e)
 
     def handle(self, request: Request):
