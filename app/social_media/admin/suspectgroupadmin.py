@@ -2,6 +2,7 @@ import logging
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import redirect
 from django.urls import path
@@ -13,9 +14,16 @@ from ..models import SuspectGroup
 logger = logging.getLogger(__name__)
 
 
+@admin.action(description="Collect")
+def perform_collect(modeladmin, request, queryset: QuerySet):
+    for group in queryset:
+        perform_group_data_collection_task.delay(group.id)
+
+
 class SuspectGroupAdmin(ModelAdmin):
     list_display = ['url', 'id']
     ordering = ['-id']
+    actions = [perform_collect]
 
     def perform_scan(self, request: HttpRequest, object_id):
         perform_group_data_collection_task.delay(object_id)
