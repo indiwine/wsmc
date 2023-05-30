@@ -19,8 +19,8 @@ x-selenium-nodes: &selenium-nodes
   SE_EVENT_BUS_PUBLISH_PORT: 4442
   SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
   SE_VNC_NO_PASSWORD: 1
-  SE_SCREEN_WIDTH: 1920
-  SE_SCREEN_HEIGHT: 1080
+  #  SE_SCREEN_WIDTH: 1920
+  #  SE_SCREEN_HEIGHT: 1080
   SE_NODE_SESSION_TIMEOUT: 800
 
 services:
@@ -88,6 +88,9 @@ services:
 
   webdriver:
     image: selenium/hub:4.9.0
+    environment:
+      SE_NODE_SESSION_TIMEOUT: 800
+      SE_SESSION_REQUEST_TIMEOUT: 800
     depends_on:
       - chrome-01
     ports:
@@ -95,17 +98,17 @@ services:
       - "4443:4443"
       - "4444:4444"
   nominatim:
-      image: mediagis/nominatim:4.2
-      expose:
-          - "8080"
-      environment:
-          PBF_URL: https://download.geofabrik.de/europe/ukraine-latest.osm.pbf
-          REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
-          NOMINATIM_PASSWORD: very_secure_password
-          IMPORT_STYLE: "admin"
-      volumes:
-        - nominatim-data:/var/lib/postgresql/14/main
-      shm_size: 256m
+    image: mediagis/nominatim:4.2
+    expose:
+      - "8080"
+    environment:
+      PBF_URL: https://download.geofabrik.de/europe/ukraine-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
+      NOMINATIM_PASSWORD: very_secure_password
+      IMPORT_STYLE: "admin"
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 256m
 
 volumes:
   postgresql:
