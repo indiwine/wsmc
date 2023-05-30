@@ -1,9 +1,12 @@
+import logging
 from typing import List, Generator
 
 from social_media.dtos import SmProfileDto
 from .abstractvkpageobject import AbstractVkPageObject
 from .api_objects.vkprofilenode import VkProfileNode
 from ...common import chunks_list
+
+logger = logging.getLogger(__name__)
 
 
 class VkApiPageObject(AbstractVkPageObject):
@@ -26,6 +29,7 @@ class VkApiPageObject(AbstractVkPageObject):
 
     def do_load_data_from_browser(self, batch: List[List[str]]) -> Generator[List[SmProfileDto], None, None]:
         exec_code = self.generate_batch_user_get_codes(batch)
+        logger.debug('Sending exec code to VK: %s', exec_code)
         raw_response: dict = self.driver.execute_async_script("""
             const url = 'https://api.vk.com/method/execute';
             const callback = arguments[arguments.length - 1];
@@ -74,10 +78,10 @@ class VkApiPageObject(AbstractVkPageObject):
             req.open('POST', url);
             req.send(data);
             """, exec_code, self.VK_API_VER)
+        logger.debug('VK async exec done: %s', raw_response)
 
         for response_chunk in raw_response['response']:
             yield self.map_profile_node_to_dto(response_chunk)
-
 
     @classmethod
     def generate_batch_user_get_codes(cls, batch: List[List[str]]) -> str:

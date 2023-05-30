@@ -16,7 +16,7 @@ services:
     image: indiwine/wsmc:latest
 #    command: celery -A wsmc worker -P solo
     environment:
-      DEBUG: '0'
+      DEBUG: '1'
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'
