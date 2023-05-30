@@ -25,8 +25,8 @@ class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
     _last_profile_collected_at: Optional[int] = None
 
-    DELAY_BETWEEN_PROFILES = 90
-    PROFILES_PER_REQUEST = 2500
+    DELAY_BETWEEN_PROFILES = 60 * 3
+    PROFILES_PER_REQUEST = 100 * 25
     STEP: int = 20
     request_origin = None
     post_count = 0
@@ -45,7 +45,7 @@ class VkPostsCollector(AbstractCollector):
         with transaction.atomic():
             if len(profiles) == 0:
                 return
-            
+
             try:
                 for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
                     for profile_dto in profile_dto_list:
