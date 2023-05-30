@@ -3,7 +3,7 @@ from time import time
 from typing import Generator, Optional, Callable, Tuple
 
 from django.db import transaction
-from selenium.common import ElementNotInteractableException
+from selenium.common import ElementNotInteractableException, TimeoutException
 
 from social_media.models import VkPostStat, SmPost, SmProfile
 from social_media.social_media import SocialMediaEntities
@@ -25,8 +25,8 @@ class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
     _last_profile_collected_at: Optional[int] = None
 
-    DELAY_BETWEEN_PROFILES = 60
-    PROFILES_PER_REQUEST = 1000
+    DELAY_BETWEEN_PROFILES = 90
+    PROFILES_PER_REQUEST = 2500
     STEP: int = 20
     request_origin = None
     post_count = 0
@@ -45,14 +45,18 @@ class VkPostsCollector(AbstractCollector):
         with transaction.atomic():
             if len(profiles) == 0:
                 return
-            for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
-                for profile_dto in profile_dto_list:
-                    SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type) \
-                        .update(was_collected=True, **self.as_dict_for_model(profile_dto))
-                    profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
+            
+            try:
+                for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
+                    for profile_dto in profile_dto_list:
+                        SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type) \
+                            .update(was_collected=True, **self.as_dict_for_model(profile_dto))
+                        profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
 
-                    if profile.identify_location():
-                        profile.save()
+                        if profile.identify_location():
+                            profile.save()
+            except TimeoutException as e:
+                logger.error(f'Collecting profiles - timeout', exc_info=e)
 
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.POSTS):
