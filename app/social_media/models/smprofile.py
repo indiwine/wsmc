@@ -12,7 +12,8 @@ from ..social_media import SocialMediaTypes
 
 logger = logging.getLogger(__name__)
 
-LOOKUP_COUNTRY_CODES = ['UA', 'RU', 'BY', 'KZ']
+LOOKUP_COUNTRY_CODES = ['UA']
+
 
 class SmProfile(Model):
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
@@ -68,7 +69,6 @@ class SmProfile(Model):
         if self.country != 'Украина':
             return False
 
-
         # Already known
         if self.location_known:
             logger.debug('Location already known')
@@ -85,7 +85,6 @@ class SmProfile(Model):
 
         if self.country:
             country_request = f'{self.country}, '
-
 
         location_query = self.location
         if not location_query:

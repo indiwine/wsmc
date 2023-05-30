@@ -1,4 +1,5 @@
 import logging
+from time import time
 from typing import Generator, Optional, Callable, Tuple
 
 from django.db import transaction
@@ -22,12 +23,20 @@ logger = logging.getLogger(__name__)
 
 class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
+    _last_profile_collected_at: Optional[int] = None
 
+    DELAY_BETWEEN_PROFILES = 90
     STEP: int = 20
     request_origin = None
     post_count = 0
 
     def do_collect_profiles(self, request: Request):
+        if self._last_profile_collected_at and (int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
+            logger.info('Skipping post collection')
+            return
+
+        logger.info('Collecting profiles....')
+        self._last_profile_collected_at = int(time())
         api_page_object = VkApiPageObject(request.driver, VkLinkBuilder.build_group(''))
         profiles = SmProfile.objects \
                        .select_for_update(skip_locked=True) \
@@ -99,7 +108,7 @@ class VkPostsCollector(AbstractCollector):
 
                 if is_new:
                     new_count += 1
-                # self.do_collect_profiles(request)
+                self.do_collect_profiles(request)
 
             return post_count
 

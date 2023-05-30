@@ -6,10 +6,11 @@ x-app-common: &common-variables
   FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY} # Precalculated key
   WEBDRIVER_URL: 'http://webdriver:4444'
   SELENIUM_DRIVER: 'chrome'
-  NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
   WSMC_LOAD_AI: ${WSMC_LOAD_AI}
-  TF_CPP_MIN_LOG_LEVEL: 2
+  NOMINATIM_USER_AGENT: 'wsmc_test_app'
+  NOMINATIM_DOMAIN: 'nominatim:8080'
+  NOMINATIM_SCHEME: 'http'
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
@@ -38,7 +39,7 @@ services:
   celery:
     image: indiwine/wsmc:latest
     hostname: 'celery'
-    command: celery -A wsmc worker --concurrency=3
+    command: celery -A wsmc worker --concurrency=3 -n webdriver-worker@%h
     volumes:
       - wsmc-storage:/app/storage
     environment:
@@ -82,16 +83,6 @@ services:
     ports:
       - "7902:7900"
 
-  #  chrome-04:
-  #    image: selenium/node-chrome:112.0
-  #    shm_size: "2g"
-  #    depends_on:
-  #      - webdriver
-  #    environment:
-  #      <<: *selenium-nodes
-  #    ports:
-  #      - "7903:7900"
-
   webdriver:
     image: selenium/hub:4.9.0
     depends_on:
@@ -100,8 +91,21 @@ services:
       - "4442:4442"
       - "4443:4443"
       - "4444:4444"
+  nominatim:
+      image: mediagis/nominatim:4.2
+      expose:
+          - "8080"
+      environment:
+          PBF_URL: https://download.geofabrik.de/europe/ukraine-latest.osm.pbf
+          REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
+          NOMINATIM_PASSWORD: very_secure_password
+          IMPORT_STYLE: "admin"
+      volumes:
+        - nominatim-data:/var/lib/postgresql/14/main
+      shm_size: 256m
 
 volumes:
   postgresql:
   tdlib:
   wsmc-storage:
+  nominatim-data:

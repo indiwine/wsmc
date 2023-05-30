@@ -29,7 +29,12 @@ class GeoCoderHelper:
     @classmethod
     def get_geocoder_inst(cls):
         if cls._GEOCODER_INST is None:
-            cls._GEOCODER_INST = Nominatim(user_agent=settings.NOMINATIM_USER_AGENT, timeout=60)
+            cls._GEOCODER_INST = Nominatim(
+                domain=settings.NOMINATIM_DOMAIN,
+                user_agent=settings.NOMINATIM_USER_AGENT,
+                timeout=settings.NOMINATIM_TIMEOUT,
+                scheme='http'
+            )
 
         return cls._GEOCODER_INST
 
@@ -54,7 +59,7 @@ class GeoCoderHelper:
                 if not lookup_result:
                     lookup_result = False
 
-                cache.set(cache_key, lookup_result, 24 * 60 * 60)
+                # cache.set(cache_key, lookup_result, 24 * 60 * 60)
 
 
         else:

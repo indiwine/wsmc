@@ -29,9 +29,6 @@ ALLOWED_HOSTS = [
     'localhost'
 ]
 
-
-
-
 # Application definition
 
 
@@ -82,7 +79,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'wsmc.wsgi.application'
-
 
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
 
@@ -153,7 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = 'storage/'
 MEDIA_ROOT = '/app/storage'
 
-log_level = 'DEBUG' if DEBUG else 'WARNING'
+log_level = 'DEBUG' if DEBUG else 'INFO'
 
 LOGGING = {
     'version': 1,
@@ -208,7 +204,11 @@ CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
+
 NOMINATIM_USER_AGENT = os.environ.get('NOMINATIM_USER_AGENT', 'wsmc_test_app')
+NOMINATIM_DOMAIN = os.environ.get('NOMINATIM_DOMAIN', 'nominatim.openstreetmap.org')
+NOMINATIM_SCHEME = os.environ.get('NOMINATIM_SCHEME', 'https')
+NOMINATIM_TIMEOUT = 10
 
 # WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
 WSMC_LOAD_AI = False
@@ -231,7 +231,6 @@ PHONENUMBER_DEFAULT_REGION = 'UA'
 TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
-
 
 # Test setting
 TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
