@@ -25,28 +25,29 @@ class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
     _last_profile_collected_at: Optional[int] = None
 
-    DELAY_BETWEEN_PROFILES = 90
+    DELAY_BETWEEN_PROFILES = 60
+    PROFILES_PER_REQUEST = 1000
     STEP: int = 20
     request_origin = None
     post_count = 0
 
     def do_collect_profiles(self, request: Request):
         if self._last_profile_collected_at and (int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
-            logger.info('Skipping post collection')
+            logger.info('Skipping profile collection')
             return
 
         logger.info('Collecting profiles....')
         self._last_profile_collected_at = int(time())
         api_page_object = VkApiPageObject(request.driver, VkLinkBuilder.build_group(''))
-        profiles = SmProfile.objects \
-                       .select_for_update(skip_locked=True) \
-                       .filter(was_collected=False, social_media=request.get_social_media_type).values_list('oid', flat=True)[:2500]
+        profiles = SmProfile.objects.select_for_update(skip_locked=True) \
+                        .filter(was_collected=False, social_media=request.get_social_media_type) \
+                        .values_list('oid', flat=True)[:self.PROFILES_PER_REQUEST]
         with transaction.atomic():
             if len(profiles) == 0:
                 return
             for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
                 for profile_dto in profile_dto_list:
-                    SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type)\
+                    SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type) \
                         .update(was_collected=True, **self.as_dict_for_model(profile_dto))
                     profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
 
