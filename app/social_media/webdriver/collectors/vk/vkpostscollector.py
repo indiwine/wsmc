@@ -25,7 +25,7 @@ class VkPostsCollector(AbstractCollector):
     _options: VkOptions = None
     _last_profile_collected_at: Optional[int] = None
 
-    DELAY_BETWEEN_PROFILES = 60 * 3
+    DELAY_BETWEEN_PROFILES = 60 * 15
     PROFILES_PER_REQUEST = 100 * 25
     STEP: int = 20
     request_origin = None
@@ -40,8 +40,8 @@ class VkPostsCollector(AbstractCollector):
         self._last_profile_collected_at = int(time())
         api_page_object = VkApiPageObject(request.driver, VkLinkBuilder.build_group(''))
         profiles = SmProfile.objects.select_for_update(skip_locked=True) \
-                        .filter(was_collected=False, social_media=request.get_social_media_type) \
-                        .values_list('oid', flat=True)[:self.PROFILES_PER_REQUEST]
+                       .filter(was_collected=False, social_media=request.get_social_media_type) \
+                       .values_list('oid', flat=True)[:self.PROFILES_PER_REQUEST]
         with transaction.atomic():
             if len(profiles) == 0:
                 return

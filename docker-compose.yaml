@@ -11,6 +11,9 @@ x-app-common: &common-variables
   NOMINATIM_USER_AGENT: 'wsmc_test_app'
   NOMINATIM_DOMAIN: 'nominatim:8080'
   NOMINATIM_SCHEME: 'http'
+  DEBUG: ${DEBUG}
+  TEST_VK_LOGIN: ${TEST_VK_LOGIN}
+  TEST_VK_PASSWORD: ${TEST_VK_PASSWORD}
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
@@ -19,8 +22,9 @@ x-selenium-nodes: &selenium-nodes
   SE_EVENT_BUS_PUBLISH_PORT: 4442
   SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
   SE_VNC_NO_PASSWORD: 1
-  #  SE_SCREEN_WIDTH: 1920
-  #  SE_SCREEN_HEIGHT: 1080
+#  SE_SCREEN_WIDTH: 1920
+#  SE_SCREEN_HEIGHT: 1080
+#  SE_OPTS: "--log-level FINE"
   SE_NODE_SESSION_TIMEOUT: 800
 
 services:
@@ -63,7 +67,7 @@ services:
       - postgresql:/var/lib/postgresql/data
 
   chrome-01:
-    image: selenium/node-chrome:112.0
+    image: selenium/node-chrome:113.0
     shm_size: "2g"
     environment:
       <<: *selenium-nodes
@@ -71,7 +75,7 @@ services:
       - "7900:7900"
 
   chrome-02:
-    image: selenium/node-chrome:112.0
+    image: selenium/node-chrome:113.0
     shm_size: "2g"
     environment:
       <<: *selenium-nodes
@@ -79,7 +83,7 @@ services:
       - "7901:7900"
 
   chrome-03:
-    image: selenium/node-chrome:112.0
+    image: selenium/node-chrome:113.0
     shm_size: "2g"
     environment:
       <<: *selenium-nodes
@@ -87,10 +91,11 @@ services:
       - "7902:7900"
 
   webdriver:
-    image: selenium/hub:4.9.0
+    image: selenium/hub:4.9.1
     environment:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800
+      SE_OPTS: "--log-level FINE"
     depends_on:
       - chrome-01
     ports:

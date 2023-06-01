@@ -1,10 +1,6 @@
 version: '3.8'
 services:
   app:
-    environment:
-      DEBUG: '1'
-      TEST_VK_LOGIN: ${TEST_VK_LOGIN}
-      TEST_VK_PASSWORD: ${TEST_VK_PASSWORD}
     build: './app'
     volumes:
       - './app:/app'
@@ -15,8 +11,6 @@ services:
   celery:
     image: indiwine/wsmc:latest
 #    command: celery -A wsmc worker -P solo
-    environment:
-      DEBUG: '1'
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'

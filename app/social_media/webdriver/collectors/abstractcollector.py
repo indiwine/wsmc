@@ -169,6 +169,9 @@ class AbstractCollector(Collector):
         image.created = created
 
     def persist_sm_profile(self, sm_profile: SmProfileDto, request: Request):
+        """
+        **DEPRECATED**
+        """
         return SmProfile.objects.update_or_create(credentials=request.credentials,
                                                   suspect=request.suspect_identity.suspect,
                                                   defaults={
@@ -209,6 +212,9 @@ class AbstractCollector(Collector):
         return SmProfile.objects.get(suspect_social_media=request.suspect_identity)
 
     def get_sm_profile(self, request: Request):
+        """
+        **DEPRECATED**
+        """
         return SmProfile.objects.get(credentials=request.credentials,
                                      suspect=request.suspect_identity.suspect)
 

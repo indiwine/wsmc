@@ -6,14 +6,15 @@ from typing import Optional, Generator, List, Union
 
 from django.conf import settings
 from selenium.common import WebDriverException
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import Remote
+from selenium.webdriver.remote.webelement import WebElement
 from seleniumwire import webdriver as seleniumwire_webdriver
 from seleniumwire.utils import decode
 
 logger = logging.getLogger(__name__)
 
 WEB_DRIVER = Remote
+
 
 class WsmcWebDriver(WEB_DRIVER):
     SELENIUMWIRE_OPTIONS = {
@@ -64,7 +65,8 @@ class WsmcWebDriver(WEB_DRIVER):
             return None
 
     def scroll_into_view(self, element: WebElement):
-        self.execute_script('arguments[0].scrollIntoView({ behavior: "instant", block: "center", inline: "center" });', element)
+        self.execute_script('arguments[0].scrollIntoView({ behavior: "instant", block: "center", inline: "center" });',
+                            element)
 
     def is_element_at_page_and_visible(self, css_selector: str) -> bool:
         return self.execute_script("""

@@ -32,6 +32,7 @@ class TestVkDataCollection(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        super().tearDownClass()
         cls.driver.quit()
 
     def test_group_info_collection(self):

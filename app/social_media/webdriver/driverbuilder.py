@@ -45,9 +45,6 @@ class DriverBuilder:
                                desired_capabilities=capabilities,
                                )
 
-        driver.set_page_load_timeout(settings.WSMC_SELENIUM_WAIT_TIMEOUT)
-        driver.set_script_timeout(settings.WSMC_SELENIUM_SCRIPT_TIMEOUT)
-
         driver.scopes = [
             # '.*\.(jpg|jpeg|png|gif|bmp).*',
             '.*facebook\.com/api/graphql.*',
@@ -87,10 +84,15 @@ class DriverBuilder:
             # options.add_argument(f'user-agent={ua}')
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            options.add_experimental_option('useAutomationExtension', False)
+            options.add_experimental_option("useAutomationExtension", False)
             options.add_argument("start-maximized")
-            options.add_extension('/app/social_media/webdriver/uBlock-Origin.crx')
-            options.add_extension('/app/social_media/webdriver/Privacy-Pass.crx')
+            options.add_extension("/app/social_media/webdriver/uBlock-Origin.crx")
+            options.add_extension("/app/social_media/webdriver/Privacy-Pass.crx")
+            options.timeouts = {
+                "implicit": 0,
+                "pageLoad": settings.WSMC_SELENIUM_WAIT_TIMEOUT * 1000,
+                "script": settings.WSMC_SELENIUM_SCRIPT_TIMEOUT * 1000
+            }
         else:
             options = FirefoxOptions()
 
