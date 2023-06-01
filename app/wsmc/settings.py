@@ -149,7 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = 'storage/'
 MEDIA_ROOT = '/app/storage'
 
-log_level = 'DEBUG' if DEBUG else 'INFO'
+log_level = 'DEBUG' if DEBUG else 'WARNING'
 
 LOGGING = {
     'version': 1,
