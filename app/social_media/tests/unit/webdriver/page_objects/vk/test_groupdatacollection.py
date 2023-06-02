@@ -233,6 +233,8 @@ class TestVkDataCollection(SimpleTestCase):
 
     def test_non_hart_like(self):
         """
+
+
         Case: Post has one like, like is not on a regular "heart
         """
 

@@ -144,6 +144,8 @@ class VkPostsCollector(AbstractCollector):
             return
 
         fan_box_object = post_reactions_object.open_likes_window()
+        if not fan_box_object:
+            return
 
         for like_authors in fan_box_object.generate_likes():
             _, new_likes_num = self.batch_persist_likes(like_authors, post_item, request)

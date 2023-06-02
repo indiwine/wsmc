@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Generator, List, Optional
 
 from selenium.webdriver import ActionChains
@@ -13,6 +14,7 @@ from .vkpostfansboxpageobject import VkPostFansBoxPageObject
 from ...exceptions import WsmcWebDriverPostLikesException
 from ...link_builders.vk.strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 
+logger = logging.getLogger(__name__)
 
 class VkPostReactionsPageObject(AbstractVkPageObject):
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy, post_button_reactions_container: WebElement):
@@ -64,9 +66,12 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
             return None
 
         fan_box_object = self.open_likes_window()
+        if not fan_box_object:
+            return None
+
         return fan_box_object.generate_likes()
 
-    def open_likes_window(self) -> VkPostFansBoxPageObject:
+    def open_likes_window(self) -> Optional[VkPostFansBoxPageObject]:
         self.driver.scroll_into_view(self.post_button_reactions_container)
         btn_node = self.bottom_reactions_btn()
         ActionChains(self.driver).move_to_element(btn_node).perform()
@@ -84,4 +89,6 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
                 self.get_wait().until(EC.visibility_of_element_located(self.fans_box_locator()))
                 return VkPostFansBoxPageObject(self.driver, self.link_strategy, self.fans_box())
 
-        raise WsmcWebDriverPostLikesException('Cannot locate button to open modal winodw with likes')
+        logger.warning('Cannot locate button to open modal window with likes at "%s"', self.driver.get_current_url_safe)
+
+        return None
