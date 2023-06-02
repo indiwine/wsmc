@@ -50,8 +50,8 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
             return 0
 
         count_data = json.loads(item)
-        if isinstance(count_data, dict) and '0' in count_data:
-            return count_data['0']
+        if isinstance(count_data, dict):
+            return sum(count_data.values())
 
         if isinstance(count_data, list) and len(count_data) >= 1:
             return count_data[0]
