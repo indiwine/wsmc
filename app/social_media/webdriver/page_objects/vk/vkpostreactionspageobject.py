@@ -2,6 +2,7 @@ import json
 from typing import Generator, List, Optional
 
 from selenium.webdriver import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,8 +42,8 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
     def bottom_action_count(self):
         return self.post_button_reactions_container.find_element(By.CLASS_NAME, 'PostBottomAction__count')
 
-    def like_reaction(self):
-        return self.post_button_reactions_container.find_element(By.CSS_SELECTOR, '.ReactionsMenu__inner > .Reaction')
+    def like_reactions(self):
+        return self.post_button_reactions_container.find_elements(By.CSS_SELECTOR, '.ReactionsMenu__inner > .Reaction')
 
     def likes_count(self) -> int:
         item = self.bottom_reactions_btn().get_attribute('data-reaction-counts')
@@ -71,11 +72,16 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
         ActionChains(self.driver).move_to_element(btn_node).perform()
         self.get_wait().until(EC.visibility_of_element_located(self.reactions_popper_locator()))
 
-        reaction_container = self.like_reaction()
-        reaction_box = reaction_container.find_element(By.CLASS_NAME, 'ReactionTitle--withUsers')
+        for reaction_container in self.like_reactions():
+            try:
+                reaction_box = reaction_container.find_element(By.CLASS_NAME, 'ReactionTitle--withUsers')
+            except NoSuchElementException:
+                continue
+            else:
+                ActionChains(self.driver).move_to_element(reaction_container).perform()
+                self.get_wait().until(EC.visibility_of(reaction_box))
+                reaction_box.click()
+                self.get_wait().until(EC.visibility_of_element_located(self.fans_box_locator()))
+                return VkPostFansBoxPageObject(self.driver, self.link_strategy, self.fans_box())
 
-        ActionChains(self.driver).move_to_element(reaction_container).perform()
-        self.get_wait().until(EC.visibility_of(reaction_box))
-        reaction_box.click()
-        self.get_wait().until(EC.visibility_of_element_located(self.fans_box_locator()))
-        return VkPostFansBoxPageObject(self.driver, self.link_strategy, self.fans_box())
+        raise WsmcWebDriverPostLikesException('Cannot locate button to open modal winodw with likes')

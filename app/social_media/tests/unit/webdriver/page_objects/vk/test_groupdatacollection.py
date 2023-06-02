@@ -35,7 +35,15 @@ class TestVkDataCollection(SimpleTestCase):
         super().tearDownClass()
         cls.driver.quit()
 
+    def get_group_page_object(self, url: str) -> VkGroupPage:
+        group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(url))
+        group_page_object.go_to_group()
+        return group_page_object
+
     def test_group_info_collection(self):
+        """
+        Case: Just a common group collection
+        """
         group_url = 'https://vk.com/officialpages'
         expected_dto = SmGroupDto(
             permalink='https://vk.com/public22079806',
@@ -50,12 +58,17 @@ class TestVkDataCollection(SimpleTestCase):
         self.assertEqual(group_dto, expected_dto)
 
     def test_club_group_info(self):
+        """
+        Case: Distinguish between `/club` and `/public` urls
+        """
         group_url = 'https://vk.com/chvk.vaqner'
         group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(group_url))
-        group_dto = group_page_object.collect_group()
-        print(group_dto)
+        group_page_object.collect_group()
 
     def test_post_info_collection(self):
+        """
+        Case: Just a common post collection
+        """
         page_url = 'https://vk.com/wall-22079806_206330'
 
         expected_dto = SmPostDto(
@@ -107,15 +120,20 @@ class TestVkDataCollection(SimpleTestCase):
         self.assertEqual(total_likes, len(likes), 'Number of collected likes is different')
 
     def test_group_navigation_and_post_collection(self):
+        """
+        Case: Just a common post collection in a group
+        """
+
+        fraction_of_collected_likes = 0.92
         group_url = 'https://vk.com/officialpages'
         posts_per_page = 20
 
-        group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(group_url))
-        group_page_object.go_to_group()
+        group_page_object = self.get_group_page_object(group_url)
 
         wall_object = group_page_object.go_to_wall()
         has_posts = wall_object.wait_for_posts()
         self.assertTrue(has_posts, 'Posts cannot be found')
+
         posts = []
         for post_object in wall_object.collect_posts(0):
             post_dto = post_object.collect()
@@ -123,13 +141,18 @@ class TestVkDataCollection(SimpleTestCase):
             post_reactions_object = post_object.get_post_reactions_object()
             total_likes = post_reactions_object.likes_count()
             post_likes = post_object.collect_likes_flat()
-            # TODO: Add likes assertion
+
+            # VK does not always show all the likes for the post, so we left for calculating "almost" arbitrary delta
+            desired_delta = round(total_likes * (1 - fraction_of_collected_likes))
+            self.assertAlmostEqual(total_likes, len(post_likes), delta=desired_delta)
             posts.append(post_dto)
 
-        print(posts)
         self.assertEqual(posts_per_page, len(posts), 'number of posts')
 
     def test_profile_collection(self):
+        """
+        Case: Just a common profile info fetch
+        """
         profile_url = 'https://vk.com/durov'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         profile_dto = profile_page_object.collect_profile()
@@ -150,11 +173,13 @@ class TestVkDataCollection(SimpleTestCase):
         print(profile_dto)
         self.assertEqual(profile_dto, expected_dto)
 
-    def test_disabled_profile(self):
+    def test_closed_profile(self):
+        """
+        Case: Profile a closed to view
+        """
         profile_url = 'https://vk.com/id114551834'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
-        profile_dto = profile_page_object.collect_profile()
-        print(profile_dto)
+        profile_page_object.collect_profile()
 
     def test_screenshot(self):
         profile_url = 'https://vk.com/id203133326'
@@ -167,6 +192,9 @@ class TestVkDataCollection(SimpleTestCase):
         self.assertTrue(file_path.exists())
 
     def test_non_standard_chars(self):
+        """
+        Case: profile with unicode chars that require additional conversion
+        """
         profile_url = 'https://vk.com/id296682879'
         expected_dto = SmProfileDto(
             oid='296682879',
@@ -182,17 +210,37 @@ class TestVkDataCollection(SimpleTestCase):
 
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         profile_dto = profile_page_object.collect_profile()
-        print(profile_dto)
         self.assertEqual(profile_dto, expected_dto)
 
     def test_not_found_profile(self):
+        """
+        Case: 404 profile
+        """
         profile_url = 'https://vk.com/id729303074'
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         self.assertRaises(WsmcWebDriverProfileNotFoundException, profile_page_object.collect_profile)
 
     def test_profile_bulk_data(self):
+        """
+        Case: Sending request to native api
+        TODO: Add real test case
+        TODO: Move from here
+        """
         page_object = VkApiPageObject(self.driver, VkLinkBuilder.build(''))
         page_object.ACTIONS_PER_EXEC = 2
         for results in page_object.bulk_users_get(['1', '296682879', '114551834', '203133326', '729303074'], 2):
             pprint(results)
 
+    def test_non_hart_like(self):
+        """
+        Case: Post has one like, like is not on a regular "heart
+        """
+
+        page_url = 'https://vk.com/wall-31065441_691'
+        single_post_page_object = VkSinglePostPage(self.driver, VkLinkBuilder.build_group(page_url))
+        post_object = single_post_page_object.get_post_page_object(page_url)
+
+        post_reactions_object = post_object.get_post_reactions_object()
+        total_likes = post_reactions_object.likes_count()
+        likes = post_object.collect_likes_flat()
+        self.assertEqual(total_likes, len(likes))
