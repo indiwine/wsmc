@@ -29,7 +29,7 @@ x-selenium-nodes: &selenium-nodes
 
 services:
   app:
-    image: indiwine/wsmc:latest
+    image: indiwine/wsmc:dev
     hostname: 'app'
     ports:
       - "8000:8000"
@@ -43,8 +43,13 @@ services:
       - webdriver
       - redis
       - celery
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.role==manager"
   celery:
-    image: indiwine/wsmc:latest
+    image: indiwine/wsmc:dev
     hostname: 'celery'
     command: celery -A wsmc worker --concurrency=3 -n webdriver-worker@%h
     volumes:
@@ -55,8 +60,15 @@ services:
       - redis
       - postgres
       - webdriver
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.role==manager"
   redis:
     image: redis:7-alpine
+    deploy:
+      mode: global
   postgres:
     image: postgis/postgis:14-3.3-alpine
     environment:
@@ -65,31 +77,21 @@ services:
       POSTGRES_DB: "wsmc"
     volumes:
       - postgresql:/var/lib/postgresql/data
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - "node.role==manager"
 
-  chrome-01:
+  chrome:
     image: selenium/node-chrome:113.0
     shm_size: "2g"
     environment:
       <<: *selenium-nodes
     ports:
-      - "7900:7900"
-
-  chrome-02:
-    image: selenium/node-chrome:113.0
-    shm_size: "2g"
-    environment:
-      <<: *selenium-nodes
-    ports:
-      - "7901:7900"
-
-  chrome-03:
-    image: selenium/node-chrome:113.0
-    shm_size: "2g"
-    environment:
-      <<: *selenium-nodes
-    ports:
-      - "7902:7900"
-
+      - "7900"
+    deploy:
+      replicas: 8
   webdriver:
     image: selenium/hub:4.9.1
     environment:
@@ -97,11 +99,14 @@ services:
       SE_SESSION_REQUEST_TIMEOUT: 800
       SE_OPTS: "--log-level FINE"
     depends_on:
-      - chrome-01
+      - chrome
     ports:
       - "4442:4442"
       - "4443:4443"
       - "4444:4444"
+    deploy:
+      mode: global
+
   nominatim:
     image: mediagis/nominatim:4.2
     expose:
@@ -114,6 +119,8 @@ services:
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
     shm_size: 256m
+    deploy:
+      mode: global
 
 volumes:
   postgresql:
