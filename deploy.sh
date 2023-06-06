@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
 
-set -e
 
-. .env
-
-docker stack deploy -c docker-compose.yaml wsmc
+export $(cat .env) > /dev/null 2>&1; docker stack deploy -c docker-compose.yaml wsmc
