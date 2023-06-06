@@ -4,4 +4,4 @@ set -e
 
 . .env
 
-docker stack deploy -c docker-compose.yaml
+docker stack deploy -c docker-compose.yaml wsmc
