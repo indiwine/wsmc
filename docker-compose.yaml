@@ -106,16 +106,16 @@ services:
     ports:
       - "7900"
     deploy:
-      replicas: 8
+      replicas: 2
       placement:
         max_replicas_per_node: 4
       resources:
         limits:
           cpus: '1.0'
-          memory: 2g
+          memory: 3g
         reservations:
-          cpus: '0.25'
-          memory: 1g
+          cpus: '1.0'
+          memory: 2g
 
   webdriver:
     image: selenium/hub:4.9.1

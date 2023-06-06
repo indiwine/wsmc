@@ -26,7 +26,9 @@ DEBUG = bool(int(os.environ.get('DEBUG', '0')))
 
 ALLOWED_HOSTS = [
     '0.0.0.0',
-    'localhost'
+    'localhost',
+    '192.168.1.100',
+    '10.8.0.100',
 ]
 
 # Application definition
