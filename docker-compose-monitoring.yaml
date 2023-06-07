@@ -22,7 +22,6 @@ services:
       placement:
         constraints:
           - "node.role==manager"
-
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.1
     container_name: cadvisor
@@ -39,9 +38,28 @@ services:
       - monitoring_stack
     deploy:
       mode: global
+  grafana:
+    image: grafana/grafana:9.5.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_home:/usr/share/grafana
+      - grafana_config:/etc/grafana
+    depends_on:
+      - prometheus
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+      placement:
+        constraints:
+          - "node.role==manager"
 
 volumes:
   prometheus_data:
+  grafana_data:
+  grafana_config:
+  grafana_home:
 
 networks:
   monitoring_stack:
