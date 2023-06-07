@@ -9,11 +9,14 @@ services:
     ports:
       - "6379:6379"
   celery:
-    image: indiwine/wsmc:latest
+    build: './app'
 #    command: celery -A wsmc worker -P solo
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'
+  chrome:
+    deploy:
+      replicas: 1
   postgres:
     ports:
       - "5432:5432"

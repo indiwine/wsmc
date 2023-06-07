@@ -52,7 +52,7 @@ services:
   celery:
     image: indiwine/wsmc:dev
     hostname: 'celery'
-    command: celery -A wsmc worker --concurrency=3 -n webdriver-worker@%h
+    command: celery -A wsmc worker --concurrency=10 -n webdriver-worker@%h
     volumes:
       - wsmc-storage:/app/storage
     environment:
@@ -69,7 +69,7 @@ services:
       resources:
         limits:
           cpus: '0.9'
-          memory: 600M
+          memory: 800M
         reservations:
           cpus: '0.25'
           memory: 200M
@@ -105,11 +105,11 @@ services:
     ports:
       - "7900"
     deploy:
-      replicas: 8
+      replicas: 10
       placement:
-        max_replicas_per_node: 7
-        constraints:
-          - "node.role!=manager"
+        max_replicas_per_node: 5
+#        constraints:
+#          - "node.role!=manager"
       resources:
         limits:
           cpus: '0.9'
