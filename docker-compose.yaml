@@ -105,9 +105,11 @@ services:
     ports:
       - "7900"
     deploy:
-      replicas: 2
+      replicas: 8
       placement:
-        max_replicas_per_node: 4
+        max_replicas_per_node: 7
+        constraints:
+          - "node.role!=manager"
       resources:
         limits:
           cpus: '0.9'
