@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - monitoring_stack
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+      placement:
+        constraints:
+          - "node.role==manager"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring_stack
+    deploy:
+      mode: global
+
+
+networks:
+  monitoring_stack:
+    driver: overlay
+    attachable: true
