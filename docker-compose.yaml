@@ -154,6 +154,9 @@ services:
     shm_size: 256m
     deploy:
       replicas: 1
+      placement:
+        constraints:
+          - "volume in volume_mounts && volume.node == node.id"
 
 volumes:
   postgresql:
