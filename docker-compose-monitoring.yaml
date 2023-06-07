@@ -10,6 +10,8 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - cadvisor
     networks:
@@ -34,6 +36,8 @@ services:
     deploy:
       mode: global
 
+volumes:
+  prometheus_data:
 
 networks:
   monitoring_stack:
