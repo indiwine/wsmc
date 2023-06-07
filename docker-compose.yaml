@@ -100,7 +100,6 @@ services:
 
   chrome:
     image: selenium/node-chrome:113.0
-    shm_size: "2g"
     environment:
       <<: *selenium-nodes
     ports:
@@ -109,6 +108,19 @@ services:
       replicas: 2
       placement:
         max_replicas_per_node: 4
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 3G
+        reservations:
+          cpus: '0.2'
+          memory: 2G
+    volumes:
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 2147483648
+
 
   webdriver:
     image: selenium/hub:4.9.1
@@ -135,6 +147,10 @@ services:
       IMPORT_STYLE: "admin"
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 268435456
     shm_size: 256m
     deploy:
       replicas: 1
