@@ -69,10 +69,10 @@ services:
       resources:
         limits:
           cpus: '0.9'
-          memory: 800M
+          memory: 1500M
         reservations:
           cpus: '0.25'
-          memory: 200M
+          memory: 700M
   redis:
     image: redis:7-alpine
     deploy:
