@@ -107,9 +107,9 @@ services:
     deploy:
       replicas: 10
       placement:
-        max_replicas_per_node: 5
-#        constraints:
-#          - "node.role!=manager"
+        max_replicas_per_node: 7
+        constraints:
+          - "node.role!=manager"
       resources:
         limits:
           cpus: '0.9'
