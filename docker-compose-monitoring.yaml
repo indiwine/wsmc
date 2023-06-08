@@ -27,7 +27,7 @@ services:
     container_name: cadvisor
     user: root
     expose:
-      - '8080'
+      - '8080:10222'
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
