@@ -26,7 +26,7 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.47.1
     container_name: cadvisor
     user: root
-    expose:
+    ports:
       - '10222:8080'
     volumes:
       - /:/rootfs:ro
