@@ -180,7 +180,7 @@ services:
     deploy:
       replicas: 1
       labels:
-        wsmc.monitoring.pg: true
+        wsmc.monitoring.pg: 'true'
 
 
   celery_exporter:
@@ -196,7 +196,7 @@ services:
     deploy:
       replicas: 1
       labels:
-        wsmc.monitoring.celery: true
+        wsmc.monitoring.celery: 'true'
 
 
 
