@@ -47,7 +47,7 @@ scrape_configs:
   - job_name: 'pg'
     dockerswarm_sd_configs:
       - host: unix:///var/run/docker.sock
-        role: services
+        role: tasks
         filters:
           - name: name
             values: [ 'pg_exporter' ]
@@ -61,7 +61,7 @@ scrape_configs:
   - job_name: 'celery'
     dockerswarm_sd_configs:
       - host: unix:///var/run/docker.sock
-        role: services
+        role: tasks
         filters:
           - name: name
             values: ['celery_exporter']
