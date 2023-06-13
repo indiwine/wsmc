@@ -80,7 +80,7 @@ services:
     deploy:
       replicas: 1
       labels:
-        wsmc.services.redis: true
+        wsmc.services.redis: 'true'
       resources:
         limits:
           cpus: '0.50'
@@ -103,7 +103,7 @@ services:
         constraints:
           - "node.role==manager"
       labels:
-        wsmc.services.pg: true
+        wsmc.services.pg: 'true'
 
   chrome:
     image: selenium/node-chrome:113.0
