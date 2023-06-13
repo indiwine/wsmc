@@ -1,4 +1,5 @@
 version: '3.8'
+
 x-app-common: &common-variables
   POSTGRES_NAME: wsmc
   POSTGRES_USER: user
@@ -73,10 +74,13 @@ services:
         reservations:
           cpus: '0.25'
           memory: 700M
+
   redis:
     image: redis:7-alpine
     deploy:
       replicas: 1
+      labels:
+        wsmc.services.redis: true
       resources:
         limits:
           cpus: '0.50'
@@ -84,6 +88,7 @@ services:
         reservations:
           cpus: '0.25'
           memory: 20M
+
   postgres:
     image: postgis/postgis:14-3.3-alpine
     environment:
@@ -97,6 +102,8 @@ services:
       placement:
         constraints:
           - "node.role==manager"
+      labels:
+        wsmc.services.pg: true
 
   chrome:
     image: selenium/node-chrome:113.0
@@ -159,6 +166,39 @@ services:
       placement:
         constraints:
           - "node.hostname==swarm-2"
+
+  pg_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    ports:
+      - target: 9187
+        published: 10224
+        mode: host
+    profiles:
+      - 'monitoring'
+    environment:
+      DATA_SOURCE_NAME: 'postgresql://user:741963@postgres:5432/postgres'
+    deploy:
+      replicas: 1
+      labels:
+        wsmc.monitoring.pg: true
+
+
+  celery_exporter:
+    image: danihodovic/celery-exporter
+    profiles:
+      - 'monitoring'
+    ports:
+      - target: 9808
+        published: 10223
+        mode: host
+    environment:
+      CE_BROKER_URL: 'redis://redis:6379/'
+    deploy:
+      replicas: 1
+      labels:
+        wsmc.monitoring.celery: true
+
+
 
 volumes:
   postgresql:
