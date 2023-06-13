@@ -49,7 +49,7 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         role: tasks
         filters:
-          - name: name
+          - name: 'service'
             values: [ 'pg_exporter' ]
     relabel_configs:
       - source_labels: [ __meta_dockerswarm_node_address ]
@@ -63,7 +63,7 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         role: tasks
         filters:
-          - name: name
+          - name: 'service'
             values: ['celery_exporter']
     relabel_configs:
       - source_labels: [ __meta_dockerswarm_node_address ]
