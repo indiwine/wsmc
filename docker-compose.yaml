@@ -174,7 +174,7 @@ services:
         published: 10224
         mode: host
     environment:
-      DATA_SOURCE_NAME: 'postgresql://user:741963@postgres:5432/postgres'
+      DATA_SOURCE_NAME: 'postgresql://user:741963@postgres:5432/postgres?sslmode=disable'
     deploy:
       replicas: 1
       labels:
