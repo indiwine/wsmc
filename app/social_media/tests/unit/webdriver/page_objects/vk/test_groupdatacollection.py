@@ -1,6 +1,7 @@
 import datetime
 from pathlib import Path
 from pprint import pprint
+from time import sleep
 
 from django.conf import settings
 from django.test import SimpleTestCase
@@ -25,7 +26,7 @@ class TestVkDataCollection(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.driver = DriverBuilder.build()
+        cls.set_new_driver()
         if DO_LOGIN:
             VkLoginPage(cls.driver, VkLinkBuilder.build('')).perform_login(user_name=settings.TEST_VK_LOGIN,
                                                                            password=settings.TEST_VK_PASSWORD)
@@ -34,6 +35,19 @@ class TestVkDataCollection(SimpleTestCase):
     def tearDownClass(cls) -> None:
         super().tearDownClass()
         cls.driver.quit()
+
+    @classmethod
+    def set_new_driver(cls):
+        cls.driver = DriverBuilder.build()
+
+    def test_vk_session_restore(self):
+        storage = self.driver.get_browser_storage()
+        self.driver.quit()
+        self.set_new_driver()
+        self.driver.get('https://vk.com/not-found')
+        self.driver.restore_browser_storage_js(storage)
+        self.driver.get('https://vk.com')
+        pass
 
     def get_group_page_object(self, url: str) -> VkGroupPage:
         group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(url))

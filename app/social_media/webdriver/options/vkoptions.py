@@ -24,5 +24,7 @@ class VkOptions(BaseOptions):
     Limit number of posts collected
     """
 
+    login_use_jitter = True
+
     def configure_for_retry(self):
         self.post_do_load_latest = False

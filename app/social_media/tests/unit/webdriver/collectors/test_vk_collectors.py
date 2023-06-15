@@ -38,12 +38,17 @@ class TestVkCollectors(TestCase):
 
     def create_agent(self, request: Request, chain_obj: Collector):
         run_agent = Agent(request)
+        chain_obj.set_options(VkOptions())
         run_agent._construct_chain = MagicMock(return_value=chain_obj)
         return run_agent
 
     def test_login(self):
         request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
-        run_agent = self.create_agent(request, VkLoginCollector())
+
+        login_collector = VkLoginCollector()
+        login_collector.MAX_JITTER_DELAY = 30
+
+        run_agent = self.create_agent(request, login_collector)
         run_agent.run()
         # Here we gust assume login is successfully if there is no errors
 

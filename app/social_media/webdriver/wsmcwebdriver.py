@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import socket
 from datetime import datetime
@@ -14,6 +15,12 @@ from seleniumwire.utils import decode
 logger = logging.getLogger(__name__)
 
 WEB_DRIVER = Remote
+
+
+@dataclasses.dataclass
+class BrowserStorageData:
+    cookies: List[dict]
+    local_storage: dict
 
 
 class WsmcWebDriver(WEB_DRIVER):
@@ -136,3 +143,49 @@ class WsmcWebDriver(WEB_DRIVER):
         except WebDriverException as e:
             logger.warning('is_element_displayed_safe failed to check', exc_info=e)
             return False
+
+    def delete_session_storage(self):
+        self.execute_script('window.sessionStorage.clear()')
+
+    def delete_local_storage(self):
+        self.execute_script('window.localStorage.clear()')
+
+    def add_local_storage(self, items: dict):
+        self.execute_script(
+            'Object.keys(arguments[0]).forEach(key => window.localStorage.setItem(key, arguments[0][key]))', items
+        )
+
+    def get_local_storage_data(self) -> dict:
+        return self.execute_script('return JSON.parse(JSON.stringify(window.localStorage));')
+
+    def get_browser_storage(self) -> BrowserStorageData:
+        return BrowserStorageData(
+            cookies=self.get_cookies(),
+            local_storage=self.get_local_storage_data()
+        )
+
+    def restore_browser_storage_js(self, storage_data: BrowserStorageData):
+        self.execute_script('window.sessionStorage.clear(); window.localStorage.clear()')
+        self.execute_script("""
+        Object.keys(arguments[0]).forEach(key => window.localStorage.setItem(key, arguments[0][key]))
+        """, storage_data.local_storage)
+
+
+        self.delete_all_cookies()
+        for cookie in storage_data.cookies:
+            self.add_cookie(cookie)
+
+
+
+
+    def restore_browser_storage(self, storage_data: BrowserStorageData):
+        self.delete_all_cookies()
+        for cookie in storage_data.cookies:
+            self.add_cookie(cookie)
+
+        self.delete_session_storage()
+        self.delete_local_storage()
+        self.add_local_storage(storage_data.local_storage)
+        self.refresh()
+
+

@@ -119,10 +119,10 @@ services:
           - "node.role!=manager"
       resources:
         limits:
-          cpus: '0.9'
+          cpus: '2'
           memory: 3G
         reservations:
-          cpus: '0.2'
+          cpus: '1'
           memory: 2G
     volumes:
       - type: tmpfs
@@ -136,8 +136,6 @@ services:
     environment:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800
-    depends_on:
-      - chrome
     ports:
       - "4442:4442"
       - "4443:4443"

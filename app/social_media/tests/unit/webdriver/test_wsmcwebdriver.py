@@ -26,3 +26,8 @@ class TestWsmcWebdriver(SimpleTestCase):
             """, wait_sec)
 
         self.assertRaises(TimeoutException, do_long_async_task)
+
+    def test_save_and_restore_state(self):
+        self.driver.get('http://vk.com')
+        print(self.driver.get_cookies())
+

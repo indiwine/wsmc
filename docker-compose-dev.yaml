@@ -17,6 +17,7 @@ services:
   chrome:
     ports:
       - "7900:7900"
+    shm_size: 3g
     deploy:
       replicas: 1
   postgres:
@@ -24,3 +25,9 @@ services:
       - "5432:5432"
     volumes:
       - postgresql:/var/lib/postgresql/data
+  pg_exporter:
+    profiles:
+      - "monitoring"
+  celery_exporter:
+    profiles:
+      - "monitoring"
