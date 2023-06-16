@@ -112,9 +112,9 @@ services:
     ports:
       - "7900"
     deploy:
-      replicas: 10
+      replicas: 8
       placement:
-        max_replicas_per_node: 7
+        max_replicas_per_node: 4
         constraints:
           - "node.role!=manager"
       resources:
@@ -128,7 +128,7 @@ services:
       - type: tmpfs
         target: /dev/shm
         tmpfs:
-          size: 2147483648
+          size: 2684354560
 
 
   webdriver:
@@ -142,6 +142,9 @@ services:
       - "4444:4444"
     deploy:
       replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
 
   nominatim:
     image: mediagis/nominatim:4.2
