@@ -53,7 +53,7 @@ services:
   celery:
     image: indiwine/wsmc:dev
     hostname: 'celery'
-    command: celery -A wsmc worker --concurrency=10 -n webdriver-worker@%h
+    command: celery -A wsmc worker --concurrency=8 -n webdriver-worker@%h
     volumes:
       - wsmc-storage:/app/storage
     environment:
