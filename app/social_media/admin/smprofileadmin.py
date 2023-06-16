@@ -5,6 +5,7 @@ from django.contrib.gis.db.models import Union
 from django.db.models import QuerySet, OuterRef, Subquery, Exists, Count
 from django.db.models.expressions import RawSQL
 from django.shortcuts import redirect
+from django.utils.safestring import mark_safe
 from import_export.admin import ExportMixin
 from import_export.fields import Field
 from import_export.resources import ModelResource
@@ -71,8 +72,27 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         count = self.likes_count
         return generate_link_for_model(LinkTypes.CHANGELIST, SmLikes, f"Likes ({count})", params={"owner_id": self.id})
 
-    readonly_fields = ['id_url', get_likes_view_url]
-    list_display = ['name', 'location', 'home_town', 'country', 'is_reviewed', 'was_collected', get_likes_view_url]
+    @admin.display(description='ID URL', empty_value='-')
+    def get_id_link(self: SmProfile):
+        return mark_safe(f'<a href="{self.id_url()}" target="_blank">{self.id_url()}</a>')
+
+    readonly_fields = [
+        get_id_link,
+        get_likes_view_url,
+        'oid',
+        'name',
+        'university',
+        'location',
+        'home_town',
+        'birthdate',
+        'country',
+        'domain',
+        'metadata',
+        'was_collected',
+        'suspect_social_media',
+        'social_media',
+    ]
+    list_display = ['name', 'location', 'home_town', 'country', 'is_reviewed', get_id_link, get_likes_view_url]
 
     def get_queryset(self, request):
         queryset: QuerySet = super().get_queryset(request)
@@ -87,6 +107,9 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return True
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(SmProfile, SmProfileAdmin)

@@ -35,13 +35,13 @@ class SmProfile(Model):
     was_collected = BooleanField(default=False)
     is_reviewed = BooleanField(default=False)
 
-    suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True)
+    suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True, editable=False)
 
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
     location_point = PointField(default=None, null=True)
-    location_known = BooleanField(default=False)
-    location_precise = BooleanField(default=False)
+    location_known = BooleanField(default=False, editable=False)
+    location_precise = BooleanField(default=False, editable=False)
 
     def __str__(self):
         return self.name
