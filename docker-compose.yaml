@@ -25,7 +25,7 @@ x-selenium-nodes: &selenium-nodes
   SE_VNC_NO_PASSWORD: 1
 #  SE_SCREEN_WIDTH: 1920
 #  SE_SCREEN_HEIGHT: 1080
-#  SE_OPTS: "--log-level FINE"
+  SE_OPTS: "--log-level OFF"
   SE_NODE_SESSION_TIMEOUT: 800
 
 services:
@@ -136,6 +136,7 @@ services:
     environment:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800
+      SE_OPTS: "--log-level OFF"
     ports:
       - "4442:4442"
       - "4443:4443"

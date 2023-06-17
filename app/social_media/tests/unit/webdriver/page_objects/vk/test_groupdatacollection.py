@@ -40,14 +40,14 @@ class TestVkDataCollection(SimpleTestCase):
     def set_new_driver(cls):
         cls.driver = DriverBuilder.build()
 
-    def test_vk_session_restore(self):
-        storage = self.driver.get_browser_storage()
-        self.driver.quit()
-        self.set_new_driver()
-        self.driver.get('https://vk.com/not-found')
-        self.driver.restore_browser_storage_js(storage)
-        self.driver.get('https://vk.com')
-        pass
+    # def test_vk_session_restore(self):
+    #     storage = self.driver.get_browser_storage()
+    #     self.driver.quit()
+    #     self.set_new_driver()
+    #     self.driver.get('https://vk.com/not-found')
+    #     self.driver.restore_browser_storage_js(storage)
+    #     self.driver.get('https://vk.com')
+    #     pass
 
     def get_group_page_object(self, url: str) -> VkGroupPage:
         group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(url))

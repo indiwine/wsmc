@@ -1,7 +1,7 @@
+import logging
 from typing import Generator, List, Dict
 
-import logging
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -62,10 +62,15 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
                 break
 
     def _load_more_likes(self):
-        btn = self.load_more_btn()
-        if not btn.is_displayed():
+        try:
+            btn = self.load_more_btn()
+            if not btn.is_displayed():
+                return False
+            btn.click()
+        except WebDriverException as e:
+            logger.error('Cannot load more likes', exc_info=e)
             return False
-        btn.click()
+
         try:
             self.get_wait().until(EC.presence_of_element_located(self.fan_rows_locator()))
         except TimeoutException as e:
@@ -115,8 +120,6 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
             ))
 
         return result
-
-
 
     @classmethod
     def fan_row_to_author_dro(cls, fan_row: WebElement) -> AuthorDto:
