@@ -139,7 +139,7 @@ class TestVkDataCollection(SimpleTestCase):
         """
 
         fraction_of_collected_likes = 0.92
-        group_url = 'https://vk.com/officialpages'
+        group_url = 'https://vk.com/top_novostnoy'
         posts_per_page = 20
 
         group_page_object = self.get_group_page_object(group_url)

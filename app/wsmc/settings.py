@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'social_media.apps.SocialMediaConfig',
     'telegram_connection.apps.TelegramConfig',
     'phonenumber_field',
-    'import_export'
+    'import_export',
+    'tinymce',
 ]
 
 MIDDLEWARE = [
@@ -239,3 +240,19 @@ TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_
 # Test setting
 TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
 TEST_VK_PASSWORD = os.environ.get('TEST_VK_PASSWORD', '')
+
+
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 500,
+    "menubar": True,
+    "paste_data_images": True,
+    "plugins": "advlist,autolink,lists,link,image,imagetools,charmap,print,preview,anchor,"
+    "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,"
+    "code,help,wordcount",
+    "toolbar": "undo redo | "
+    "bold italic backcolor | alignleft aligncenter "
+    "alignright alignjustify | bullist numlist outdent indent | "
+    "removeformat | fullscreen",
+
+}

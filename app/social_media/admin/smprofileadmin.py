@@ -2,8 +2,7 @@ from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.db.models import Union
-from django.db.models import QuerySet, OuterRef, Subquery, Exists, Count
-from django.db.models.expressions import RawSQL
+from django.db.models import QuerySet, OuterRef, Subquery, Count
 from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
 from import_export.admin import ExportMixin
@@ -35,7 +34,8 @@ class ProfileLocationPreciseFilter(SimpleListFilter):
 
     def queryset(self, request, queryset: QuerySet):
         if self.value():
-            polygon_subquery = SmProfileLocationFilter.objects.get(id=self.value()).locations.aggregate(Union('pol'))['pol__union']
+            polygon_subquery = SmProfileLocationFilter.objects.get(id=self.value()).locations.aggregate(Union('pol'))[
+                'pol__union']
             return queryset.filter(location_point__intersects=polygon_subquery)
 
 
@@ -57,12 +57,14 @@ class SmProfileResource(ModelResource):
 
 class SmProfileAdmin(ExportMixin, GISModelAdmin):
     list_filter = [
-        'was_collected',
-        'location_known',
-        'location_precise',
-        'is_reviewed',
+        # 'was_collected',
+        # 'location_known',
+        # 'location_precise',
+        'screening_status',
+        'person_responsible',
         ProfileLocationPreciseFilter,
-        'country'
+        'is_reviewed',
+        # 'country'
     ]
     resource_classes = [SmProfileResource]
     actions = [redirect_to_likes, mark_reviewed]
@@ -75,6 +77,9 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
     @admin.display(description='ID URL', empty_value='-')
     def get_id_link(self: SmProfile):
         return mark_safe(f'<a href="{self.id_url()}" target="_blank">{self.id_url()}</a>')
+
+    search_fields = ['oid', 'domain', 'name']
+    search_help_text = "Ім'я, ід соц мережі, або домен (наприклад `durov`)"
 
     readonly_fields = [
         get_id_link,
@@ -91,8 +96,12 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'was_collected',
         'suspect_social_media',
         'social_media',
+        'is_reviewed'
     ]
-    list_display = ['name', 'location', 'home_town', 'country', 'is_reviewed', get_id_link, get_likes_view_url]
+    list_display = ['name', 'location', 'home_town', 'person_responsible', 'screening_status',
+                    get_id_link, get_likes_view_url, 'is_reviewed']
+
+    list_editable = ['person_responsible', 'screening_status']
 
     def get_queryset(self, request):
         queryset: QuerySet = super().get_queryset(request)

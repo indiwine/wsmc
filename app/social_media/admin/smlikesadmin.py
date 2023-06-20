@@ -24,7 +24,8 @@ class SmLikesResource(ModelResource):
 class SmLikesAdmin(ExportMixin, ModelAdmin):
     actions = None
     list_display_links = None
-    ordering = ['owner']
+    ordering = ['-parent__datetime']
+    list_filter = ['parent__datetime']
 
     resource_classes = [SmLikesResource]
 
@@ -40,7 +41,11 @@ class SmLikesAdmin(ExportMixin, ModelAdmin):
     def post_permalink(self: SmLikes):
         return mark_safe(f'<a target="_blank" href="{self.parent_object.permalink}">{self.parent_object.permalink}</a>')
 
-    list_display = [formatted_owner, profile_link, post_item, post_permalink]
+    @admin.display(ordering='parent__datetime')
+    def post_date(self: SmLikes):
+        return self.parent_object.datetime
+
+    list_display = [formatted_owner, profile_link, post_item, post_permalink, post_date]
 
     def has_add_permission(self, request):
         return False

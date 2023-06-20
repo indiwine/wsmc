@@ -4,11 +4,14 @@ from typing import Optional
 from django.contrib import admin
 from django.contrib.gis.db.models import PointField
 from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
+from django.contrib.auth.models import User
+from tinymce.models import HTMLField
 
 from .smcredential import SmCredential
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from ..geo.geocoderhelper import GeoCoderHelper
 from ..social_media import SocialMediaTypes
+from ..social_media.profilescreeningstatus import ProfileScreeningStatus
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +42,20 @@ class SmProfile(Model):
 
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
-    location_point = PointField(default=None, null=True)
+    location_point = PointField(default=None, null=True, blank=True)
     location_known = BooleanField(default=False, editable=False)
     location_precise = BooleanField(default=False, editable=False)
+
+    person_responsible = ForeignKey(User, default=None, null=True, on_delete=SET_NULL, blank=True)
+
+    screening_status = CharField(
+        max_length=4,
+        choices=ProfileScreeningStatus.choices,
+        default=ProfileScreeningStatus.PENDING,
+        blank=True
+    )
+
+    comment = HTMLField(default='')
 
     def __str__(self):
         return self.name
@@ -120,6 +134,8 @@ class SmProfile(Model):
                 'social_media',
                 'location_known',
                 'location_precise',
-                'is_reviewed'
+                'is_reviewed',
+                'screening_status',
+                'person_responsible',
             ])
         ]

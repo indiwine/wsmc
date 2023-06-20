@@ -17,10 +17,11 @@ import re
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 from django.views.static import serve
 
 urlpatterns = [
+    path('tinymce/', include('tinymce.urls')),
     # ====== WARNING! ========
     # Do not use this config anywhere near the internet!
     re_path(

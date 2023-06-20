@@ -29,7 +29,8 @@ class SmPost(Model):
 
     likes = GenericRelation(SmLikes,
                             object_id_field='parent_id',
-                            content_type_field='parent_type'
+                            content_type_field='parent_type',
+                            related_query_name='parent'
                             )
 
     sm_post_id = CharField(max_length=25000, help_text='ID поста в соціальній мережі', verbose_name='ID',
