@@ -213,7 +213,6 @@ class TgAgent:
         self._wait(self.tg.call_method('viewMessages', view_data, False))
         self._wait(self.tg.call_method('closeChat', chat_data, False))
 
-
     def get_callback_query_answer(self, msg: MessageResponse, callback_data: str) -> CallbackQueryAnswer:
         """
         Send a callback query to a bot

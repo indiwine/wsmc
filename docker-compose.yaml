@@ -97,6 +97,11 @@ services:
       POSTGRES_DB: "wsmc"
     volumes:
       - postgresql:/var/lib/postgresql/data
+      - ./deploy_config/postgres.custom.conf:/var/lib/postgresql/data/postgresql.conf
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 2684354560
     deploy:
       replicas: 1
       placement:
@@ -104,6 +109,13 @@ services:
           - "node.role==manager"
       labels:
         wsmc.services.pg: 'true'
+      resources:
+        limits:
+          cpus: '5'
+          memory: 5G
+        reservations:
+          cpus: '4'
+          memory: 4G
 
   chrome:
     image: selenium/node-chrome:113.0

@@ -7,18 +7,19 @@ from django.db.models import Model, ForeignKey, CASCADE, TextField, DateTimeFiel
 
 from .smlikes import SmLikes
 from ..social_media import SocialMediaTypes
+from ..social_media.profilescreeningstatus import ProfileScreeningStatus
 
 
 class SmPost(Model):
     permalink = URLField(null=True, help_text='Прямий лінк на пост', max_length=2512, editable=False)
 
-    author_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='author')
-    author_id = PositiveIntegerField(verbose_name='')
+    author_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='author', editable=False)
+    author_id = PositiveIntegerField(verbose_name='', editable=False)
     author_object = GenericForeignKey('author_type', 'author_id')
     """Post author"""
 
-    origin_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='origin')
-    origin_id = PositiveIntegerField(verbose_name='')
+    origin_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='origin', editable=False)
+    origin_id = PositiveIntegerField(verbose_name='',editable=False)
     origin_object = GenericForeignKey('origin_type', 'origin_id')
     """Post origin, typically group or user """
 
@@ -30,7 +31,8 @@ class SmPost(Model):
     likes = GenericRelation(SmLikes,
                             object_id_field='parent_id',
                             content_type_field='parent_type',
-                            related_query_name='parent'
+                            related_query_name='parent',
+                            editable=False
                             )
 
     sm_post_id = CharField(max_length=25000, help_text='ID поста в соціальній мережі', verbose_name='ID',
@@ -44,6 +46,12 @@ class SmPost(Model):
 
     raw_post = JSONField(null=True, editable=False)
     search_vector = SearchVectorField('body', editable=False)
+
+    screening_status = CharField(
+        max_length=4,
+        choices=ProfileScreeningStatus.choices,
+        default=ProfileScreeningStatus.PENDING,
+    )
 
     def __str__(self):
         post = self.sm_post_id[0:20]
@@ -62,7 +70,8 @@ class SmPost(Model):
                 'origin_type',
                 'origin_id',
                 'author_type',
-                'author_id'
+                'author_id',
+                'screening_status'
             ]),
             GinIndex(
                 SearchVector('search_vector', config='russian'),

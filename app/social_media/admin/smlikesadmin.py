@@ -25,7 +25,7 @@ class SmLikesAdmin(ExportMixin, ModelAdmin):
     actions = None
     list_display_links = None
     ordering = ['-parent__datetime']
-    list_filter = ['parent__datetime']
+    list_filter = ['parent__datetime', 'parent__screening_status']
 
     resource_classes = [SmLikesResource]
 
@@ -45,7 +45,11 @@ class SmLikesAdmin(ExportMixin, ModelAdmin):
     def post_date(self: SmLikes):
         return self.parent_object.datetime
 
-    list_display = [formatted_owner, profile_link, post_item, post_permalink, post_date]
+    @admin.display(ordering='parent__screening_status')
+    def post_screening_status(self: SmLikes):
+        return self.parent_object.get_screening_status_display()
+
+    list_display = [formatted_owner, profile_link, post_item, post_permalink, post_date, post_screening_status]
 
     def has_add_permission(self, request):
         return False

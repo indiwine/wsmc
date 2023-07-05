@@ -61,6 +61,7 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         # 'location_known',
         # 'location_precise',
         'screening_status',
+        'authenticity_status',
         'person_responsible',
         ProfileLocationPreciseFilter,
         'is_reviewed',
@@ -98,10 +99,10 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'social_media',
         'is_reviewed'
     ]
-    list_display = ['name', 'location', 'home_town', 'person_responsible', 'screening_status',
-                    get_id_link, get_likes_view_url, 'is_reviewed']
+    list_display = ['name', 'location', 'home_town', 'person_responsible', 'screening_status', 'authenticity_status',
+                    get_id_link, get_likes_view_url]
 
-    list_editable = ['person_responsible', 'screening_status']
+    list_editable = ['person_responsible', 'screening_status', 'authenticity_status']
 
     def get_queryset(self, request):
         queryset: QuerySet = super().get_queryset(request)

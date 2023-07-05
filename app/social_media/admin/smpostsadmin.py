@@ -13,11 +13,11 @@ class SmPostsAdmin(ModelAdmin):
     actions = None
     ordering = ['-datetime']
 
+    readonly_fields = ['social_media', 'datetime', 'body']
+
     @admin.display(description='Permalink')
     def permalink(self: SmPost):
         return mark_safe(f'<a href="{self.permalink}" target="_blank">{self.permalink}</a>')
-
-    fields = [permalink, 'social_media', 'datetime', 'body']
 
     def get_search_results(self, request, queryset: QuerySet, search_term: str):
         result = queryset
@@ -45,9 +45,6 @@ class SmPostsAdmin(ModelAdmin):
     list_filter = ('social_media', 'datetime', ('body', EmptyFieldListFilter))
 
     def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
         return False
 
 

@@ -11,6 +11,7 @@ from .smcredential import SmCredential
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from ..geo.geocoderhelper import GeoCoderHelper
 from ..social_media import SocialMediaTypes
+from ..social_media.profileauthenticitystatus import ProfileAuthenticityStatus
 from ..social_media.profilescreeningstatus import ProfileScreeningStatus
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,9 @@ class SmProfile(Model):
 
     was_collected = BooleanField(default=False)
     is_reviewed = BooleanField(default=False)
+    """
+    DEPRECATED
+    """
 
     suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True, editable=False)
 
@@ -52,7 +56,12 @@ class SmProfile(Model):
         max_length=4,
         choices=ProfileScreeningStatus.choices,
         default=ProfileScreeningStatus.PENDING,
-        blank=True
+    )
+
+    authenticity_status = CharField(
+        max_length=4,
+        choices=ProfileAuthenticityStatus.choices,
+        default=ProfileAuthenticityStatus.UNKNOWN,
     )
 
     comment = HTMLField(default='')
@@ -137,5 +146,6 @@ class SmProfile(Model):
                 'is_reviewed',
                 'screening_status',
                 'person_responsible',
+                'authenticity_status'
             ])
         ]
