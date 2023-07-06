@@ -74,7 +74,7 @@ class VkPostFansBoxPageObject(AbstractVkPageObject):
         try:
             self.get_wait().until(EC.presence_of_element_located(self.fan_rows_locator()))
         except TimeoutException as e:
-            logger.debug('Timeout while loading likes', exc_info=e)
+            logger.debug('Timeout while loading likes')
             return False
         return True
 

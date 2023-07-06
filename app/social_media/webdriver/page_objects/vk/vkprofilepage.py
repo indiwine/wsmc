@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class VkProfilePage(AbstractVkPageObject):
-    NOT_FOUND_TITLE = '404 Not Found'
+
     VK_USER_GET = 'users.get'
     _user_id: Optional[int] = None
     _user_domain: Optional[str] = None
@@ -97,7 +97,7 @@ class VkProfilePage(AbstractVkPageObject):
                 EC.title_is(self.NOT_FOUND_TITLE)
             ))
 
-            if self.driver.title == self.NOT_FOUND_TITLE:
+            if self.is_404():
                 raise WsmcWebDriverProfileNotFoundException(f'Profile "{self.driver.get_current_url_safe}" not found')
 
     def _find_profile_data(self) -> VkProfileNode:

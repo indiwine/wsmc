@@ -45,6 +45,7 @@ class TestVkCollectors(TestCase):
     def test_login(self):
         request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
 
+        VkLoginCollector.MAX_JITTER_DELAY = 30
         login_collector = VkLoginCollector()
         login_collector.MAX_JITTER_DELAY = 30
 
@@ -54,9 +55,7 @@ class TestVkCollectors(TestCase):
 
     def test_group_collector(self):
         suspect_group = SuspectGroup.objects.create(
-            name='Test Vk Group',
             url='https://vk.com/jj.crocodile',
-            credentials=self.credential
         )
 
         request = Request(
@@ -109,15 +108,15 @@ class TestVkCollectors(TestCase):
         self.assertIsNone(updated_profile.suspect_social_media)
 
     def test_post_offset_generator(self):
+        VkPostsCollector.MIN_PROFILES_PER_REQUEST = 1
         posts_collector = VkPostsCollector()
+        posts_collector.MIN_PROFILES_PER_REQUEST = 1
 
         options = VkOptions()
         posts_collector.set_options(options)
 
         suspect_group = SuspectGroup.objects.create(
-            name='Another Test Vk Group',
             url='https://vk.com/jj.crocodile',
-            credentials=self.credential
         )
 
         request = Request(

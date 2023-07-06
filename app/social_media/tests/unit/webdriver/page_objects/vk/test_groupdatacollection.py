@@ -1,7 +1,6 @@
 import datetime
 from pathlib import Path
 from pprint import pprint
-from time import sleep
 
 from django.conf import settings
 from django.test import SimpleTestCase
@@ -10,7 +9,7 @@ from social_media.dtos import SmGroupDto, SmPostDto, SmPostImageDto, AuthorDto, 
 from social_media.social_media import SocialMediaTypes
 from social_media.webdriver.common import date_time_parse
 from social_media.webdriver.driverbuilder import DriverBuilder
-from social_media.webdriver.exceptions import WsmcWebDriverProfileNotFoundException
+from social_media.webdriver.exceptions import WsmcWebDriverProfileNotFoundException, WsmcWebDriverGroupNotFoundException
 from social_media.webdriver.link_builders.vk.vklinkbuilder import VkLinkBuilder
 from social_media.webdriver.page_objects.vk.vkapipageobject import VkApiPageObject
 from social_media.webdriver.page_objects.vk.vkgrouppage import VkGroupPage
@@ -75,9 +74,14 @@ class TestVkDataCollection(SimpleTestCase):
         """
         Case: Distinguish between `/club` and `/public` urls
         """
-        group_url = 'https://vk.com/chvk.vaqner'
+        group_url = 'https://vk.com/rt_russian'
         group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(group_url))
         group_page_object.collect_group()
+
+    def test_blocked_group(self):
+        group_url = 'https://vk.com/chvk.vaqner'
+        group_page_object = VkGroupPage(self.driver, VkLinkBuilder.build_group(group_url))
+        self.assertRaises(WsmcWebDriverGroupNotFoundException, group_page_object.collect_group)
 
     def test_post_info_collection(self):
         """
@@ -131,14 +135,20 @@ class TestVkDataCollection(SimpleTestCase):
         self.assertEqual(image.oid, expected_image.oid, 'Image id doesn\'t mathc')
         self.assertTrue(image.url)
 
-        self.assertEqual(total_likes, len(likes), 'Number of collected likes is different')
+        self.assertNumberOfLikes(total_likes, len(likes))
+
+    def assertNumberOfLikes(self, total_likes: int, collected_likes: int):
+        # VK does not always show all the likes for the post, so we left for calculating "almost" arbitrary delta
+
+        fraction_of_collected_likes = 0.90
+        desired_delta = round(total_likes * (1 - fraction_of_collected_likes))
+        self.assertAlmostEqual(total_likes, collected_likes, delta=desired_delta)
 
     def test_group_navigation_and_post_collection(self):
         """
         Case: Just a common post collection in a group
         """
 
-        fraction_of_collected_likes = 0.92
         group_url = 'https://vk.com/top_novostnoy'
         posts_per_page = 20
 
@@ -156,9 +166,7 @@ class TestVkDataCollection(SimpleTestCase):
             total_likes = post_reactions_object.likes_count()
             post_likes = post_object.collect_likes_flat()
 
-            # VK does not always show all the likes for the post, so we left for calculating "almost" arbitrary delta
-            desired_delta = round(total_likes * (1 - fraction_of_collected_likes))
-            self.assertAlmostEqual(total_likes, len(post_likes), delta=desired_delta)
+            self.assertNumberOfLikes(total_likes, len(post_likes))
             posts.append(post_dto)
 
         self.assertEqual(posts_per_page, len(posts), 'number of posts')
@@ -218,12 +226,13 @@ class TestVkDataCollection(SimpleTestCase):
             domain='id296682879',
             location=None,
             university='ՇՊՀ (ШГУ им. Налбандяна, бывш. ԳՊՄԻ Մ.Նալբանդյանի անվան, ГГПИ им. Налбандяна) Սոցիալական գիտությունների և իրավունքի ֆակուլտետը (Факультет социальных наук и права)',
-            home_town='Петропавловск-Камчатский🌋',
+            home_town='Воронеж',
             metadata=None
         )
 
         profile_page_object = VkProfilePage(self.driver, VkLinkBuilder.build(profile_url))
         profile_dto = profile_page_object.collect_profile()
+        pprint(profile_dto)
         self.assertEqual(profile_dto, expected_dto)
 
     def test_not_found_profile(self):

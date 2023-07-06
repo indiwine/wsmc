@@ -1,15 +1,21 @@
-from django.db.models import Model, URLField, CharField, ForeignKey, RESTRICT
+from typing import Optional
+
+from django.db.models import Model, URLField
 
 from .smcredential import SmCredential
+from ..social_media import SocialMediaTypes
 
 
 class SuspectGroup(Model):
-    name = CharField(max_length=255, null=True, blank=True)
-    url = URLField()
-    credentials = ForeignKey(SmCredential, on_delete=RESTRICT, null=True)
+    _credential_used: Optional[SmCredential] = None
+    url = URLField(unique=True)
+
+    @property
+    def credentials(self) -> SmCredential:
+        if not self._credential_used:
+            self._credential_used = SmCredential.objects.get_next_credential(SocialMediaTypes.from_url(self.url))
+
+        return self._credential_used
 
     def __str__(self):
-        if not self.name:
-            return f'Untitled group at {self.url}'
-
-        return self.name
+        return self.url

@@ -6,8 +6,9 @@ from pathlib import Path
 from typing import Optional, Generator, List, Union
 
 from django.conf import settings
-from selenium.common import WebDriverException
+from selenium.common import WebDriverException, NoSuchElementException
 from selenium.webdriver import Remote
+from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from seleniumwire import webdriver as seleniumwire_webdriver
 from seleniumwire.utils import decode
@@ -137,6 +138,12 @@ class WsmcWebDriver(WEB_DRIVER):
         except Exception as e:
             logger.error('Error while quiting webdriver', exc_info=e)
 
+    def find_element_safe(self, by=By.ID, value: Optional[str] = None) -> Optional[WebElement]:
+        try:
+            return self.find_element(by, value)
+        except NoSuchElementException:
+            return None
+
     def is_element_displayed_safe(self, element: WebElement) -> bool:
         try:
             return element.is_displayed()
@@ -170,13 +177,9 @@ class WsmcWebDriver(WEB_DRIVER):
         Object.keys(arguments[0]).forEach(key => window.localStorage.setItem(key, arguments[0][key]))
         """, storage_data.local_storage)
 
-
         self.delete_all_cookies()
         for cookie in storage_data.cookies:
             self.add_cookie(cookie)
-
-
-
 
     def restore_browser_storage(self, storage_data: BrowserStorageData):
         self.delete_all_cookies()
@@ -187,5 +190,3 @@ class WsmcWebDriver(WEB_DRIVER):
         self.delete_local_storage()
         self.add_local_storage(storage_data.local_storage)
         self.refresh()
-
-

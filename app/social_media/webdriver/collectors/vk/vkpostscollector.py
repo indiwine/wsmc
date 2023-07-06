@@ -27,6 +27,7 @@ class VkPostsCollector(AbstractCollector):
 
     DELAY_BETWEEN_PROFILES = 60 * 15
     PROFILES_PER_REQUEST = 100 * 25
+    MIN_PROFILES_PER_REQUEST = 100 * 25
     STEP: int = 20
     request_origin = None
     post_count = 0
@@ -43,7 +44,8 @@ class VkPostsCollector(AbstractCollector):
                        .filter(was_collected=False, social_media=request.get_social_media_type) \
                        .values_list('oid', flat=True)[:self.PROFILES_PER_REQUEST]
         with transaction.atomic():
-            if len(profiles) == 0:
+            num_of_profiles = len(profiles)
+            if num_of_profiles == 0 or num_of_profiles < self.MIN_PROFILES_PER_REQUEST:
                 return
 
             try:

@@ -18,6 +18,10 @@ class WsmcWebDriverProfileNotFoundException(WsmcWebdriverException):
     pass
 
 
+class WsmcWebDriverGroupNotFoundException(WsmcWebdriverException):
+    pass
+
+
 class WsmcWebDriverGroupException(WsmcWebdriverException):
     pass
 

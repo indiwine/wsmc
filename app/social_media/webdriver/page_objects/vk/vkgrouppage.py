@@ -1,12 +1,13 @@
 import re
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 from social_media.dtos import SmGroupDto
+from social_media.social_media import SocialMediaTypes
 from .abstractvkpageobject import AbstractVkPageObject
 from .vkprofilewallpage import VkProfileWallPage
-from ...exceptions import WsmcWebDriverGroupException
-from social_media.social_media import SocialMediaTypes
+from ...exceptions import WsmcWebDriverGroupException, WsmcWebDriverGroupNotFoundException
 
 
 class VkGroupPage(AbstractVkPageObject):
@@ -20,6 +21,14 @@ class VkGroupPage(AbstractVkPageObject):
     def permalink(self) -> str:
         return self.meta_url().get_attribute('content')
 
+    @staticmethod
+    def group_cover_locator():
+        return By.CLASS_NAME, 'redesigned-group-cover'
+
+    @staticmethod
+    def group_blocked_locator():
+        return By.CLASS_NAME, 'groups_blocked'
+
     def profile_wall_link(self):
         return self.driver.find_element(By.CSS_SELECTOR, '.page_block ._wall_tab_own a')
 
@@ -30,6 +39,17 @@ class VkGroupPage(AbstractVkPageObject):
 
     def collect_group(self) -> SmGroupDto:
         self.go_to_group()
+
+        self.get_wait().until(EC.any_of(
+            EC.presence_of_element_located(self.group_cover_locator()),
+            EC.title_is(self.NOT_FOUND_TITLE),
+            EC.presence_of_element_located(self.group_blocked_locator())
+        ))
+
+        if self.is_404() or self.driver.find_element_safe(*self.group_blocked_locator()):
+            raise WsmcWebDriverGroupNotFoundException(
+                f'Group cannot be found or blocked at "{self.driver.get_current_url_safe}"')
+
         return SmGroupDto(
             permalink=self.permalink(),
             name=self.meta_title().get_attribute('content'),

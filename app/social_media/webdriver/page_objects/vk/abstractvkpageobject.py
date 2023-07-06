@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 class AbstractVkPageObject(AbstractPageObject):
+    NOT_FOUND_TITLE = '404 Not Found'
+
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy):
         super().__init__(driver)
         self.link_strategy = link_strategy
@@ -19,3 +21,6 @@ class AbstractVkPageObject(AbstractPageObject):
             oid = oid[1:]
 
         return oid, is_group
+
+    def is_404(self):
+        return self.driver.title == self.NOT_FOUND_TITLE
