@@ -11,9 +11,13 @@ class SuspectGroup(Model):
     url = URLField(unique=True)
 
     @property
+    def social_media_type(self) -> SocialMediaTypes:
+        return SocialMediaTypes.from_url(self.url)
+
+    @property
     def credentials(self) -> SmCredential:
         if not self._credential_used:
-            self._credential_used = SmCredential.objects.get_next_credential(SocialMediaTypes.from_url(self.url))
+            self._credential_used = SmCredential.objects.get_next_credential(self.social_media_type)
 
         return self._credential_used
 

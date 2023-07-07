@@ -7,7 +7,9 @@ class WscmWebdriverRetryFailedException(WsmcWebdriverException):
 
 
 class WsmcWebDriverLoginError(WsmcWebdriverException):
-    pass
+    def __init__(self, *args, is_captcha_required):
+        self.is_captcha_required = is_captcha_required
+        super().__init__(*args)
 
 
 class WsmcWebDriverProfileException(WsmcWebdriverException):

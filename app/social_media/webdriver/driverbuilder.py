@@ -1,10 +1,9 @@
 import logging
 import re
-import socket
 from enum import Enum
+from typing import Optional
 
 from django.conf import settings
-from fake_useragent import UserAgent
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.firefox.options import FirefoxProfile, Options as FirefoxOptions
@@ -29,20 +28,24 @@ def grp(pat, txt):
     return '&'
 
 
+class DriverBuildOptions:
+    block_images: bool = True
+    profile_folder_name: Optional[str] = None
+
+
 class DriverBuilder:
     @staticmethod
-    def build() -> WsmcWebDriver:
+    def build(driver_build_options: Optional[DriverBuildOptions] = None) -> WsmcWebDriver:
+        if not driver_build_options:
+            driver_build_options = DriverBuildOptions()
 
         selected_driver = DriverBuilder._get_selected_driver()
         logger.debug(f'Building webdriver {selected_driver.name}')
-        options = DriverBuilder._get_driver_options(selected_driver)
-        capabilities = options.to_capabilities()
+        options = DriverBuilder._get_driver_options(selected_driver, driver_build_options)
 
         logger.debug(f'Webdriver executor: {settings.WSMC_WEBDRIVER_URL}')
         driver = WsmcWebDriver(command_executor=settings.WSMC_WEBDRIVER_URL,
-                               options=options,
-                               browser_profile=DriverBuilder._get_browser_profile(selected_driver),
-                               desired_capabilities=capabilities,
+                               options=options
                                )
 
         driver.scopes = [
@@ -62,22 +65,32 @@ class DriverBuilder:
         raise RuntimeError(f'{raw_driver} is not a valid selenium web driver')
 
     @staticmethod
-    def _get_driver_options(selected_driver: SeleniumDriverTypeEnum) -> ArgOptions:
+    def _get_driver_options(selected_driver: SeleniumDriverTypeEnum,
+                            driver_build_options: DriverBuildOptions) -> ArgOptions:
         if selected_driver == SeleniumDriverTypeEnum.CHROME:
-            user_agent_faker = UserAgent(browsers=['edge', 'chrome', 'safari', 'opera'])
-            user_agent_faker.update()
-            ua = user_agent_faker.chrome
-            logger.debug(f'UA: {ua}')
 
             options = ChromeOptions()
             prefs = {
                 "profile.default_content_setting_values.notifications": 2,
-                "profile.managed_default_content_settings.images": 2,
+                "profile.managed_default_content_settings.images": 2 if driver_build_options.block_images else 0,
+                "profile.managed_default_content_settings.stylesheets": 2,
+                # "profile.managed_default_content_settings.cookies": 2,
+                # "profile.managed_default_content_settings.javascript": 1,
+                # "profile.managed_default_content_settings.plugins": 1,
+                "profile.managed_default_content_settings.popups": 2,
+                "profile.managed_default_content_settings.geolocation": 2,
+                "profile.managed_default_content_settings.media_stream": 2,
                 "credentials_enable_service": False,
                 "profile.password_manager_enabled": False,
                 "intl.accept_languages": settings.WSMC_WEBDRIVER_LOCALE
             }
             options.add_experimental_option('prefs', prefs)
+
+            if driver_build_options.profile_folder_name:
+                # options.add_argument(f'--profile-directory={driver_build_options.profile_folder_name}')
+                options.add_argument(
+                    f'--user-data-dir=/home/seluser/{driver_build_options.profile_folder_name}')
+
             options.add_argument(f'--lang={settings.WSMC_WEBDRIVER_LOCALE}')
 
             options.add_argument("--disable-blink-features")

@@ -5,7 +5,8 @@ from .abstractvkpageobject import AbstractVkPageObject
 
 
 class VkMainFeedPage(AbstractVkPageObject):
-    def main_feed_container_locator(self):
+    @staticmethod
+    def main_feed_container_locator():
         return By.ID, 'main_feed'
 
     def wait_for_main_feed(self):

@@ -12,6 +12,7 @@ from ..webdriver.exceptions import WsmcWebDriverLoginError
 
 class SmCredentialsAdmin(ModelAdmin):
     list_display = ('user_name', 'social_media')
+    list_filter = ['social_media']
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:

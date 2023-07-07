@@ -20,12 +20,8 @@ def perform_collect(modeladmin, request, queryset: QuerySet):
         perform_group_data_collection_task.delay(group.id)
 
 
-def account(self: SuspectGroup):
-    return self.credentials.user_name
-
-
 class SuspectGroupAdmin(ModelAdmin):
-    list_display = ['url', 'id', account]
+    list_display = ['url', 'id']
     ordering = ['-id']
     actions = [perform_collect]
 

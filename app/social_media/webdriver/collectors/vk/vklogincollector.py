@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class VkLoginCollector(AbstractCollector):
-    MAX_JITTER_DELAY = 5 * 60
+    MAX_JITTER_DELAY = 1 * 60
     MIN_JITTER_DELAY = 15
     _options: VkOptions = None
 

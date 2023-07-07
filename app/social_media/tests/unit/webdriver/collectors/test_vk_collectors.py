@@ -38,20 +38,21 @@ class TestVkCollectors(TestCase):
 
     def create_agent(self, request: Request, chain_obj: Collector):
         run_agent = Agent(request)
-        chain_obj.set_options(VkOptions())
+        chain_obj.set_options(request.options)
         run_agent._construct_chain = MagicMock(return_value=chain_obj)
         return run_agent
 
     def test_login(self):
         request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
+        request.driver_build_options.block_images = False
+        request.driver_build_options.profile_folder_name = None
+        request.options.login_use_jitter = False
 
-        VkLoginCollector.MAX_JITTER_DELAY = 30
         login_collector = VkLoginCollector()
-        login_collector.MAX_JITTER_DELAY = 30
 
         run_agent = self.create_agent(request, login_collector)
         run_agent.run()
-        # Here we gust assume login is successfully if there is no errors
+        # Here we gustls assume login is successfully if there is no errors
 
     def test_group_collector(self):
         suspect_group = SuspectGroup.objects.create(
@@ -82,7 +83,7 @@ class TestVkCollectors(TestCase):
         login_collector.set_next(group_collector)
 
         run_agent = self.create_agent(request, login_collector)
-        run_agent.run()
+        run_agent.run(max_retries=1)
         saved_group = posts_collector.get_request_origin(request)
 
         self.assertEqual(suspect_group.id, saved_group.suspect_group.id)
@@ -96,7 +97,7 @@ class TestVkCollectors(TestCase):
         )
         request = Request([], credentials=self.credential)
         run_agent = self.create_agent(request, VkSecondaryProfilesCollector())
-        run_agent.run()
+        run_agent.run(max_retries=1)
 
         updated_profile = SmProfile.objects.get(id=original_profile.id)
         self.assertTrue(updated_profile.name)

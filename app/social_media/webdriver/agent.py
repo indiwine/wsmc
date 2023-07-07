@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Optional
 
 from selenium.common import NoSuchWindowException, WebDriverException
 
@@ -17,9 +18,17 @@ logger = logging.getLogger(__name__)
 
 class Agent:
 
-    def __init__(self, request: Request):
+    def __init__(self, request: Request, task_id: Optional[str] = None):
+
         self.request = request
+        self.task_id = task_id
         logger.info(f'Agent created for {request}')
+
+    def _get_screenshot_prefix(self, attempt: int) -> str:
+        result = f'agent_error_attempt_{attempt}'
+        if self.task_id:
+            result = f'{self.task_id}__{result}'
+        return result
 
     def run(self, max_retries: int = 5, base_delay: int = 30):
         """
@@ -41,7 +50,8 @@ class Agent:
                 logger.warning('Selenium window was closed...')
                 return
             except (WscmWebdriverRetryFailedException, WebDriverException, WsmcWebDriverLoginError) as e:
-                self.request.driver.save_screenshot_safe(f'agent_error_attempt_{attempt}')
+
+                self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
                 if attempt == max_retries:
                     raise
 
@@ -62,7 +72,6 @@ class Agent:
                 time.sleep(delay)
             finally:
                 self.request.close_driver()
-
 
     def _construct_chain(self) -> Collector:
         sm_type = self.request.get_social_media_type

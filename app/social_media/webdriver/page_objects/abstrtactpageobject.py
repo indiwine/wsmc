@@ -48,13 +48,15 @@ class AbstractPageObject(ABC):
                      max_retry_count: int = 10,
                      on_fail: Optional[Callable] = None,
                      additional_exceptions: List[Type[Exception]] = None,
-                     cooldown_time: Optional[int] = None
+                     cooldown_time: Optional[int] = None,
+                     before_retry_action: Optional[Callable] = None
                      ) -> T:
         """
         Basic action that can be repeated up to `max_retry_count` after a refresh action
 
         Action is expecting to raise a selenium TimeoutException
         
+        @param before_retry_action: Action performed before each retry (refreshes page by default)
         @param cooldown_time: optional number of seconds between attempts
         @param additional_exceptions: List exceptions eligible for retry (selenium.common.TimeoutException is always present)
         @param action: callback
@@ -62,6 +64,10 @@ class AbstractPageObject(ABC):
         @param on_fail: Called one time at first error
         @return:
         """
+
+        do_before_retry: Callable = lambda: self.driver.refresh()
+        if before_retry_action:
+            do_before_retry = before_retry_action
 
         exceptions_to_wait: List[Type[Exception]] = [TimeoutException]
         if additional_exceptions:
@@ -89,7 +95,7 @@ class AbstractPageObject(ABC):
                 else:
                     logger.error(f'Action failed at "{self.driver.get_current_url_safe}"... reloading page', exc_info=e)
 
-                self.driver.refresh()
+                do_before_retry()
 
     def init_end_of_page_count(self):
         self._is_eop_inited = True

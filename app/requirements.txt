@@ -7,13 +7,13 @@ django-import-export==3.2.0
 # keras-cv==0.3.4
 # tensorflow==2.11.0
 # tensorflow-datasets==4.8.2
-selenium==4.9.1
+selenium==4.10.0
 selenium-wire==5.1.0
 schwifty==2023.3.0
 PyICU==2.10.2
 python-telegram==0.16.0
 phonenumberslite==8.13.11
-celery==5.2.7
+celery==5.3.1
 dateparser==1.1.8
 psycopg2==2.9.6
 Pillow==9.5.0

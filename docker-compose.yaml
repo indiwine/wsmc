@@ -111,14 +111,14 @@ services:
         wsmc.services.pg: 'true'
       resources:
         limits:
-          cpus: '5'
-          memory: 5G
+          cpus: '6'
+          memory: 8G
         reservations:
-          cpus: '4'
-          memory: 4G
+          cpus: '5'
+          memory: 7G
 
   chrome:
-    image: selenium/node-chrome:113.0
+    image: selenium/node-chrome:114.0
     environment:
       <<: *selenium-nodes
     ports:
@@ -144,7 +144,7 @@ services:
 
 
   webdriver:
-    image: selenium/hub:4.9.1
+    image: selenium/hub:4.10.0
     environment:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800

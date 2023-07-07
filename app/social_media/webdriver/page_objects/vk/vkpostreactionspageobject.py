@@ -2,8 +2,8 @@ import json
 import logging
 from typing import Generator, List, Optional
 
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver import ActionChains
-from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -15,6 +15,7 @@ from ...exceptions import WsmcWebDriverPostLikesException
 from ...link_builders.vk.strategies.abstractvklinkstrategy import AbstractVkLinkStrategy
 
 logger = logging.getLogger(__name__)
+
 
 class VkPostReactionsPageObject(AbstractVkPageObject):
     def __init__(self, driver, link_strategy: AbstractVkLinkStrategy, post_button_reactions_container: WebElement):
@@ -71,8 +72,19 @@ class VkPostReactionsPageObject(AbstractVkPageObject):
 
         return fan_box_object.generate_likes()
 
-    def open_likes_window(self) -> Optional[VkPostFansBoxPageObject]:
+    def scroll_into_view_reactions_buttons(self):
         self.driver.scroll_into_view(self.post_button_reactions_container)
+
+    def open_likes_window(self) -> Optional[VkPostFansBoxPageObject]:
+        self.scroll_into_view_reactions_buttons()
+
+        return self.retry_action(
+            action=self._do_open_likes_window,
+            before_retry_action=self.scroll_into_view_reactions_buttons,
+            additional_exceptions=[StaleElementReferenceException]
+        )
+
+    def _do_open_likes_window(self) -> Optional[VkPostFansBoxPageObject]:
         btn_node = self.bottom_reactions_btn()
         ActionChains(self.driver).move_to_element(btn_node).perform()
         self.get_wait().until(EC.visibility_of_element_located(self.reactions_popper_locator()))

@@ -3,10 +3,10 @@ from typing import Optional, List, Union
 
 from pyee import EventEmitter
 
-from .driverbuilder import DriverBuilder
-from .wsmcwebdriver import WsmcWebDriver
+from .driverbuilder import DriverBuilder, DriverBuildOptions
 from .options.baseoptions import BaseOptions
 from .options.vkoptions import VkOptions
+from .wsmcwebdriver import WsmcWebDriver
 from ..models import SuspectSocialMediaAccount, SmCredential, SuspectGroup
 from ..social_media import SocialMediaEntities, SocialMediaTypes
 
@@ -37,6 +37,8 @@ class Request:
         self.ee = ee
 
         self.options = self.build_default_options()
+        self.driver_build_options = DriverBuildOptions()
+        self.driver_build_options.profile_folder_name = f'chrome_cred_{credentials.id}'
 
     def __str__(self):
         return f'Request: "{self.credentials.social_media}", [{self.entities}]'
@@ -45,7 +47,7 @@ class Request:
     def driver(self) -> WsmcWebDriver:
         if self._driver is None:
             logger.info('Building selenium driver')
-            self._driver = DriverBuilder.build()
+            self._driver = DriverBuilder.build(self.driver_build_options)
         return self._driver
 
     @property
@@ -74,7 +76,6 @@ class Request:
             raise NotImplementedError('Options for ok is not implemented')
 
         raise RuntimeError(f'Unknown social media type: {self.get_social_media_type}')
-
 
     def configure_for_retry(self):
         self.last_retry_success = False

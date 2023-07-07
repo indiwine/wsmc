@@ -19,11 +19,6 @@ def redirect_to_likes(modeladmin, request, queryset: QuerySet):
     return redirect(generate_url_for_model(LinkTypes.CHANGELIST, SmLikes, params={'owner_id__in': id_list}))
 
 
-@admin.action(description="Set Reviewed")
-def mark_reviewed(modeladmin, request, queryset: QuerySet):
-    queryset.update(is_reviewed=True)
-
-
 class ProfileLocationPreciseFilter(SimpleListFilter):
     title = 'Location Filter'
 
@@ -64,11 +59,11 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'authenticity_status',
         'person_responsible',
         ProfileLocationPreciseFilter,
-        'is_reviewed',
+        # 'is_reviewed',
         # 'country'
     ]
     resource_classes = [SmProfileResource]
-    actions = [redirect_to_likes, mark_reviewed]
+    actions = [redirect_to_likes]
 
     @admin.display(description='Likes', empty_value='-', ordering='likes_count')
     def get_likes_view_url(self: SmProfile) -> str:
