@@ -5,3 +5,4 @@ class ProfileScreeningStatus(TextChoices):
     PENDING = 'pe', 'В очікуванні'
     RUSSIAN = 're', 'Русня'
     OK = 'ok', 'Норм'
+    LDNR = 'ln', 'БАМБАС'

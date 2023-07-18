@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 from typing import List, Generator
 
@@ -9,10 +10,18 @@ from ...exceptions import WsmcWebDriverNativeApiCallTimout
 
 logger = logging.getLogger(__name__)
 
+VK_API_VER = '5.131'
+
+
+@dataclasses.dataclass
+class VkNativeApiRequest:
+    method: str
+    payload: dict
+    api_version: str = VK_API_VER
+
 
 class VkApiPageObject(AbstractVkPageObject):
     ACTIONS_PER_EXEC = 25
-    VK_API_VER = '5.131'
 
     obtain_access_token_func = """
     """
@@ -26,16 +35,68 @@ class VkApiPageObject(AbstractVkPageObject):
         oid_chunks = list(chunks_list(oid_list, oid_per_request))
 
         for batch in chunks_list(oid_chunks, self.ACTIONS_PER_EXEC):
-            yield from self.do_load_data_from_browser(batch)
+            yield from self.do_bulk_users_get(batch)
 
-    def do_load_data_from_browser(self, batch: List[List[str]]) -> Generator[List[SmProfileDto], None, None]:
-        exec_code = self.generate_batch_user_get_codes(batch)
+    def friends_get(self, user_oid: int) -> Generator[List[SmProfileDto], None, None]:
+        yield from self.do_friends_get(user_oid)
+
+    def do_bulk_users_get(self, batch: List[List[str]]) -> Generator[List[SmProfileDto], None, None]:
         logger.debug('Sending exec code to VK')
-        raw_response: dict = self.driver.execute_async_script("""
-            const url = 'https://api.vk.com/method/execute';
+        native_api_request = VkNativeApiRequest(
+            method='execute',
+            payload={
+                'code': self.generate_batch_user_get_codes(batch)
+            }
+        )
+
+        raw_response: dict = self.make_native_api_request(native_api_request)
+        logger.debug('VK async exec done')
+        if 'error' in raw_response and raw_response['error'] == 'timeout':
+            raise WsmcWebDriverNativeApiCallTimout('Call for profiles has been timed out')
+
+        for response_chunk in raw_response['response']:
+            yield self.map_profile_node_to_dto(response_chunk)
+
+    def do_friends_get(self, user_oid: int, limit: int = 5000) -> Generator[List[SmProfileDto], None, None]:
+        request_payload = {
+            'user_id': user_oid,
+            'fields': 'nickname,contacts',
+            'count': limit,
+            'offset': 0
+        }
+
+        native_api_request = VkNativeApiRequest(
+            method='friends.get',
+            payload=request_payload
+        )
+
+        total_friends = None
+
+        while True:
+            raw_response = self.make_native_api_request(native_api_request)
+            response = raw_response['response']
+            if total_friends is None:
+                total_friends = response['count']
+
+            users = response['items']
+            num_of_users = len(users)
+
+            yield self.map_profile_node_to_dto(users)
+
+            if num_of_users == limit:
+                request_payload['offset'] += limit
+
+            if num_of_users < limit:
+                break
+
+    def make_native_api_request(self, request):
+        return self.driver.execute_async_script("""
             const callback = arguments[arguments.length - 1];
-            const code = arguments[0];
-            const apiVersion = arguments[1];
+            const apiRequestModel = arguments[0];
+            const payload = apiRequestModel.payload;
+            
+            const url = `https://api.vk.com/method/${apiRequestModel.method}`;
+            
             const currentOid = window.curNotifier.uid;
             
             const obtainAccessToken = () => {
@@ -59,8 +120,8 @@ class VkApiPageObject(AbstractVkPageObject):
             
             const data = new FormData();
             data.set('access_token', obtainAccessToken())
-            data.set('code', code);
-            data.set('v', apiVersion);
+            Object.keys(payload).forEach(formKey => data.set(formKey, payload[formKey]))
+            data.set('v', apiRequestModel.api_version);
             
             const req = new XMLHttpRequest();
             req.responseType = 'json';
@@ -95,13 +156,7 @@ class VkApiPageObject(AbstractVkPageObject):
             req.open('POST', url);
             req.send(data);
             
-            """, exec_code, self.VK_API_VER)
-        logger.debug('VK async exec done')
-        if 'error' in raw_response and raw_response['error'] == 'timeout':
-            raise WsmcWebDriverNativeApiCallTimout('Call for profiles has been timed out')
-
-        for response_chunk in raw_response['response']:
-            yield self.map_profile_node_to_dto(response_chunk)
+            """, dataclasses.asdict(request))
 
     @classmethod
     def generate_batch_user_get_codes(cls, batch: List[List[str]]) -> str:

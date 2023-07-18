@@ -2,9 +2,9 @@ import logging
 from typing import Optional
 
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.contrib.gis.db.models import PointField
 from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
-from django.contrib.auth.models import User
 from tinymce.models import HTMLField
 
 from .smcredential import SmCredential
@@ -21,9 +21,6 @@ LOOKUP_COUNTRY_CODES = ['UA']
 
 class SmProfile(Model):
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
-
-    # TODO Removal
-    # suspect = ForeignKey(Suspect, null=True, on_delete=CASCADE)
 
     oid = CharField(max_length=512, verbose_name='ID', help_text='ID користувача в соціальній мережі')
     name = CharField(max_length=512, verbose_name="Ім'я", help_text="Ім'я як вказано в соціальній мережі")

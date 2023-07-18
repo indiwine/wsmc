@@ -55,7 +55,7 @@ class VataDetectorDemoForm(Form):
 
 
 class SuspectAdmin(ModelAdmin):
-    # inlines = [LinkedSmAccounts, LinkedSmProfile]
+    inlines = [LinkedSmAccounts]
     search_fields = ['name']
     readonly_fields = ['score']
     list_display = ['__str__', 'score']

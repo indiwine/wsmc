@@ -254,6 +254,15 @@ class TestVkDataCollection(SimpleTestCase):
         for results in page_object.bulk_users_get(['1', '296682879', '114551834', '203133326', '729303074'], 2):
             pprint(results)
 
+    def test_profile_friends_collection(self):
+        page_object = VkApiPageObject(self.driver, VkLinkBuilder.build(''))
+
+        result = []
+        for friends in page_object.friends_get(169845376):
+            result += friends
+
+        self.assertGreaterEqual(len(result), 8000)
+
     def test_non_hart_like(self):
         """
 

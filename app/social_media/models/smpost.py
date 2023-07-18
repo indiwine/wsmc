@@ -19,14 +19,9 @@ class SmPost(Model):
     """Post author"""
 
     origin_type = ForeignKey(ContentType, on_delete=CASCADE, related_name='origin', editable=False)
-    origin_id = PositiveIntegerField(verbose_name='',editable=False)
+    origin_id = PositiveIntegerField(verbose_name='', editable=False)
     origin_object = GenericForeignKey('origin_type', 'origin_id')
     """Post origin, typically group or user """
-
-    # TODO: Removal
-    # suspect = ForeignKey(Suspect, on_delete=CASCADE, verbose_name='Людина')
-    # profile = ForeignKey(SmProfile, on_delete=CASCADE, verbose_name='Профіль',
-    #                      help_text="Профіль зв'язаний з цим постом")
 
     likes = GenericRelation(SmLikes,
                             object_id_field='parent_id',

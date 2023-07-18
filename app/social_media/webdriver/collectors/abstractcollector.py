@@ -117,6 +117,9 @@ class AbstractCollector(Collector):
 
         return len(existing_likes), len(likes_to_create)
 
+    def batch_create_friends_links(self):
+        pass
+
     def batch_persist_profiles(self, like_authors: List[AuthorDto], request: Request):
         all_oids = list(map(lambda author_dto: author_dto.oid, like_authors))
         db_profiles = SmProfile.objects.filter(oid__in=all_oids, social_media=request.get_social_media_type)

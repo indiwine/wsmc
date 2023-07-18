@@ -7,6 +7,7 @@ from .screeningdetail import ScreeningDetail
 from .screeningreport import ScreeningReport
 from .smcomment import SmComment
 from .smcredential import SmCredential
+from .smfriend import SmFriend
 from .smgroup import SmGroup
 from .smlikes import SmLikes
 from .smpost import SmPost
