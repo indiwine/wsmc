@@ -58,6 +58,7 @@ class SmCredential(models.Model):
     was_last_used = models.BooleanField(default=False, editable=False)
     last_used_date = models.DateTimeField(null=True, default=None, editable=False)
     in_use = models.BooleanField(default=True)
+    # session = models.JSONField(default=None, null=True, editable=False)
 
     def __str__(self):
         return f'{self.user_name} ({self.get_social_media_display()})'
