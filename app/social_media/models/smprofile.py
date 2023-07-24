@@ -64,7 +64,7 @@ class SmProfile(Model):
         default=ProfileAuthenticityStatus.UNKNOWN,
     )
 
-    comment = HTMLField(default='')
+    comment = HTMLField(default='', blank=True)
 
     def __str__(self):
         return self.name
