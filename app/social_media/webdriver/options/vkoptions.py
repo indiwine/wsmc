@@ -7,7 +7,7 @@ from .baseoptions import BaseOptions
 
 
 class VkOptions(BaseOptions):
-    post_date_limit: Optional[datetime] = datetime(2022, 2, 24, tzinfo=timezone.get_current_timezone())
+    post_date_limit: Optional[datetime] = datetime(2022, 3, 14, tzinfo=timezone.get_current_timezone())
     """
     Maximum date limit for collecting posts
     """
