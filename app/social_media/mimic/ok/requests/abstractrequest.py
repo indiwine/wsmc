@@ -33,7 +33,7 @@ class AbstractRequest(ABC, Generic[PARAMS]):
         pass
 
     @abc.abstractmethod
-    def to_execute_dict(self) -> Union[dict, list]:
+    def to_execute_dict(self) -> dict:
         pass
 
     @property

@@ -6,7 +6,7 @@ from .abstractrequest import AbstractRequest, PARAMS, AbstractRequestParams
 class BatchExecuteParams(AbstractRequestParams):
     request_storage: List[AbstractRequest] = []
 
-    def to_execute_dict(self) -> Union[dict, list]:
+    def to_execute_dict(self) -> dict:
         result = []
 
         for req in self.request_storage:
