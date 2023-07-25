@@ -1,6 +1,7 @@
-import dataclasses
+from typing import Type
 
-from ..abstractrequest import AbstractRequestParams, GenericRequest
+from ..abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
+    GenericResponseBody, RESPONSE_BODY, AbstractResponse
 
 
 class LoginParams(AbstractRequestParams):
@@ -17,9 +18,31 @@ class LoginParams(AbstractRequestParams):
         return result
 
 
+class LoginResponseBody(GenericResponseBody):
+    uid: str
+    session_key: str
+    session_secret_key: str
+    auth_token: str
+    api_server: str
+    auth_sig: str
+    activated_profile: bool
+    auth_hash: str
+
+
+class LoginResponse(GenericResponse):
+    @staticmethod
+    def get_body_class() -> Type[RESPONSE_BODY]:
+        return LoginResponseBody
+
+
 class LoginRequest(GenericRequest):
-    def __init__(self, params: AbstractRequestParams):
+    def __init__(self, user_name: str, password: str):
+        params = LoginParams()
+        params.user_name = user_name
+        params.password = password
+
         super().__init__('auth', 'login', params)
 
-
-
+    @staticmethod
+    def bound_response_cls() -> Type[AbstractResponse]:
+        return LoginResponse
