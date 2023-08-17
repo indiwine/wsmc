@@ -1,6 +1,29 @@
+from __future__ import annotations
+
 import abc
 from abc import ABC
-from typing import TypeVar, Generic, Type, Optional
+from enum import Enum
+from typing import TypeVar, Generic, Type, Optional, Union, TypedDict
+
+
+class OkRequestHttpMethod(Enum):
+    GET = 'g'
+    POST = 'p'
+
+
+class AbstractCustomPayloadEncoderMixin(ABC):
+    @abc.abstractmethod
+    def encode(self, payload: dict) -> bytes:
+        """
+        Encode payload to string
+        """
+        pass
+
+    def get_content_type(self) -> str:
+        """
+        Get content type of encoded payload
+        """
+        return 'application/octet-stream'
 
 
 class AbstractRequestParams(ABC):
@@ -14,7 +37,7 @@ class AbstractRequestParams(ABC):
 
 class AbstractResponseBody(ABC):
     @abc.abstractmethod
-    def __init__(self, raw_params: dict):
+    def __init__(self, raw_params: Union[dict, list]):
         pass
 
 
@@ -23,6 +46,8 @@ RESPONSE_BODY = TypeVar('RESPONSE_BODY', bound=AbstractResponseBody)
 
 
 class AbstractResponse(ABC, Generic[RESPONSE_BODY]):
+    def __init__(self, request: AbstractRequest):
+        self.request = request
 
     @staticmethod
     @abc.abstractmethod
@@ -34,14 +59,19 @@ class AbstractResponse(ABC, Generic[RESPONSE_BODY]):
         pass
 
     @abc.abstractmethod
-    def set_from_raw(self, raw_response: dict):
+    def set_from_raw(self, raw_response: Union[dict, list]):
         pass
 
 
 class AbstractRequest(ABC, Generic[PARAMS]):
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
+    def http_method(self) -> OkRequestHttpMethod:
+        pass
+
+    @property
+    @abc.abstractmethod
     def method(self) -> str:
         pass
 
@@ -50,13 +80,13 @@ class AbstractRequest(ABC, Generic[PARAMS]):
     def bound_response_cls() -> Type[AbstractResponse]:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def method_group(self) -> str:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def params(self) -> PARAMS:
         pass
 
@@ -74,31 +104,38 @@ class AbstractRequest(ABC, Generic[PARAMS]):
 
 
 class GenericResponseBody(AbstractResponseBody):
-    def __init__(self, raw_params: dict):
-        for key, value in raw_params.items():
-            setattr(self, key, value)
+    def __init__(self, raw_params: Union[dict, list]):
+        self.raw_params = raw_params
+
+        if isinstance(raw_params, dict):
+            for key, value in raw_params.items():
+                setattr(self, key, value)
 
 
 class GenericResponse(AbstractResponse):
-    _body: Optional[RESPONSE_BODY] = None
-    raw_body: Optional[dict] = None
+    body: Optional[RESPONSE_BODY] = None
+    raw_body: Optional[Union[dict, list]] = None
 
     @staticmethod
     def get_body_class() -> Type[RESPONSE_BODY]:
         return GenericResponseBody
 
     def get_body(self) -> RESPONSE_BODY:
-        if not self._body:
+        if not self.body:
             raise RuntimeError('Body hase not been set yet')
-        return self._body
+        return self.body
 
-    def set_from_raw(self, raw_response: dict):
+    def set_from_raw(self, raw_response: Union[dict, list]):
         self.raw_body = raw_response
         body_cls = self.get_body_class()
-        self._body = body_cls(raw_response)
+        self.body = body_cls(raw_response)
 
 
 class GenericRequest(AbstractRequest):
+    @property
+    def http_method(self) -> OkRequestHttpMethod:
+        return OkRequestHttpMethod.POST
+
     @staticmethod
     def bound_response_cls() -> Type[AbstractResponse]:
         return GenericResponse
@@ -108,11 +145,7 @@ class GenericRequest(AbstractRequest):
         return self._method_group
 
     def to_execute_dict(self) -> dict:
-        return {
-            self.dotted_method_name: {
-                "params": self.params.to_execute_dict()
-            }
-        }
+        return self.params.to_execute_dict()
 
     @property
     def method(self) -> str:

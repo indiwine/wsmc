@@ -1,9 +1,12 @@
+import dataclasses
 from typing import Type
+from django.conf import settings
 
 from ..abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     GenericResponseBody, RESPONSE_BODY, AbstractResponse
 
 
+@dataclasses.dataclass
 class LoginParams(AbstractRequestParams):
     user_name: str
     password: str
@@ -12,9 +15,9 @@ class LoginParams(AbstractRequestParams):
     verification_supported_v: str = "6"
 
     def to_execute_dict(self) -> dict:
-        result = vars(self)
-        result['deviceId'] = 'INSTALL_ID=a34865a3-021c-4f9b-aab7-6eac042e8884;ANDROID_ID=66de9c2ac05fd4f2;'
-        result['gaid'] = '274b6ed2-4358-496e-a1ae-892e52242549'
+        result = dataclasses.asdict(self)
+        result['deviceId'] = settings.MIMIC_OK_DEVICE_ID
+        result['gaid'] = settings.MIMIC_OK_GAID
         return result
 
 
@@ -37,9 +40,7 @@ class LoginResponse(GenericResponse):
 
 class LoginRequest(GenericRequest):
     def __init__(self, user_name: str, password: str):
-        params = LoginParams()
-        params.user_name = user_name
-        params.password = password
+        params = LoginParams(user_name, password)
 
         super().__init__('auth', 'login', params)
 

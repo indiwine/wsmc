@@ -190,6 +190,18 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'handlers': ['console'],
         # }
+        'aiohttp.client': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.internal': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.access': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        }
     }
 }
 
@@ -237,9 +249,27 @@ TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
 
+# OK MIMIC module config
+
+MIMIC_OK_DEVICE_ID = 'INSTALL_ID=a34865a3-021c-4f9b-aab7-6eac042e8884;ANDROID_ID=66de9c2ac05fd4f2;'
+# Google Device ID
+MIMIC_OK_GAID = '274b6ed2-4358-496e-a1ae-892e52242549'
+# OK App Key
+MIMIC_OK_APP_KEY = 'CBAFJIICABABABABA'
+# User Agent for requests
+MIMIC_OK_UA = 'OKAndroid/23.7.10 b23071000 (Android 13; en_US; Google Pixel6 Build/TQ3A.230605.010.A1; 420dpi 420dpi 1080x2201)'
+# MIMIC_OK_UA = 'OKAndroid/23.7.10 b23071000 (Android 13; en_US; google sdk_gphone_x86_64 Build/sdk_gphone_x86_64-userdebug 13 TE1A.220922.025 9795748 dev-keys; 420dpi 420dpi 1080x2201)'
+
+# OK externalLog app version
+MIMIC_OK_ELOG_APP = 'ru.ok.android:23.7.10:23071000'
+# OK externalLog platform version
+MIMIC_OK_ELOG_PLATFORM = 'android:phone:13'
+
 # Test setting
 TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
 TEST_VK_PASSWORD = os.environ.get('TEST_VK_PASSWORD', '')
+TEST_OK_LOGIN = os.environ.get('TEST_OK_LOGIN', '')
+TEST_OK_PASSWORD = os.environ.get('TEST_OK_PASSWORD', '')
 
 
 TINYMCE_DEFAULT_CONFIG = {
