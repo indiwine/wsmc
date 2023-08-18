@@ -4,6 +4,7 @@ from django.conf import settings
 
 from ..abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     GenericResponseBody, RESPONSE_BODY, AbstractResponse
+from ..common import append_gaid_and_device_id
 
 
 @dataclasses.dataclass
@@ -16,9 +17,7 @@ class LoginParams(AbstractRequestParams):
 
     def to_execute_dict(self) -> dict:
         result = dataclasses.asdict(self)
-        result['deviceId'] = settings.MIMIC_OK_DEVICE_ID
-        result['gaid'] = settings.MIMIC_OK_GAID
-        return result
+        return append_gaid_and_device_id(result)
 
 
 class LoginResponseBody(GenericResponseBody):

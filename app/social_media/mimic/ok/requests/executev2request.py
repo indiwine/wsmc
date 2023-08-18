@@ -38,7 +38,7 @@ class ExecuteV2Response(GenericResponse):
 
     def set_from_raw(self, raw_response: Union[dict, list]):
         assert isinstance(raw_response, list), 'We are expecting list over here'
-        response_body: ExecuteV2ResponseBody = self.get_body_class()()
+        response_body: ExecuteV2ResponseBody = self.get_body_class()(raw_response)
         batch_params: BatchExecuteParams = self.request.params
 
         for index, response_item in enumerate(raw_response):
@@ -51,6 +51,9 @@ class ExecuteV2Response(GenericResponse):
 
 
 class ExecuteV2Request(AbstractRequest):
+    def is_json(self) -> bool:
+        return False
+
     @property
     def http_method(self) -> OkRequestHttpMethod:
         return OkRequestHttpMethod.POST

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import json
 from abc import ABC
 from enum import Enum
 from typing import TypeVar, Generic, Type, Optional, Union, TypedDict
@@ -24,6 +25,12 @@ class AbstractCustomPayloadEncoderMixin(ABC):
         Get content type of encoded payload
         """
         return 'application/octet-stream'
+
+    def get_content_encoding(self) -> Optional[str]:
+        """
+        Get content encoding of encoded payload
+        """
+        return None
 
 
 class AbstractRequestParams(ABC):
@@ -93,6 +100,13 @@ class AbstractRequest(ABC, Generic[PARAMS]):
     @abc.abstractmethod
     def to_execute_dict(self) -> dict:
         pass
+    @abc.abstractmethod
+    def is_json(self) -> bool:
+        """
+        Is request should be sent as json or as x-www-form-urlencoded
+        NOTE: This is only applicable for POST requests and only without AbstractCustomPayloadEncoderMixin
+        """
+        pass
 
     @property
     def dotted_method_name(self) -> str:
@@ -110,6 +124,9 @@ class GenericResponseBody(AbstractResponseBody):
         if isinstance(raw_params, dict):
             for key, value in raw_params.items():
                 setattr(self, key, value)
+
+    def __str__(self):
+        return f'GenericResponseBody: {json.dumps(self.raw_params, indent=4)}'
 
 
 class GenericResponse(AbstractResponse):
@@ -132,6 +149,9 @@ class GenericResponse(AbstractResponse):
 
 
 class GenericRequest(AbstractRequest):
+    def is_json(self) -> bool:
+        return True
+
     @property
     def http_method(self) -> OkRequestHttpMethod:
         return OkRequestHttpMethod.POST

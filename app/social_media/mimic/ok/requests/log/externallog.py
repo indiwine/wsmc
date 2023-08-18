@@ -18,6 +18,9 @@ class OkLogEncoderMixin(AbstractCustomPayloadEncoderMixin):
     def get_content_type(self) -> str:
         return 'application/x-www-form-urlencoded'
 
+    def get_content_encoding(self) -> Optional[str]:
+        return 'gzip'
+
 
 @dataclasses.dataclass
 class ExternalLogItem:

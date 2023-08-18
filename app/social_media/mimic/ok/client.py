@@ -45,10 +45,13 @@ class OkHttpClient:
                 if isinstance(request, AbstractCustomPayloadEncoderMixin):
                     payload = request.encode(payload)
                     headers['content-type'] = request.get_content_type()
-                    headers['Content-Encoding'] = 'gzip'
+                    if request.get_content_encoding():
+                        headers['Content-Encoding'] = request.get_content_encoding()
+
                     post_params['data'] = payload
                 else:
-                    post_params['data'] = payload
+                    param_key = 'json' if request.is_json() else 'data'
+                    post_params[param_key] = payload
 
                 async with session.post(url, headers=headers, **post_params) as response:
                     response_text = await response.text()
