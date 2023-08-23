@@ -3,3 +3,7 @@ class OkApiCallException(Exception):
         super().__init__(msg)
         self.ok_code = code
         self.ok_data = data
+
+
+class OkResponseNotFoundException(Exception):
+    pass

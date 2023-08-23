@@ -3,7 +3,6 @@ from typing import Type
 
 from .login import LoginResponse
 from ..abstractrequest import GenericRequest, AbstractRequestParams, AbstractResponse
-from ..common import append_gaid_and_device_id
 
 
 @dataclasses.dataclass
@@ -12,15 +11,23 @@ class LoginByTokenParams(AbstractRequestParams):
     away: bool = True
     verification_supported: bool = True
     verification_supported_v: str = "6"
-    def to_execute_dict(self) -> dict:
-        result = dataclasses.asdict(self)
-        return append_gaid_and_device_id(result)
+    deviceId: str = 'unknown'
+    gaid: str = 'unknown'
 
+    def configure_before_send(self, device, auth_options):
+        self.deviceId = device.get_device_id()
+        self.gaid = device.gaid
+
+    def to_execute_dict(self) -> dict:
+        return dataclasses.asdict(self)
 
 class LoginByTokenRequest(GenericRequest):
-    def __init__(self, token: str):
-        params = LoginByTokenParams(token)
+    def __init__(self, auth_token: str):
+        params = LoginByTokenParams(auth_token)
         super().__init__('auth', 'loginByToken', params)
+
+    def is_json(self) -> bool:
+        return False
 
     @staticmethod
     def bound_response_cls() -> Type[AbstractResponse]:

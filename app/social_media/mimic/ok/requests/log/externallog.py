@@ -4,6 +4,8 @@ from typing import List, Optional
 
 from django.conf import settings
 
+from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
+from social_media.mimic.ok.device import AndroidDevice
 from social_media.mimic.ok.log_requests.reader import OkLogStreamEncoder
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, AbstractRequestParams, \
     AbstractCustomPayloadEncoderMixin
@@ -34,8 +36,8 @@ class ExternalLogItem:
 
 @dataclasses.dataclass
 class ExternalLogData:
-    application: str = settings.MIMIC_OK_ELOG_APP
-    platform: str = settings.MIMIC_OK_ELOG_PLATFORM
+    application: str = f'ru.ok.android:{settings.MIMIC_OK_APP_VER}:{settings.MIMIC_OK_APP_BUILD}'
+    platform: str = 'unknown'
     items: List[ExternalLogItem] = dataclasses.field(default_factory=list)
 
 
@@ -43,6 +45,9 @@ class ExternalLogData:
 class ExternalLogParams(AbstractRequestParams):
     collector: str = None
     data: ExternalLogData = None
+
+    def configure_before_send(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
+        self.data.platform = f'android:phone:{device.os_version}'
 
     def to_execute_dict(self) -> dict:
         result = dataclasses.asdict(self)

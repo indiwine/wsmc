@@ -6,6 +6,9 @@ from abc import ABC
 from enum import Enum
 from typing import TypeVar, Generic, Type, Optional, Union, TypedDict
 
+from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
+from social_media.mimic.ok.device import AndroidDevice
+
 
 class OkRequestHttpMethod(Enum):
     GET = 'g'
@@ -34,6 +37,16 @@ class AbstractCustomPayloadEncoderMixin(ABC):
 
 
 class AbstractRequestParams(ABC):
+    def configure_before_send(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
+        """
+        Configure params before sending
+
+        @param device:
+        @param auth_options:
+        @return:
+        """
+        pass
+
     @abc.abstractmethod
     def to_execute_dict(self) -> dict:
         """
@@ -108,6 +121,15 @@ class AbstractRequest(ABC, Generic[PARAMS]):
         """
         pass
 
+    def configure(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
+        """
+        Configure request and its own parameters before sending
+        @param device:
+        @param auth_options:
+        @return:
+        """
+        self.params.configure_before_send(device, auth_options)
+
     @property
     def dotted_method_name(self) -> str:
         return f'{self.method_group}.{self.method}'
@@ -149,6 +171,9 @@ class GenericResponse(AbstractResponse):
 
 
 class GenericRequest(AbstractRequest):
+    # def configure(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
+    #     self.params.configure_before_send(device, auth_options)
+
     def is_json(self) -> bool:
         return True
 

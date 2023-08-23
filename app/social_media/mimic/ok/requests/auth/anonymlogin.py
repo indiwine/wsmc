@@ -1,20 +1,23 @@
 import json
 from typing import Type
 
-from django.conf import settings
 
 from ..abstractrequest import GenericRequest, AbstractRequestParams, OkRequestHttpMethod, GenericResponseBody, \
     GenericResponse, RESPONSE_BODY, AbstractResponse
 
 
 class AnonymLoginParams(AbstractRequestParams):
-    gaid: str = settings.MIMIC_OK_GAID
+    gaid: str = 'unknown'
     session_data: dict = {
-        'device_id': settings.MIMIC_OK_DEVICE_ID,
+        'device_id': 'unknown',
         'version': 2,
         'client_version': 'android_8',
         'client_type': 'SDK_ANDROID'
     }
+
+    def configure_before_send(self, device, auth_options):
+        self.gaid = device.gaid
+        self.session_data['device_id'] = device.get_device_id()
 
     def to_execute_dict(self) -> dict:
         return {

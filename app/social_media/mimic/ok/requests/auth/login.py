@@ -1,10 +1,8 @@
 import dataclasses
 from typing import Type
-from django.conf import settings
 
 from ..abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     GenericResponseBody, RESPONSE_BODY, AbstractResponse
-from ..common import append_gaid_and_device_id
 
 
 @dataclasses.dataclass
@@ -14,10 +12,15 @@ class LoginParams(AbstractRequestParams):
     gen_token: bool = True
     verification_supported: bool = True
     verification_supported_v: str = "6"
+    deviceId: str = 'unknown'
+    gaid: str = 'unknown'
+
+    def configure_before_send(self, device, auth_options):
+        self.deviceId = device.get_device_id()
+        self.gaid = device.gaid
 
     def to_execute_dict(self) -> dict:
-        result = dataclasses.asdict(self)
-        return append_gaid_and_device_id(result)
+        return dataclasses.asdict(self)
 
 
 class LoginResponseBody(GenericResponseBody):

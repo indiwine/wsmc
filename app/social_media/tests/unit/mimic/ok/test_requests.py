@@ -7,6 +7,7 @@ from django.test import SimpleTestCase
 from django.conf import settings
 
 from social_media.mimic.ok.client import OkHttpClient
+from social_media.mimic.ok.device import default_device
 from social_media.mimic.ok.log_requests.mocking import LogRequestMockTask, LogRequestMockPipeline
 from social_media.mimic.ok.requests.auth.anonymlogin import AnonymLoginRequest, AnonymLoginResponse, \
     AnonymLoginResponseBody
@@ -21,7 +22,7 @@ class OkRequestsTestCase(SimpleTestCase):
         before_login_tasks = LogRequestMockTask(file_path=str(file_path))
         before_login_tasks = LogRequestMockPipeline.execute_task(before_login_tasks)
 
-        client = OkHttpClient()
+        client = OkHttpClient(default_device)
 
         anon_login_request = AnonymLoginRequest()
         response = await client.make(anon_login_request)
@@ -31,8 +32,7 @@ class OkRequestsTestCase(SimpleTestCase):
             random_int = random.randint(1, 10)
             print(f'Sleeping for {random_int} seconds')
             await asyncio.sleep(random_int)
-            response = await client.make(request)
-            pprint(response)
+            await client.make(request)
 
 
         batch_request = ExecuteV2Request('auth.login')
@@ -42,6 +42,10 @@ class OkRequestsTestCase(SimpleTestCase):
 
         response = await client.make(batch_request)
         pprint(response)
+
+    def test_login_by_token(self):
+        pass
+
 
     def test_login_request(self):
         batch_request = ExecuteV2Request('auth.login')

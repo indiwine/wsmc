@@ -1,39 +1,39 @@
 import dataclasses
-from typing import Optional
-from django.conf import settings
 
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
 
+from social_media.mimic.ok.device import AndroidDevice
 from social_media.mimic.ok.exceptions import OkApiCallException
+from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequest, OkRequestHttpMethod, AbstractResponse, \
     AbstractCustomPayloadEncoderMixin
 
 BASE_URL = 'https://api.ok.ru/api/'
 
 
-@dataclasses.dataclass
-class OkHttpClientAuthOptions:
-    application_key: str = settings.MIMIC_OK_APP_KEY
-    session_key: Optional[str] = None
-    screen: Optional[str] = None
-
-
 class OkHttpClient:
-    def __init__(self, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions(), ua: str = settings.MIMIC_OK_UA):
+    def __init__(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions()):
         self.auth_options = auth_options
-        self.ua = ua
+        self.device = device
+        self.jar = aiohttp.CookieJar()
 
     def _build_session(self) -> ClientSession:
         return aiohttp.ClientSession(headers={
-            'user-agent': self.ua
-        })
+            'user-agent': self.device.get_user_agent()
+        }, cookie_jar=self.jar)
 
     async def make(self, request: AbstractRequest) -> AbstractResponse:
         url = f'{BASE_URL}{request.pathed_method_name}'
         async with self._build_session() as session:
+            # Configure request params
+            request.configure(self.device, self.auth_options)
+
+            # Build payload
             payload = self.get_payload(request)
+            # Inject required app keys and tokens
             payload.update(self.get_app_keys())
+
 
             if request.http_method == OkRequestHttpMethod.GET:
                 async with session.get(url, params=payload) as response:
