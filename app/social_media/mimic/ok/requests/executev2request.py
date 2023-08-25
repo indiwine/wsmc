@@ -7,8 +7,8 @@ from ..exceptions import OkResponseNotFoundException
 
 
 class BatchExecuteParams(AbstractRequestParams):
-    request_storage: List[AbstractRequest] = []
-
+    def __init__(self):
+        self.request_storage: List[AbstractRequest] = []
 
     def configure_before_send(self, device, auth_options):
         for req in self.request_storage:
@@ -33,10 +33,12 @@ class BatchExecuteParams(AbstractRequestParams):
 
 
 class ExecuteV2ResponseBody(GenericResponseBody):
-    responses_batch: List[AbstractResponse] = []
+    def __init__(self, raw_params: Union[dict, list]):
+        self.responses_batch: List[AbstractResponse] = []
+        super().__init__(raw_params)
 
 
-class ExecuteV2Response(GenericResponse):
+class ExecuteV2Response(GenericResponse[ExecuteV2ResponseBody]):
 
     @staticmethod
     def get_body_class() -> Type[RESPONSE_BODY]:
@@ -70,7 +72,7 @@ class ExecuteV2Response(GenericResponse):
         raise OkResponseNotFoundException(f'Response for request {request} not found')
 
 
-class ExecuteV2Request(AbstractRequest):
+class ExecuteV2Request(AbstractRequest[BatchExecuteParams]):
     def is_json(self) -> bool:
         return False
 
@@ -94,8 +96,8 @@ class ExecuteV2Request(AbstractRequest):
     def params(self) -> PARAMS:
         return self._params
 
-    def __init__(self, id: str):
-        self.id = id
+    def __init__(self, batch_id: str):
+        self.id = batch_id
         self._params: BatchExecuteParams = BatchExecuteParams()
 
     def to_execute_dict(self) -> dict:

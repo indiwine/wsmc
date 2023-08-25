@@ -55,7 +55,7 @@ class ExternalLogParams(AbstractRequestParams):
         return result
 
 
-class ExternalLogRequest(GenericRequest, OkLogEncoderMixin):
+class ExternalLogRequest(GenericRequest[ExternalLogParams], OkLogEncoderMixin):
     def __init__(self, params: ExternalLogParams):
         super().__init__('log', 'externalLog', params)
 

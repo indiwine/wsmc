@@ -63,6 +63,7 @@ class AbstractResponseBody(ABC):
 
 PARAMS = TypeVar('PARAMS', bound=AbstractRequestParams)
 RESPONSE_BODY = TypeVar('RESPONSE_BODY', bound=AbstractResponseBody)
+RESPONSE = TypeVar('RESPONSE', bound=AbstractResponseBody)
 
 
 class AbstractResponse(ABC, Generic[RESPONSE_BODY]):
@@ -151,7 +152,7 @@ class GenericResponseBody(AbstractResponseBody):
         return f'GenericResponseBody: {json.dumps(self.raw_params, indent=4)}'
 
 
-class GenericResponse(AbstractResponse):
+class GenericResponse(AbstractResponse[RESPONSE_BODY]):
     body: Optional[RESPONSE_BODY] = None
     raw_body: Optional[Union[dict, list]] = None
 
@@ -170,9 +171,7 @@ class GenericResponse(AbstractResponse):
         self.body = body_cls(raw_response)
 
 
-class GenericRequest(AbstractRequest):
-    # def configure(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
-    #     self.params.configure_before_send(device, auth_options)
+class GenericRequest(AbstractRequest[PARAMS]):
 
     def is_json(self) -> bool:
         return True

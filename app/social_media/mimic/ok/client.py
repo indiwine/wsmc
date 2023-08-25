@@ -1,4 +1,6 @@
+import base64
 import dataclasses
+import pickle
 
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
@@ -11,12 +13,21 @@ from social_media.mimic.ok.requests.abstractrequest import AbstractRequest, OkRe
 
 BASE_URL = 'https://api.ok.ru/api/'
 
+class SerializableCookieJar(aiohttp.CookieJar):
+    def to_base64(self) -> str:
+        binary_data = pickle.dumps(self._cookies, protocol=pickle.HIGHEST_PROTOCOL)
 
+        # Convert binary_data to base64 string
+        return base64.b64encode(binary_data).decode('utf-8')
+
+    def from_base64(self, base64_str: str):
+        binary_data = base64.b64decode(base64_str)
+        self._cookies = pickle.loads(binary_data)
 class OkHttpClient:
     def __init__(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions()):
         self.auth_options = auth_options
         self.device = device
-        self.jar = aiohttp.CookieJar()
+        self.jar = SerializableCookieJar()
 
     def _build_session(self) -> ClientSession:
         return aiohttp.ClientSession(headers={

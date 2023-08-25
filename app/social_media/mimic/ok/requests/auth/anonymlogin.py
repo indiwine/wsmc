@@ -1,6 +1,5 @@
 import json
-from typing import Type
-
+from typing import Type, Optional, Union
 
 from ..abstractrequest import GenericRequest, AbstractRequestParams, OkRequestHttpMethod, GenericResponseBody, \
     GenericResponse, RESPONSE_BODY, AbstractResponse
@@ -27,13 +26,15 @@ class AnonymLoginParams(AbstractRequestParams):
 
 
 class AnonymLoginResponseBody(GenericResponseBody):
-    session_key: str
-    session_secret_key: str
-    api_server: str
-    activated_profile: bool
+    def __init__(self, raw_params: Union[dict, list]):
+        self.session_key: Optional[str] = None
+        self.session_secret_key: Optional[str] = None
+        self.api_server: Optional[str] = None
+        self.activated_profile: Optional[str] = None
+        super().__init__(raw_params)
 
 
-class AnonymLoginResponse(GenericResponse):
+class AnonymLoginResponse(GenericResponse[AnonymLoginResponseBody]):
     @staticmethod
     def get_body_class() -> Type[RESPONSE_BODY]:
         return AnonymLoginResponseBody
