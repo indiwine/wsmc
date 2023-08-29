@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import time
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List
 
 from social_media.mimic.ok.log_requests.reader import OkLogStreamDecoder, BurpSuiteRequestsReader
@@ -63,6 +64,7 @@ class UpdateTimestampsFilter(AbstractLogRequestMockFilter):
 @dataclasses.dataclass
 class LogRequestMockTask:
     file_path: str
+
     raw_requests: List[dict] = None
     log_requests: List[ExternalLogRequest] = None
 
@@ -98,3 +100,15 @@ class LogRequestMockPipeline:
     def execute_task(cls, task: LogRequestMockTask) -> LogRequestMockTask:
         pipeline = LogRequestMockPipeline.build(*cls.default_filters())
         return pipeline.execute(task)
+
+
+def load_from_storage(sub_path: str) -> List[ExternalLogRequest]:
+    """
+    Load log requests from storage
+
+    @param sub_path: path to a file relative to storage folder
+    @return:
+    """
+    file_path = str(Path(__file__).parent / 'storage' / sub_path)
+    task = LogRequestMockTask(file_path=file_path)
+    return LogRequestMockPipeline.execute_task(task).log_requests

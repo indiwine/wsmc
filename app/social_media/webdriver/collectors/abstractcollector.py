@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from dataclasses import fields, Field, is_dataclass
-from typing import Callable, Tuple, Optional, Union, List
+from typing import Callable, Tuple, Optional, Union, List, TypeVar, Generic
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -15,13 +15,16 @@ from ...dtos.smpostimagedto import SmPostImageDto
 from ...models import SmProfile, SmPost, SmPostImage, SuspectGroup, SmGroup, SmComment, SmLikes
 
 
-class Collector(ABC):
+OPTIONS = TypeVar('OPTIONS', bound=BaseOptions)
+REQUEST_DATA = TypeVar('REQUEST_DATA', bound=None)
+
+class Collector(ABC, Generic[REQUEST_DATA]):
     @abstractmethod
     def set_next(self, collector: Collector) -> Collector:
         pass
 
     @abstractmethod
-    def handle(self, request: Request):
+    def handle(self, request: Request[REQUEST_DATA]):
         pass
 
     @abstractmethod
@@ -29,19 +32,23 @@ class Collector(ABC):
         pass
 
 
-class AbstractCollector(Collector):
-    _next_collector: Collector = None
-    _options: BaseOptions = None
+class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS]):
+    def __init__(self):
+        self._next_collector: Optional[Collector] = None
+        self._options: Optional[OPTIONS] = None
 
     def set_next(self, collector: Collector) -> Collector:
         self._next_collector = collector
         return self
 
-    def set_options(self, options: BaseOptions):
+    def set_options(self, options: OPTIONS):
         self._options = options
 
+    def get_options(self) -> OPTIONS:
+        return self._options
+
     @abstractmethod
-    def handle(self, request: Request):
+    def handle(self, request: Request[REQUEST_DATA]):
         if self._next_collector:
             return self._next_collector.handle(request)
         return None

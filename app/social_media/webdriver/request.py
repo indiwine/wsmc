@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List, Union
+from typing import Optional, List, Union, TypeVar, Generic
 
 from pyee import EventEmitter
 
@@ -12,15 +12,15 @@ from ..social_media import SocialMediaEntities, SocialMediaTypes
 
 logger = logging.getLogger(__name__)
 
+REQUEST_DATA_TYPE = TypeVar('REQUEST_DATA_TYPE')
 
-class Request:
-    _driver: Optional[WsmcWebDriver] = None
-    _is_img_disabled = False
 
-    post_limit = None
-    load_latest = True
-    is_retrying = False
-    last_retry_success = False
+class Request(Generic[REQUEST_DATA_TYPE]):
+    data: REQUEST_DATA_TYPE | None
+    _driver: WsmcWebDriver | None
+
+    is_retrying: bool
+    last_retry_success: bool
 
     def __init__(self,
                  entities: List[SocialMediaEntities],
@@ -28,14 +28,21 @@ class Request:
                  suspect_identity: Union[SuspectSocialMediaAccount, SuspectGroup] = None,
                  ee: EventEmitter = None):
 
+        # Default values
+        self._driver = None
+        self.is_retrying = False
+        self.last_retry_success = False
+        self.data: Optional[REQUEST_DATA_TYPE] = None
+
+        # Request data
         self.entities = entities
-
         self.credentials = credentials
-
         self.suspect_identity: Union[SuspectSocialMediaAccount, SuspectGroup] = suspect_identity
 
+        # Event emitter (if any)
         self.ee = ee
 
+        # Options
         self.options = self.build_default_options()
         self.driver_build_options = DriverBuildOptions()
         self.driver_build_options.profile_folder_name = f'chrome_cred_{credentials.id}'
@@ -45,6 +52,15 @@ class Request:
 
     @property
     def driver(self) -> WsmcWebDriver:
+        """
+        Get selenium driver
+
+        Use this property to get selenium driver instance or reuse existing one
+
+        @note: Not all collectors use selenium driver, so this property should be used with caution
+        @todo Move driver building to separate class, so the request will not be responsible for driver building
+        @return:
+        """
         if self._driver is None:
             logger.info('Building selenium driver')
             self._driver = DriverBuilder.build(self.driver_build_options)

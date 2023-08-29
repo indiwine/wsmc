@@ -6,7 +6,7 @@ from selenium.common import NoSuchWindowException, WebDriverException
 
 from .collectors import Collector
 from .collectors.fb import FbLoginCollector, FbProfileCollector, FbPostsCollector
-from .collectors.ok import OkLoginCollector, OkProfileCollector, OkPostsCollector
+from .collectors.ok import OkSeleniumLoginCollector, OkSeleniumProfileCollector, OkSeleniumPostsCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
     VkGroupCollector
 from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError
@@ -114,8 +114,8 @@ class Agent:
             return base
 
         elif sm_type == SocialMediaTypes.OK:
-            login_handler = OkLoginCollector()
-            login_handler.set_next(OkProfileCollector().set_next(OkPostsCollector()))
+            login_handler = OkSeleniumLoginCollector()
+            login_handler.set_next(OkSeleniumProfileCollector().set_next(OkSeleniumPostsCollector()))
             return login_handler
         else:
             raise RuntimeError(f'No suitable chain for social media {sm_type}')

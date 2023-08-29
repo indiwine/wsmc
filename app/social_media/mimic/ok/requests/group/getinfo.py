@@ -1,8 +1,10 @@
 import dataclasses
 from typing import Type, Union, Dict, Optional
 
+from social_media.dtos import SmGroupDto
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, GenericResponse, RESPONSE_BODY, \
     AbstractResponse, AbstractRequestParams, AbstractResponseBody
+from social_media.social_media import SocialMediaTypes
 
 
 @dataclasses.dataclass
@@ -52,6 +54,14 @@ class GroupInfoItem:
     has_unseen_daily_photo: Optional[bool] = None
     homepage_url: Optional[str] = None
     mobile_cover: Optional[dict] = None
+
+    def to_group_dto(self) -> SmGroupDto:
+        return SmGroupDto(
+            permalink=f'https://ok.ru/group/{self.uid}',
+            oid=self.uid,
+            name=self.name,
+            social_media=SocialMediaTypes.OK
+        )
 
 
 class GroupGetInfoResponseBody(AbstractResponseBody):

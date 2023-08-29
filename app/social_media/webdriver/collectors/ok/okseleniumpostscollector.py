@@ -5,7 +5,7 @@ from ...page_objects.ok.okpostspage import OkPostsPage
 from ...request import Request
 
 
-class OkPostsCollector(AbstractCollector):
+class OkSeleniumPostsCollector(AbstractCollector):
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.POSTS):
             sm_profile = self.get_sm_profile(request)

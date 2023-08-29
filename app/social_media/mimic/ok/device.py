@@ -67,6 +67,9 @@ class AndroidDevice:
         """
         return generate_ok_device_id(self)
 
+    def __str__(self):
+        return f'AndroidDevice: {self.manufacturer} {self.model} ({self.codename})'
+
 
 default_device: AndroidDevice = AndroidDevice(
     name='Pixel 6',

@@ -1,6 +1,7 @@
 import dataclasses
 from typing import Type, Union, Optional
 
+from social_media.dtos.oksessiondto import OkSessionDto
 from ..abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     GenericResponseBody, RESPONSE_BODY, AbstractResponse
 
@@ -34,6 +35,18 @@ class LoginResponseBody(GenericResponseBody):
         self.activated_profile: Optional[bool] = None
         self.auth_hash: Optional[str] = None
         super().__init__(raw_params)
+
+    def to_session_dto(self) -> OkSessionDto:
+        return OkSessionDto(
+            uid=self.uid,
+            session_key=self.session_key,
+            session_secret_key=self.session_secret_key,
+            auth_token=self.auth_token,
+            api_server=self.api_server,
+            auth_sig=self.auth_sig,
+            activated_profile=self.activated_profile,
+            auth_hash=self.auth_hash
+        )
 
 
 class LoginResponse(GenericResponse[LoginResponseBody]):

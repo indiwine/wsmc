@@ -5,7 +5,7 @@ from ...page_objects.ok.okaboutprofilepage import OkAboutProfilePage
 from ...request import Request
 
 
-class OkProfileCollector(AbstractCollector):
+class OkSeleniumProfileCollector(AbstractCollector):
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.PROFILE):
             profile_dto = OkAboutProfilePage(request.driver,

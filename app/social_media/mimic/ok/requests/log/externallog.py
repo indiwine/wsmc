@@ -32,6 +32,8 @@ class ExternalLogItem:
     time: int
     data: list
     custom: Optional[dict] = None
+    uid: Optional[str] = None
+
 
 
 @dataclasses.dataclass
@@ -49,6 +51,11 @@ class ExternalLogParams(AbstractRequestParams):
     def configure_before_send(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions):
         self.data.platform = f'android:phone:{device.os_version}'
 
+        if auth_options.current_login_data.uid:
+            for item in self.data.items:
+                if item.uid is not None:
+                    item.uid = auth_options.current_login_data.uid
+
     def to_execute_dict(self) -> dict:
         result = dataclasses.asdict(self)
         result['data'] = json.dumps(result['data'], separators=(',', ':'))
@@ -65,12 +72,11 @@ class ExternalLogRequest(GenericRequest[ExternalLogParams], OkLogEncoderMixin):
         @param base_timestamp: timestamp in milliseconds
         @return: updated timestamp set for the last log item
         """
-        params: ExternalLogParams = self.params
 
         previous_timestamp = None
         time_to_set = None
 
-        for log_item in params.data.items:
+        for log_item in self.params.data.items:
             # first item is always set to base_timestamp
             if previous_timestamp is None:
                 time_to_set = base_timestamp

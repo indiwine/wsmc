@@ -62,8 +62,8 @@ class LikeGetInfoResponse(GenericResponse[LikeGetInfoResponseBody]):
 
 
 class LikeGetInfoRequest(GenericRequest[LikeGetInfoParams]):
-    def __init__(self, like_id: str):
-        params = LikeGetInfoParams(like_id)
+    def __init__(self, like_id: str, previous_anchor: Optional[str] = None):
+        params = LikeGetInfoParams(like_id, anchor=previous_anchor)
 
         super().__init__('like', 'getInfo', params)
 

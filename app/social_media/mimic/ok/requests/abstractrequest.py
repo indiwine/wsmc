@@ -139,6 +139,9 @@ class AbstractRequest(ABC, Generic[PARAMS]):
     def pathed_method_name(self) -> str:
         return f'{self.method_group}/{self.method}'
 
+    def __str__(self):
+        return f'{self.__class__.__name__}: {self.dotted_method_name}'
+
 
 class GenericResponseBody(AbstractResponseBody):
     def __init__(self, raw_params: Union[dict, list]):
@@ -149,7 +152,7 @@ class GenericResponseBody(AbstractResponseBody):
                 setattr(self, key, value)
 
     def __str__(self):
-        return f'GenericResponseBody: {json.dumps(self.raw_params, indent=4)}'
+        return f'{self.__class__.__name__}: {json.dumps(self.raw_params)}'
 
 
 class GenericResponse(AbstractResponse[RESPONSE_BODY]):

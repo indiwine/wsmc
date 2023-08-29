@@ -21,8 +21,8 @@ from ...request import Request
 logger = logging.getLogger(__name__)
 
 
-class VkPostsCollector(AbstractCollector):
-    _options: VkOptions = None
+class VkPostsCollector(AbstractCollector[None, VkOptions]):
+
     _last_profile_collected_at: Optional[int] = None
 
     DELAY_BETWEEN_PROFILES = 60 * 15
@@ -107,7 +107,7 @@ class VkPostsCollector(AbstractCollector):
 
                 post_dto = post_page_object.collect()
 
-                if self._options.post_date_limit and post_dto.datetime < self._options.post_date_limit:
+                if self.get_options().post_date_limit and post_dto.datetime < self.get_options().post_date_limit:
                     raise WsmcStopPostCollection('Post date limit reached')
 
                 post_item, is_new = self.persist_post(post_dto, self.request_origin, request)
@@ -124,8 +124,8 @@ class VkPostsCollector(AbstractCollector):
                                              additional_exceptions=[ElementNotInteractableException]
                                              )
         request.mark_retry_successful()
-        if self._options.post_count_limit and self.post_count >= self._options.post_count_limit:
-            raise WsmcStopPostCollection(f'Post limit of {self._options.post_count_limit} reached')
+        if self.get_options().post_count_limit and self.post_count >= self.get_options().post_count_limit:
+            raise WsmcStopPostCollection(f'Post limit of {self.get_options().post_count_limit} reached')
 
         return new_count
 
@@ -192,7 +192,7 @@ class VkPostsCollector(AbstractCollector):
             nonlocal page, current_offset
             page = int(current_offset / self.STEP)
 
-        if not self._options.post_do_load_latest:
+        if not self.get_options().post_do_load_latest:
             logger.debug('Skipping newest posts')
             fwd_skipped = True
             if last_offset:

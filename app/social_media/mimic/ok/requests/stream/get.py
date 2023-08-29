@@ -96,9 +96,10 @@ class FeedEntity:
     music_artists: list
     music_playlists: list
     music_tracks: list
-    videos: list
     promo_feed_buttons: list
     photo_ext_ts_buttons: list
+    videos: Optional[list] = None
+    group_photos: Optional[list] = None
 
 
 class StreamGetResponseBody(GenericResponseBody):
