@@ -28,6 +28,8 @@ class FeedItem:
     target_refs: List[str]
     active: bool
     hot_news: bool
+    discussion_summary: Optional[dict] = None
+    place_refs: Optional[List[str]] = None
 
     @property
     def first_media_topic_id(self) -> str:
@@ -71,7 +73,6 @@ class FeedMediaTopic:
     media: list
     id: str
     created_ms: int
-    app_ref: str
     discussion_summary: dict
     like_summary: FeedMediaTopicLikeSummary
     reshare_summary: FeedMediaTopicReShareSummary
@@ -83,13 +84,13 @@ class FeedMediaTopic:
     on_moderation: bool
     has_extended_stats: bool
     is_feeling: bool
+    app_ref: Optional[str] = None
     capabilities: Optional[str] = None
     is_commenting_denied: Optional[bool] = None
 
 
 @nested_dataclass
 class FeedEntity:
-    apps: list
     groups: list
     media_topics: List[FeedMediaTopic]
     music_albums: list
@@ -98,8 +99,11 @@ class FeedEntity:
     music_tracks: list
     promo_feed_buttons: list
     photo_ext_ts_buttons: list
+    apps: Optional[list] = None
     videos: Optional[list] = None
     group_photos: Optional[list] = None
+    group_albums: Optional[list] = None
+    users: Optional[list] = None
 
 
 class StreamGetResponseBody(GenericResponseBody):

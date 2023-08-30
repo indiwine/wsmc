@@ -17,7 +17,6 @@ class OkLoginCollector(AbstractCollector[OkRequestData, OkOptions]):
         session_dto = login_response.to_session_dto()
         session_dto.cookie_jar = request.data.client.jar.to_base64()
 
-        request.credentials.session = session_dto
-        request.credentials.save()
+        request.credentials.session = session_dto.to_json()
+        await request.credentials.asave()
 
-        return super().handle(request)

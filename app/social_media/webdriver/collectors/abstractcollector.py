@@ -5,41 +5,40 @@ from abc import ABC, abstractmethod
 from dataclasses import fields, Field, is_dataclass
 from typing import Callable, Tuple, Optional, Union, List, TypeVar, Generic
 
+from asgiref.sync import sync_to_async
 from django.contrib.contenttypes.models import ContentType
 
 from ..options.baseoptions import BaseOptions
+from ..pipe.abstractasyncpipeline import AbstractPipeFilter
 from ..request import Request
 from ...dtos import SmProfileDto, SmGroupDto, AuthorDto
 from ...dtos.smpostdto import SmPostDto
 from ...dtos.smpostimagedto import SmPostImageDto
 from ...models import SmProfile, SmPost, SmPostImage, SuspectGroup, SmGroup, SmComment, SmLikes
 
-
 OPTIONS = TypeVar('OPTIONS', bound=BaseOptions)
 REQUEST_DATA = TypeVar('REQUEST_DATA', bound=None)
 
-class Collector(ABC, Generic[REQUEST_DATA]):
-    @abstractmethod
-    def set_next(self, collector: Collector) -> Collector:
-        pass
+
+
+class Collector(AbstractPipeFilter[Request], ABC):
 
     @abstractmethod
-    def handle(self, request: Request[REQUEST_DATA]):
+    async def handle(self, request: Request):
         pass
 
     @abstractmethod
     def set_options(self, options: BaseOptions):
         pass
 
+    async def __call__(self, task: Request) -> Request:
+        await self.handle(task)
+        return task
 
-class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS]):
+
+class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
     def __init__(self):
-        self._next_collector: Optional[Collector] = None
         self._options: Optional[OPTIONS] = None
-
-    def set_next(self, collector: Collector) -> Collector:
-        self._next_collector = collector
-        return self
 
     def set_options(self, options: OPTIONS):
         self._options = options
@@ -47,13 +46,14 @@ class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS])
     def get_options(self) -> OPTIONS:
         return self._options
 
-    @abstractmethod
-    def handle(self, request: Request[REQUEST_DATA]):
-        if self._next_collector:
-            return self._next_collector.handle(request)
-        return None
-
     def persist_post(self, post: SmPostDto, origin: Union[SmGroup, SmProfile], request: Request) -> Tuple[SmPost, bool]:
+        """
+        Persist post
+        @param post:
+        @param origin:
+        @param request:
+        @return:
+        """
         author_item, author_created = self.persist_author(post.author, request)
         saved_post, created = SmPost.objects.update_or_create(
             sm_post_id=post.sm_post_id,
@@ -76,6 +76,13 @@ class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS])
                      like_author: AuthorDto,
                      target: Union[SmPost, SmComment],
                      request: Request) -> Optional[Tuple[SmLikes, bool]]:
+        """
+        Persist like for target
+        @param like_author:
+        @param target:
+        @param request:
+        @return:
+        """
         if like_author.is_group:
             return None
 
@@ -154,8 +161,11 @@ class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS])
         parent_type = ContentType.objects.get_for_model(target)
         return SmLikes.objects.filter(parent_type=parent_type, parent_id=target.id).count()
 
-    def persist_group(self, group_dto: SmGroupDto, request: Request, suspect_group: Optional[SuspectGroup] = None) -> \
-        Tuple[SmGroup, bool]:
+    def persist_group(self,
+                      group_dto: SmGroupDto,
+                      request: Request,
+                      suspect_group: Optional[SuspectGroup] = None
+                      ) -> Tuple[SmGroup, bool]:
         saved_group, created = SmGroup.objects.update_or_create(
             oid=group_dto.oid,
             social_media=group_dto.social_media,
@@ -166,6 +176,14 @@ class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS])
             }
         )
         return saved_group, created
+
+    @sync_to_async
+    def apersist_group(self,
+                       group_dto: SmGroupDto,
+                       request: Request,
+                       suspect_group: Optional[SuspectGroup] = None
+                       ) -> Tuple[SmGroup, bool]:
+        return self.persist_group(group_dto, request, suspect_group)
 
     def persist_image(self, image: SmPostImageDto, post: SmPost):
         saved_image, created = SmPostImage.objects.update_or_create(post=post, oid=image.oid, defaults={
@@ -216,6 +234,11 @@ class AbstractCollector(Collector[REQUEST_DATA], Generic[REQUEST_DATA, OPTIONS])
             return SmGroup.objects.get(suspect_group=request.suspect_identity)
 
         return SmProfile.objects.get(suspect_social_media=request.suspect_identity)
+
+
+    @sync_to_async
+    def aget_request_origin(self, request: Request) -> Union[SmProfile, SmGroup]:
+        return self.get_request_origin(request)
 
     def get_sm_profile(self, request: Request):
         """

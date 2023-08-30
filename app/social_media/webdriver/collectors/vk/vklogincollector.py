@@ -2,6 +2,8 @@ import logging
 from random import randint
 from time import sleep
 
+from asgiref.sync import sync_to_async
+
 from social_media.social_media import SocialMediaEntities
 from ..abstractcollector import AbstractCollector
 from ...link_builders.vk import VkLinkBuilder
@@ -15,8 +17,10 @@ logger = logging.getLogger(__name__)
 class VkLoginCollector(AbstractCollector[None, VkOptions]):
     MAX_JITTER_DELAY = 1 * 60
     MIN_JITTER_DELAY = 15
+
     # _options: VkOptions = None
 
+    @sync_to_async
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.LOGIN, False):
             if self.get_options().login_use_jitter:
@@ -26,5 +30,3 @@ class VkLoginCollector(AbstractCollector[None, VkOptions]):
 
             VkLoginPage(request.driver, VkLinkBuilder.build('')) \
                 .perform_login(request.credentials.user_name, request.credentials.password)
-
-        return super().handle(request)

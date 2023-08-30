@@ -1,5 +1,6 @@
 import logging
 
+from asgiref.sync import sync_to_async
 from django.db import transaction
 
 from social_media.models import SmProfile
@@ -19,6 +20,8 @@ COOLDOWN_SECONDS = 60
 
 
 class VkSecondaryProfilesCollector(AbstractCollector):
+
+    @sync_to_async
     def handle(self, request: Request):
         profiles_left = True
 
@@ -54,4 +57,3 @@ class VkSecondaryProfilesCollector(AbstractCollector):
 
             request.mark_retry_successful()
 
-        return super().handle(request)

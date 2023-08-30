@@ -54,6 +54,8 @@ class GroupInfoItem:
     has_unseen_daily_photo: Optional[bool] = None
     homepage_url: Optional[str] = None
     mobile_cover: Optional[dict] = None
+    paid_content_price: Optional[int] = None
+    paid_content_description: Optional[str] = None
 
     def to_group_dto(self) -> SmGroupDto:
         return SmGroupDto(

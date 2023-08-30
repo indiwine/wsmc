@@ -56,7 +56,7 @@ class OkRequestsTestCase(SimpleTestCase):
         await self.login_or_restore_session(client)
 
         group_flow = OkGroupFlow(client)
-        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/alexnews.r')
+        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/demokratic')
         print(group_uuid)
         self.assertTrue(group_uuid)
         group_info = await group_flow.fetch_group_info(group_uuid)

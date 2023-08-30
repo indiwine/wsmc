@@ -13,4 +13,3 @@ class OkSeleniumLoginCollector(AbstractCollector):
         if request.can_process_entity(SocialMediaEntities.LOGIN, False):
             OkLoginPage(request.driver, OkLinkBuilder.build('')).perform_login(request.credentials.user_name,
                                                                                request.credentials.password)
-        super().handle(request)

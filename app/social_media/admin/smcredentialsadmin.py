@@ -6,8 +6,9 @@ from django.urls import path, reverse
 
 from social_media.models import SmCredential
 from ..social_media import SocialMediaEntities
-from ..webdriver import Request, Agent
+from ..webdriver import Agent
 from ..webdriver.exceptions import WsmcWebDriverLoginError
+from ..webdriver.request import Request
 
 
 class SmCredentialsAdmin(ModelAdmin):
@@ -19,14 +20,14 @@ class SmCredentialsAdmin(ModelAdmin):
             return super().get_readonly_fields(request, obj)
         return ['social_media']
 
-    def check_login(self, request: HttpRequest, object_id):
+    async def check_login(self, request: HttpRequest, object_id):
         credential: SmCredential = self.get_object(request, object_id)
 
         if request.method == "POST":
             login_request = Request([SocialMediaEntities.LOGIN], credential)
             agent = Agent(login_request)
             try:
-                agent.run()
+                await agent.run()
                 self.message_user(request, 'Логін пройшов успішно', messages.SUCCESS)
             except WsmcWebDriverLoginError as err:
                 self.message_user(request, f'Логін провалився: {err}', messages.ERROR)

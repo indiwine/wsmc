@@ -13,4 +13,3 @@ class OkSeleniumPostsCollector(AbstractCollector):
             for post in posts_page.collect_post():
                 self.persist_post(post, sm_profile, request)
 
-        super().handle(request)

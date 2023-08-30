@@ -2,6 +2,7 @@ import logging
 from time import time
 from typing import Generator, Optional, Callable, Tuple
 
+from asgiref.sync import sync_to_async
 from django.db import transaction
 from selenium.common import ElementNotInteractableException, TimeoutException
 
@@ -22,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class VkPostsCollector(AbstractCollector[None, VkOptions]):
-
     _last_profile_collected_at: Optional[int] = None
 
     DELAY_BETWEEN_PROFILES = 60 * 15
@@ -33,7 +33,8 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
     post_count = 0
 
     def do_collect_profiles(self, request: Request):
-        if self._last_profile_collected_at and (int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
+        if self._last_profile_collected_at and (
+            int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
             logger.info('Skipping profile collection')
             return
 
@@ -61,6 +62,7 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
                 self._last_profile_collected_at = int(time())
                 logger.error(f'Collecting profiles - timeout', exc_info=e)
 
+    @sync_to_async
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.POSTS):
             logger.debug('Start collecting posts')
@@ -85,8 +87,6 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
                 pass
             finally:
                 self._update_offset(request, offset)
-
-        return super().handle(request)
 
     def _update_offset(self, request: Request, offset: int):
         try:

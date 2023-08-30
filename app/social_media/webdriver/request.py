@@ -5,6 +5,7 @@ from pyee import EventEmitter
 
 from .driverbuilder import DriverBuilder, DriverBuildOptions
 from .options.baseoptions import BaseOptions
+from .options.okoptions import OkOptions
 from .options.vkoptions import VkOptions
 from .wsmcwebdriver import WsmcWebDriver
 from ..models import SuspectSocialMediaAccount, SmCredential, SuspectGroup
@@ -89,7 +90,7 @@ class Request(Generic[REQUEST_DATA_TYPE]):
         elif self.get_social_media_type == SocialMediaTypes.FB:
             raise NotImplementedError('Options for fb is not implemented')
         elif self.get_social_media_type == SocialMediaTypes.OK:
-            raise NotImplementedError('Options for ok is not implemented')
+            return OkOptions()
 
         raise RuntimeError(f'Unknown social media type: {self.get_social_media_type}')
 

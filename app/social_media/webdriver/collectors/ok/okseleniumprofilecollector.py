@@ -12,4 +12,3 @@ class OkSeleniumProfileCollector(AbstractCollector):
                                              OkLinkBuilder.build(request.suspect_identity.link)).collect_data()
             self.persist_sm_profile(profile_dto, request)
 
-        super().handle(request)

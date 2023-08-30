@@ -13,4 +13,3 @@ class FbProfileCollector(AbstractCollector):
                 .collect_profile()
             self.persist_sm_profile(profile_dto, request)
 
-        return super().handle(request)
