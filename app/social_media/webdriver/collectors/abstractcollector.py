@@ -72,6 +72,10 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
 
         return saved_post, created
 
+    @sync_to_async
+    def apersist_post(self, post: SmPostDto, origin: Union[SmGroup, SmProfile], request: Request) -> Tuple[SmPost, bool]:
+        return self.persist_post(post, origin, request)
+
     def persist_like(self,
                      like_author: AuthorDto,
                      target: Union[SmPost, SmComment],

@@ -1,129 +1,101 @@
 import dataclasses
+import datetime
 from copy import copy
-from typing import Optional, Union, Type, List
+from typing import Optional, Union, Type, List, Tuple, Generator
 
+from django.utils import timezone
+
+from social_media.dtos import AuthorDto, SmPostDto
 from social_media.mimic.ok.device import AndroidDevice
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     RESPONSE_BODY, AbstractResponse, GenericResponseBody
-from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none, nested_dataclass
+from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
 from social_media.mimic.ok.requests.okbanner import OkBannerItem
-
-
-@dataclasses.dataclass
-class FeedItem:
-    pattern: str
-    type: str
-    date: str
-    date_ms: int
-    title_tokens: List[dict]
-    message_tokens: List[dict]
-    mark_as_spam_id: str
-    feed_stat_info: str
-    has_similar: bool
-    actions: List[str]
-    actor_refs: List[str]
-    author_refs: List[str]
-    owner_refs: List[str]
-    target_refs: List[str]
-    active: bool
-    hot_news: bool
-    discussion_summary: Optional[dict] = None
-    place_refs: Optional[List[str]] = None
-
-    @property
-    def first_media_topic_id(self) -> str:
-        """
-        @return: first media topic id found in target_refs (NOTE: the media_topic: prefix is removed)
-        """
-        for target_ref in self.target_refs:
-            if target_ref.startswith('media_topic:'):
-                return target_ref.split(':')[-1]
-        raise ValueError('No media topic id found in target_refs')
-
-
-@dataclasses.dataclass
-class FeedMediaTopicLikeSummary:
-    count: int
-    self: bool
-    like_id: str
-    like_possible: bool
-    unlike_possible: bool
-    use_default_reaction: bool
-    reactions: Optional[list] = None
-    last_like_date_ms: Optional[int] = None
-
-
-@dataclasses.dataclass
-class FeedMediaTopicReShareSummary:
-    count: int
-    self: bool
-    self_owner: bool
-    reshare_like_id: str
-    reshare_possible: bool
-    reshare_available_for_chats: bool
-    reshare_object_ref: str
-    reshare_available_for_external: Optional[bool] = None
-    reshare_external_link: Optional[str] = None
-    last_reshare_date_ms: Optional[int] = None
-
-
-@nested_dataclass
-class FeedMediaTopic:
-    media: list
-    id: str
-    created_ms: int
-    discussion_summary: dict
-    like_summary: FeedMediaTopicLikeSummary
-    reshare_summary: FeedMediaTopicReShareSummary
-    ref: str
-    author_ref: str
-    owner_ref: str
-    has_more: bool
-    is_product: bool
-    on_moderation: bool
-    has_extended_stats: bool
-    is_feeling: bool
-    app_ref: Optional[str] = None
-    capabilities: Optional[str] = None
-    is_commenting_denied: Optional[bool] = None
-
-
-@nested_dataclass
-class FeedEntity:
-    groups: list
-    media_topics: List[FeedMediaTopic]
-    music_albums: list
-    music_artists: list
-    music_playlists: list
-    music_tracks: list
-    promo_feed_buttons: list
-    photo_ext_ts_buttons: list
-    apps: Optional[list] = None
-    videos: Optional[list] = None
-    group_photos: Optional[list] = None
-    group_albums: Optional[list] = None
-    users: Optional[list] = None
+from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
+from social_media.mimic.ok.requests.stream.entities.feedentity import FeedEntity
+from social_media.mimic.ok.requests.stream.entities.feedgroup import FeedGroup
+from social_media.mimic.ok.requests.stream.entities.feedgroupalbum import FeedGroupAlbum
+from social_media.mimic.ok.requests.stream.entities.feedgroupphoto import FeedGroupPhoto
+from social_media.mimic.ok.requests.stream.entities.feeditem import FeedItem
+from social_media.mimic.ok.requests.stream.entities.feedmediatopic import FeedMediaTopic
+from social_media.mimic.ok.requests.stream.entities.feeduser import FeedUser
+from social_media.mimic.ok.requests.stream.entities.feedvideo import FeedVideo
+from social_media.social_media import SocialMediaTypes
 
 
 class StreamGetResponseBody(GenericResponseBody):
     def __init__(self, raw_params: Union[dict, list]):
         self.feeds: List[FeedItem] = []
-        self.entities: FeedEntity = None
+        self.entities: Optional[FeedEntity] = None
         self.anchor: Optional[str] = None
         self.available: Optional[bool] = None
         super().__init__(raw_params)
 
-    def find_media_topic(self, feed_item: FeedItem) -> FeedMediaTopic:
+    def find_entity_by_ref(self, ref: str) \
+        -> Union[FeedGroup, FeedVideo, FeedUser, FeedMediaTopic, FeedGroupAlbum, FeedGroupPhoto]:
         """
-        Find media topic corresponding to feed item
+        Attempts to find entity by ref
+        @param ref:
+        @return:
+        """
+
+        entity_type = ref.split(':')[0]
+        attr_name = f'{entity_type}s'
+
+        if not hasattr(self.entities, attr_name):
+            raise ValueError(f'No entity {entity_type} found')
+        entities: List[BaseFeedEntity] = getattr(self.entities, attr_name)
+
+        for entity in entities:
+            if not dataclasses.is_dataclass(entity):
+                raise NotImplementedError(f'Entity {entity_type} is not a dataclass')
+
+            if entity.ref == ref:
+                return entity
+
+        raise ValueError(f'No entity {entity_type} with ref {ref} found')
+
+    def find_author(self, feed_item: FeedItem) -> AuthorDto:
+        """
+        Find author of feed item
         @param feed_item:
         @return:
         """
-        for media_topic in self.entities.media_topics:
-            if media_topic.id == feed_item.first_media_topic_id:
-                return media_topic
-        raise ValueError('No media topic found')
+        author_ref = feed_item.first_author_ref
+        entity: Union[FeedGroup, FeedUser] = self.find_entity_by_ref(author_ref)
+        return entity.to_author_dto()
+
+    def item_to_post_dto(self, feed_item: FeedItem) -> Tuple[SmPostDto, BaseFeedEntity]:
+        """
+        Generate SmPostDto from feed item
+        @param feed_item:
+        @return:
+        """
+        author_dto = self.find_author(feed_item)
+        target_entity = self.find_entity_by_ref(feed_item.first_target_ref)
+        permalink = target_entity.extract_permalink()
+        body = target_entity.extract_body()
+        post_id = target_entity.ref
+
+        post_dto = SmPostDto(
+            datetime=datetime.datetime.fromtimestamp(feed_item.date_ms / 1000, tz=timezone.get_current_timezone()),
+            author=author_dto,
+            sm_post_id=post_id,
+            social_media=SocialMediaTypes.OK,
+            body=body,
+            permalink=permalink,
+        )
+        return post_dto, target_entity
+
+    def post_generator(self) -> Generator[Tuple[SmPostDto, BaseFeedEntity], None, None]:
+        """
+        Generate posts from feed items
+        @return:
+        """
+        for feed_item in self.feeds:
+            post_dto, target_entity = self.item_to_post_dto(feed_item)
+            yield post_dto, target_entity
 
 
 class StreamGetResponse(GenericResponse[StreamGetResponseBody]):
@@ -132,10 +104,11 @@ class StreamGetResponse(GenericResponse[StreamGetResponseBody]):
         return StreamGetResponseBody
 
     def set_from_raw(self, raw_response: Union[dict, list]):
+        self.raw_body = raw_response
         response = copy(raw_response)
         response['feeds'] = self.build_feed_items(response['feeds'])
         response['entities'] = self.build_feed_entities(response['entities'])
-        super().set_from_raw(response)
+        self.create_and_set_body(response)
 
     @staticmethod
     def build_feed_items(feed_items: List[dict]):

@@ -1,9 +1,13 @@
+import json
 from pathlib import Path
+from pprint import pprint
 from typing import Optional
+import asyncio
 
 from django.conf import settings
 from django.test import SimpleTestCase
 
+from social_media.dtos import SmPostDto
 from social_media.dtos.oksessiondto import OkSessionDto
 from social_media.mimic.ok.client import OkHttpClient
 from social_media.mimic.ok.device import default_device
@@ -12,6 +16,7 @@ from social_media.mimic.ok.flows.okloginflow import OkLoginFlow
 from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
 from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
+from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
 
 
 class OkRequestsTestCase(SimpleTestCase):
@@ -56,7 +61,7 @@ class OkRequestsTestCase(SimpleTestCase):
         await self.login_or_restore_session(client)
 
         group_flow = OkGroupFlow(client)
-        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/demokratic')
+        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/alexnews.r')
         print(group_uuid)
         self.assertTrue(group_uuid)
         group_info = await group_flow.fetch_group_info(group_uuid)
@@ -64,13 +69,26 @@ class OkRequestsTestCase(SimpleTestCase):
 
         stream_flow = OkStreamFlow(client)
         previous_anchor = None
-        for page in range(1, 2):
+        for page in range(1, 4):
+
             group_posts_response = await stream_flow.fetch_feed(group_uuid, previous_anchor)
             group_posts_body = group_posts_response.get_body()
+
+            save_file = Path(settings.MEDIA_ROOT) / f'ok_test_posts_{page}.json'
+            save_file.write_text(json.dumps(group_posts_response.raw_body, indent=4, ensure_ascii=False))
+
             previous_anchor = group_posts_body.anchor
 
-            for feed_item in group_posts_body.feeds:
-                print(feed_item)
-                media_topic = group_posts_body.find_media_topic(feed_item)
-                likes_response = await stream_flow.fetch_likes(media_topic.like_summary.like_id)
-                print(likes_response.get_body())
+            for post_dto, target_entity in group_posts_body.post_generator():
+                self.assertIsInstance(post_dto, SmPostDto)
+                self.assertIsInstance(target_entity, BaseFeedEntity)
+                self.assertTrue(post_dto.sm_post_id)
+                self.assertTrue(post_dto.social_media)
+                self.assertTrue(post_dto.datetime)
+                self.assertTrue(post_dto.permalink)
+                self.assertTrue(post_dto.author)
+
+                print(post_dto)
+                print()
+
+            await asyncio.sleep(10)

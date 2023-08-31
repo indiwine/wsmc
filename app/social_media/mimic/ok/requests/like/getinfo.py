@@ -2,9 +2,11 @@ import dataclasses
 from copy import copy
 from typing import Optional, List, Type, Union
 
+from social_media.dtos import AuthorDto
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, AbstractRequestParams, GenericResponseBody, \
     GenericResponse, RESPONSE_BODY, AbstractResponse
-from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none, nested_dataclass
+from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
+from social_media.common import nested_dataclass
 
 
 @dataclasses.dataclass
@@ -33,6 +35,14 @@ class UserItem:
     show_lock: bool
     online: Optional[bool] = None
 
+    def to_author_dto(self) -> AuthorDto:
+        return AuthorDto(
+            oid=self.uid,
+            name=f'{self.first_name} {self.last_name}',
+            url=f'https://ok.ru/profile/{self.uid}',
+            is_group=False
+        )
+
 
 @nested_dataclass
 class ReactedUserItem:
@@ -48,6 +58,10 @@ class LikeGetInfoResponseBody(GenericResponseBody):
         self.reacted_users: List[ReactedUserItem] = []
         self.anchor: Optional[str] = None
         super().__init__(raw_params)
+
+
+    def to_author_dtos(self) -> List[AuthorDto]:
+        return [reacted_user.user.to_author_dto() for reacted_user in self.reacted_users]
 
 
 class LikeGetInfoResponse(GenericResponse[LikeGetInfoResponseBody]):

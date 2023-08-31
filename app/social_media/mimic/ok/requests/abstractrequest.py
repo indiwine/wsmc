@@ -170,8 +170,16 @@ class GenericResponse(AbstractResponse[RESPONSE_BODY]):
 
     def set_from_raw(self, raw_response: Union[dict, list]):
         self.raw_body = raw_response
+        self.create_and_set_body(raw_response)
+
+    def create_body_instance(self, raw_response: Union[dict, list]) -> RESPONSE_BODY:
         body_cls = self.get_body_class()
-        self.body = body_cls(raw_response)
+        return body_cls(raw_response)
+
+    def create_and_set_body(self, raw_response: Union[dict, list]):
+        self.body = self.create_body_instance(raw_response)
+
+
 
 
 class GenericRequest(AbstractRequest[PARAMS]):

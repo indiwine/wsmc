@@ -8,3 +8,5 @@ class OkRequestData:
 
     client: OkHttpClient
 
+    group_uid: str
+

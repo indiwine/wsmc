@@ -9,6 +9,7 @@ class OkGroupCollector(AbstractCollector[OkRequestData, OkOptions]):
     async def handle(self, request: Request[OkRequestData]):
         group_flow = OkGroupFlow(request.data.client)
         group_uid = await group_flow.resolve_group_uid(request.target_url)
+        request.data.group_uid = group_uid
         group_info = await group_flow.fetch_group_info(group_uid)
         group_dtp = group_info.to_group_dto()
         await self.apersist_group(group_dtp, request, request.suspect_identity)
