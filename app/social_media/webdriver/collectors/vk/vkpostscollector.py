@@ -33,6 +33,12 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
     post_count = 0
 
     def do_collect_profiles(self, request: Request):
+        """
+        Collect profiles in background
+        @todo - move to separate task
+        @param request:
+        @return:
+        """
         if self._last_profile_collected_at and (
             int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
             logger.info('Skipping profile collection')
@@ -51,13 +57,9 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
 
             try:
                 for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
-                    for profile_dto in profile_dto_list:
-                        SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type) \
-                            .update(was_collected=True, **self.as_dict_for_model(profile_dto))
-                        profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
 
-                        if profile.identify_location():
-                            profile.save()
+                    self.update_collected_profiles(profile_dto_list, request)
+
             except (TimeoutException, WsmcWebDriverNativeApiCallTimout) as e:
                 self._last_profile_collected_at = int(time())
                 logger.error(f'Collecting profiles - timeout', exc_info=e)
@@ -153,7 +155,7 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
             _, new_likes_num = self.batch_persist_likes(like_authors, post_item, request)
             likes_in_db += new_likes_num
 
-            if likes_in_db == total_likes_count:
+            if likes_in_db >= total_likes_count:
                 fan_box_object.close()
                 break
 

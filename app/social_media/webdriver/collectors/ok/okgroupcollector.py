@@ -12,4 +12,5 @@ class OkGroupCollector(AbstractCollector[OkRequestData, OkOptions]):
         request.data.group_uid = group_uid
         group_info = await group_flow.fetch_group_info(group_uid)
         group_dtp = group_info.to_group_dto()
-        await self.apersist_group(group_dtp, request, request.suspect_identity)
+        sm_group, _ = await self.apersist_group(group_dtp, request, request.suspect_identity)
+        request.data.group_model = sm_group

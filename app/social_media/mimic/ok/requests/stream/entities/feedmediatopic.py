@@ -27,3 +27,4 @@ class FeedMediaTopic(BaseFeedEntity):
     app_ref: Optional[str] = None
     capabilities: Optional[str] = None
     is_commenting_denied: Optional[bool] = None
+    presentation: Optional[dict] = None

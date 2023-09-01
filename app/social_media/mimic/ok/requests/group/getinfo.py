@@ -34,7 +34,6 @@ class GroupInfoItem:
     paid_content: str
     access_type: str
     category: str
-    subcategory: str
     feed_subscription: bool
     notifications_subscription: bool
     mentions_subscription: bool
@@ -43,10 +42,11 @@ class GroupInfoItem:
     products_tab_hidden: bool
     messages_allowed: bool
     content_as_official: bool
-    cover: dict
     profile_buttons: dict
     pin_notifications_off: bool
     has_group_agreement: bool
+    cover: Optional[dict] = None
+    subcategory: Optional[str] = None
     city: Optional[str] = None
     address: Optional[str] = None
     phone: Optional[str] = None

@@ -24,6 +24,19 @@ def unfold_optional(type_):
     type_args = get_args(type_)
     return type_args[0]
 
+def is_list_of_dataclasses(type_):
+    """
+    Checks if type is List of dataclasses
+    @param type_:
+    @return:
+    """
+    type_args = get_args(type_)
+    return (
+        get_origin(type_) is list
+        and len(type_args) == 1
+        and is_dataclass(type_args[0])
+    )
+
 
 def nested_dataclass(*args, **kwargs):
     """
@@ -55,8 +68,8 @@ def nested_dataclass(*args, **kwargs):
                     kwargs[name] = new_obj
 
                 # If filed is List of dataclasses and value is list, then create new list of objects
-                elif get_origin(field_type) == list and is_dataclass(get_args(field_type)[0]) and isinstance(value,
-                                                                                                             list):
+                elif is_list_of_dataclasses(field_type) and isinstance(value, list):
+
                     cls_to_create = get_args(field_type)[0]
                     new_list = [cls_to_create(**item) for item in value]
                     kwargs[name] = new_list

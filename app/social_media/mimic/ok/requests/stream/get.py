@@ -75,7 +75,7 @@ class StreamGetResponseBody(GenericResponseBody):
         author_dto = self.find_author(feed_item)
         target_entity = self.find_entity_by_ref(feed_item.first_target_ref)
         permalink = target_entity.extract_permalink()
-        body = target_entity.extract_body()
+        body = feed_item.get_message()
         post_id = target_entity.ref
 
         post_dto = SmPostDto(

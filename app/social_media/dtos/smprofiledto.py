@@ -11,6 +11,7 @@ class SmProfileMetadata:
     mobile_phone: str = None
     twitter: str = None
     site: str = None
+    permalink: str = None
 
 
 @dataclass

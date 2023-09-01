@@ -7,6 +7,7 @@ from selenium.common import NoSuchWindowException, WebDriverException
 from .collectors import Collector
 from .collectors.collectorpipeline import CollectorPipeline
 from .collectors.ok.okgroupcollector import OkGroupCollector
+from .collectors.ok.okgrouppostscollector import OkGroupPostsCollector
 from .collectors.ok.okinitdatacollector import OkInitDataCollector
 from .collectors.ok.oklogincollector import OkLoginCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
@@ -111,7 +112,14 @@ class Agent:
 
             if self.request.has_entity(SocialMediaEntities.GROUP):
                 stack.append(OkGroupCollector())
+
+                if self.request.has_entity(SocialMediaEntities.POSTS):
+                    stack.append(OkGroupPostsCollector())
         else:
             raise RuntimeError(f'No suitable filter stack for social media {sm_type}')
+
+        # Apply request options
+        for collector in stack:
+            collector.set_options(self.request.options)
 
         return stack

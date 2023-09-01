@@ -18,6 +18,9 @@ class UrlGetInfoBody(GenericResponseBody):
     def __init__(self, raw_params: Union[dict, list]):
         self.objectId: Optional[int] = None
         self.objectIdEncoded: Optional[str] = None
+        """
+        Do not use encoded object id, it is not working (at least for groups)
+        """
         self.objectIdStr: Optional[str] = None
         self.type: Optional[str] = None
         super().__init__(raw_params)

@@ -26,3 +26,4 @@ class FeedEntity:
     group_photos: Optional[List[FeedGroupPhoto]] = None
     group_albums: Optional[List[FeedGroupAlbum]] = None
     users: Optional[List[FeedUser]] = None
+    links: Optional[List] = None

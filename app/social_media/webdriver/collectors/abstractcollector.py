@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import copy
-from abc import ABC, abstractmethod
+import logging
+import random
+from abc import ABC, abstractmethod, ABCMeta
 from dataclasses import fields, Field, is_dataclass
 from typing import Callable, Tuple, Optional, Union, List, TypeVar, Generic
 
@@ -19,6 +22,7 @@ from ...models import SmProfile, SmPost, SmPostImage, SuspectGroup, SmGroup, SmC
 OPTIONS = TypeVar('OPTIONS', bound=BaseOptions)
 REQUEST_DATA = TypeVar('REQUEST_DATA', bound=None)
 
+logger = logging.getLogger(__name__)
 
 
 class Collector(AbstractPipeFilter[Request], ABC):
@@ -36,7 +40,7 @@ class Collector(AbstractPipeFilter[Request], ABC):
         return task
 
 
-class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
+class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABCMeta):
     def __init__(self):
         self._options: Optional[OPTIONS] = None
 
@@ -73,7 +77,8 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
         return saved_post, created
 
     @sync_to_async
-    def apersist_post(self, post: SmPostDto, origin: Union[SmGroup, SmProfile], request: Request) -> Tuple[SmPost, bool]:
+    def apersist_post(self, post: SmPostDto, origin: Union[SmGroup, SmProfile], request: Request) -> Tuple[
+        SmPost, bool]:
         return self.persist_post(post, origin, request)
 
     def persist_like(self,
@@ -106,7 +111,15 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
     def batch_persist_likes(self,
                             like_authors: List[AuthorDto],
                             target: Union[SmPost, SmComment],
-                            request: Request):
+                            request: Request
+                            ) -> Tuple[int, int]:
+        """
+        Persist likes for target
+        @param like_authors:
+        @param target:
+        @param request:
+        @return: tuple of number (existing_likes, new_likes)
+        """
         authors = filter(lambda item: not item.is_group, like_authors)
         authors = self.batch_persist_profiles(list(authors), request)
 
@@ -134,6 +147,14 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
             SmLikes.objects.bulk_create(likes_to_create, ignore_conflicts=True)
 
         return len(existing_likes), len(likes_to_create)
+
+    @sync_to_async
+    def abatch_persist_likes(self,
+                             like_authors: List[AuthorDto],
+                             target: Union[SmPost, SmComment],
+                             request: Request
+                             ) -> Tuple[int, int]:
+        return self.batch_persist_likes(like_authors, target, request)
 
     def batch_persist_profiles(self, like_authors: List[AuthorDto], request: Request):
         all_oids = list(map(lambda author_dto: author_dto.oid, like_authors))
@@ -164,6 +185,10 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
     def count_likes(self, target: Union[SmPost, SmComment]) -> int:
         parent_type = ContentType.objects.get_for_model(target)
         return SmLikes.objects.filter(parent_type=parent_type, parent_id=target.id).count()
+
+    @sync_to_async
+    def acount_likes(self, target: Union[SmPost, SmComment]) -> int:
+        return self.count_likes(target)
 
     def persist_group(self,
                       group_dto: SmGroupDto,
@@ -239,10 +264,44 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
 
         return SmProfile.objects.get(suspect_social_media=request.suspect_identity)
 
-
     @sync_to_async
     def aget_request_origin(self, request: Request) -> Union[SmProfile, SmGroup]:
         return self.get_request_origin(request)
+
+    def update_collected_profiles(self, profile_dto_list: List[SmProfileDto], request: Request):
+        """
+        Update collected profiles
+
+        This method updates profiles that were collected before and now they have new data.
+        Also making attempt to identify location for each profile.
+        @param profile_dto_list:
+        @param request:
+        @return:
+        """
+
+        # TODO: Probably this method should be refactored
+
+        for profile_dto in profile_dto_list:
+
+            # Update profile with a new data
+            SmProfile.objects.filter(
+                oid=profile_dto.oid,
+                social_media=request.get_social_media_type
+            ).update(
+                was_collected=True, **self.as_dict_for_model(profile_dto)
+            )
+
+            # Get updated profile
+            profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
+
+            # Checking if profile has location and it is identifiable
+            if profile.identify_location():
+                # Save profile if it is identifiable
+                profile.save()
+
+    @sync_to_async
+    def aupdate_collected_profiles(self, profile_dto_list: List[SmProfileDto], request: Request):
+        return self.update_collected_profiles(profile_dto_list, request)
 
     def get_sm_profile(self, request: Request):
         """
@@ -277,3 +336,9 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS]):
             return not ('transient' in field.metadata and field.metadata['transient'])
 
         return cls.as_dict_fields_filter(obj, conditional_filter)
+
+    @staticmethod
+    async def random_await(min_delay: int = 1, max_delay: int = 30):
+        delay = random.randint(min_delay, max_delay)
+        logger.info(f'Waiting for {delay} seconds')
+        await asyncio.sleep(delay)

@@ -7,7 +7,7 @@ import asyncio
 from django.conf import settings
 from django.test import SimpleTestCase
 
-from social_media.dtos import SmPostDto
+from social_media.dtos import SmPostDto, AuthorDto
 from social_media.dtos.oksessiondto import OkSessionDto
 from social_media.mimic.ok.client import OkHttpClient
 from social_media.mimic.ok.device import default_device
@@ -61,7 +61,7 @@ class OkRequestsTestCase(SimpleTestCase):
         await self.login_or_restore_session(client)
 
         group_flow = OkGroupFlow(client)
-        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/alexnews.r')
+        group_uuid = await group_flow.resolve_group_uid('https://ok.ru/group/53038939046008')
         print(group_uuid)
         self.assertTrue(group_uuid)
         group_info = await group_flow.fetch_group_info(group_uuid)
@@ -88,7 +88,44 @@ class OkRequestsTestCase(SimpleTestCase):
                 self.assertTrue(post_dto.permalink)
                 self.assertTrue(post_dto.author)
 
-                print(post_dto)
-                print()
+                pprint(post_dto)
+                await self.get_likes(target_entity, stream_flow)
+
 
             await asyncio.sleep(10)
+
+
+    async def get_likes(self, target_entity: BaseFeedEntity, stream_flow: OkStreamFlow):
+
+        like_summary = target_entity.extract_like_summary()
+        if like_summary is None:
+            print('No like summary, skipping')
+            return
+
+        total_likes_count = like_summary.count
+        if total_likes_count == 0:
+            print('No likes, skipping')
+            return
+
+        like_id = like_summary.like_id
+
+        previous_anchor = None
+        while True:
+            likes_response = await stream_flow.fetch_likes(like_id, previous_anchor)
+            likes_body = likes_response.get_body()
+
+            authors = likes_body.to_author_dtos()
+            pprint(authors)
+            self.assertIsInstance(authors, list)
+
+            for author in authors:
+                self.assertIsInstance(author, AuthorDto)
+                self.assertTrue(author.oid)
+                self.assertTrue(author.name)
+                self.assertTrue(author.url)
+                self.assertFalse(author.is_group)
+
+            previous_anchor = likes_body.anchor
+            if not likes_body.has_more:
+                print('No more likes available, stopping')
+                break

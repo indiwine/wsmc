@@ -20,7 +20,7 @@ class OkGroupFlow(AbstractOkFlow):
             url_info_request
         )
 
-        return url_info_response.get_body().objectIdEncoded
+        return str(url_info_response.get_body().objectIdEncoded)
 
 
     async def fetch_group_info(self, group_uid: str) -> GroupInfoItem:

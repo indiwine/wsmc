@@ -23,6 +23,13 @@ class FeedItem:
     discussion_summary: Optional[dict] = None
     place_refs: Optional[List[str]] = None
 
+
+    def get_message(self) -> str:
+        """
+        @return: message from message_tokens
+        """
+        return '\n'.join(token['text'] for token in self.message_tokens)
+
     @property
     def first_target_ref(self) -> str:
         """

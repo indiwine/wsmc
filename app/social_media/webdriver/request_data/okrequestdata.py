@@ -1,4 +1,5 @@
 from social_media.mimic.ok.client import OkHttpClient
+from social_media.models import SmGroup
 
 
 class OkRequestData:
@@ -9,4 +10,15 @@ class OkRequestData:
     client: OkHttpClient
 
     group_uid: str
+    """
+    Group UID
+    
+    Filled by OkGroupCollector
+    """
+
+    group_model: SmGroup
+    """
+    Group model
+    Fill by OkGroupCollector
+    """
 

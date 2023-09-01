@@ -18,6 +18,7 @@ class ParentDataclass:
     many_children: List[ChildDataclass]
     optional_child: Optional[ChildDataclass] = None
     many_optional_children: Optional[List[ChildDataclass]] = None
+    missing_list_type: Optional[List] = None
 
 class TestNestedDataclass(SimpleTestCase):
     def test_one_to_one(self):
@@ -56,6 +57,17 @@ class TestNestedDataclass(SimpleTestCase):
 
         self.assertIsInstance(parent.many_optional_children[0], ChildDataclass)
         self.assertIsInstance(parent.many_optional_children[1], ChildDataclass)
+
+    def test_missing_list_type(self):
+        parent = ParentDataclass(
+            one_child={'id': '1'},
+            many_children=[{'id': '2'}, {'id': '3'}],
+            optional_child={'id': '4'},
+            many_optional_children=[{'id': '5'}, {'id': '6'}],
+            missing_list_type=[],
+        )
+
+        self.assertIsInstance(parent.missing_list_type, list)
 
 
 
