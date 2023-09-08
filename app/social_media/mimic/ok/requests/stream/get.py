@@ -144,8 +144,8 @@ class StreamGetParams(AbstractRequestParams):
 
 
 class StreamGetRequest(GenericRequest[AbstractRequestParams]):
-    def __init__(self, gid: str):
-        params = StreamGetParams(gid)
+    def __init__(self, gid: str, anchor: Optional[str] = None):
+        params = StreamGetParams(gid, anchor=anchor)
         super().__init__('stream', 'get', params)
 
     @staticmethod

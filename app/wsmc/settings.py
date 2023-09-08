@@ -256,7 +256,6 @@ MIMIC_OK_APP_KEY = 'CBAFJIICABABABABA'
 # OK App build and version
 MIMIC_OK_APP_BUILD = '23071000'
 MIMIC_OK_APP_VER = '23.7.10'
-MIMIC_OK_DEFAULT_USER_COUNTRY = 'Россия'
 
 # Test setting
 TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')

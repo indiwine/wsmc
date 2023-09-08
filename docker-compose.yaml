@@ -151,10 +151,10 @@ services:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800
       SE_OPTS: "--log-level OFF"
-    ports:
-      - "4442:4442"
-      - "4443:4443"
-      - "4444:4444"
+#    ports:
+#      - "4442:4442"
+#      - "4443:4443"
+#      - "4444:4444"
     deploy:
       replicas: 1
       placement:
@@ -170,6 +170,8 @@ services:
       REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
       NOMINATIM_PASSWORD: very_secure_password
       IMPORT_STYLE: "admin"
+    ports:
+      - "8080:8080"
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
       - type: tmpfs

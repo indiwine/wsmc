@@ -5,9 +5,9 @@ services:
     volumes:
       - './app:/app'
       - './app/storage:/app/storage'
-  redis:
-    ports:
-      - "6379:6379"
+#  redis:
+#    ports:
+#      - "6379:6379"
   celery:
     build: './app'
 #    command: celery -A wsmc worker -P solo
@@ -18,11 +18,13 @@ services:
     ports:
       - "7900:7900"
     shm_size: 3g
+    profiles:
+      - "notstart"
     deploy:
       replicas: 1
   postgres:
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgresql:/var/lib/postgresql/data
   pg_exporter:

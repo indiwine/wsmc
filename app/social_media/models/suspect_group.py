@@ -1,5 +1,6 @@
 from typing import Optional
 
+from asgiref.sync import sync_to_async
 from django.db.models import Model, URLField
 
 from .smcredential import SmCredential
@@ -20,6 +21,10 @@ class SuspectGroup(Model):
             self._credential_used = SmCredential.objects.get_next_credential(self.social_media_type)
 
         return self._credential_used
+
+    @sync_to_async
+    def afetch_next_credential(self):
+        return self.credentials
 
     def __str__(self):
         return self.url

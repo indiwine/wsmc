@@ -19,7 +19,7 @@ class OkStreamFlow(AbstractOkFlow):
         """
         batch_id = 'stream.get-first' if not previous_anchor else 'stream.get-more'
 
-        stream_get_request = StreamGetRequest(gid)
+        stream_get_request = StreamGetRequest(gid, previous_anchor)
         stream_get_response: StreamGetResponse = await self.perform_batch_request(
             batch_id,
             stream_get_request

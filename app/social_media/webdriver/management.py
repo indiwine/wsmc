@@ -24,14 +24,15 @@ POST_BATCH_SIZE = 50
 
 @async_to_sync
 async def collect_groups(suspect_group_id: int, task_id: str):
-    suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
+    suspect_group = await SuspectGroup.objects.aget(id=suspect_group_id)
+    credentials = await suspect_group.afetch_next_credential()
     collect_request = Request(
         [
             SocialMediaEntities.LOGIN,
             SocialMediaEntities.GROUP,
             SocialMediaEntities.POSTS
         ],
-        suspect_group.credentials,
+        credentials,
         suspect_group
     )
 

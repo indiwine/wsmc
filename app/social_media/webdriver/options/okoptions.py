@@ -12,4 +12,4 @@ class OkOptions(BaseOptions):
     Maximum date limit for collecting posts
     """
 
-    post_count_limit: Optional[int] = 1000
+    post_count_limit: Optional[int] = None

@@ -2,7 +2,6 @@ import dataclasses
 from copy import copy
 from typing import Optional, List, Type, Union
 
-from django.conf import settings
 
 from social_media.dtos import AuthorDto, SmProfileDto, SmProfileMetadata
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, AbstractRequestParams, GenericResponseBody, \
@@ -75,8 +74,6 @@ class UserItem:
 
             if self.location.country is not None:
                 dto.country = self.location.country
-            else:
-                dto.country = settings.MIMIC_OK_DEFAULT_USER_COUNTRY
 
         if self.location_of_birth is not None and self.location_of_birth.city is not None:
             dto.home_town = self.location_of_birth.city
@@ -91,7 +88,7 @@ class UserItem:
 class ReactedUserItem:
     reaction: str
     date_ms: int
-    user: UserItem
+    user: Optional[UserItem] = None
 
 
 class LikeGetInfoResponseBody(GenericResponseBody):
@@ -104,10 +101,18 @@ class LikeGetInfoResponseBody(GenericResponseBody):
 
 
     def to_author_dtos(self) -> List[AuthorDto]:
-        return [reacted_user.user.to_author_dto() for reacted_user in self.reacted_users]
+        result = []
+        for reacted_user in self.reacted_users:
+            if reacted_user.user is not None:
+                result.append(reacted_user.user.to_author_dto())
+        return result
 
     def to_profile_dtos(self) -> List[SmProfileDto]:
-        return [reacted_user.user.to_profile_dto() for reacted_user in self.reacted_users]
+        result = []
+        for reacted_user in self.reacted_users:
+            if reacted_user.user is not None:
+                result.append(reacted_user.user.to_profile_dto())
+        return result
 
 
 class LikeGetInfoResponse(GenericResponse[LikeGetInfoResponseBody]):

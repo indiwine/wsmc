@@ -1,6 +1,7 @@
 from .blackphrase import BlackPhrase
 from .collectedpostsstat import CollectedPostsStat
 from .location import Location
+from .okpoststat import OkPostStat
 from .osintdetail import OsintDetail
 from .osintreport import OsintReport
 from .screeningdetail import ScreeningDetail
