@@ -27,3 +27,5 @@ class FeedGroupPhoto(BaseFeedEntity):
     reshare_summary: Optional[FeedReShareSummary] = None
     user_id: Optional[str] = None
     topic_id: Optional[str] = None
+    picmp4: Optional = None
+    attrs: Optional = None

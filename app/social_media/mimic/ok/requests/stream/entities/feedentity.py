@@ -19,7 +19,7 @@ class FeedEntity:
     music_tracks: list
     promo_feed_buttons: list
     photo_ext_ts_buttons: list
-    groups: List[FeedGroup]
+    groups: Optional[List[FeedGroup]] = None
     media_topics: List[FeedMediaTopic] = None
     apps: Optional[list] = None
     videos: Optional[List[FeedVideo]] = None
@@ -27,3 +27,6 @@ class FeedEntity:
     group_albums: Optional[List[FeedGroupAlbum]] = None
     users: Optional[List[FeedUser]] = None
     links: Optional[List] = None
+    presents: Optional[List[dict]] = None
+    present_types: Optional[List[dict]] = None
+    holidays: Optional[List[dict]] = None

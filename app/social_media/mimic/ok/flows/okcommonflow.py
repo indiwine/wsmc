@@ -1,20 +1,22 @@
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.group.getinfo import GroupGetInfoRequest, GroupGetInfoResponse, GroupInfoItem
+from social_media.mimic.ok.requests.like.getinfo import UserItem
 from social_media.mimic.ok.requests.url.getinfo import UrlGetInfoRequest, UrlGetInfoResponse
+from social_media.mimic.ok.requests.users.getinfoby import UserGetInfoByRequest, UserGetInfoByResponse
 
 
-class OkGroupFlow(AbstractOkFlow):
+class OkCommonFlow(AbstractOkFlow):
     """
     Ok group flow for group-related requests
     """
 
-    async def resolve_group_uid(self, group_url: str) -> str:
+    async def resolve_url_to_uid(self, url: str) -> str:
         """
-        Resolve group UID by URL
-        @param group_url:
+        Resolve UID by URL
+        @param url:
         @return:
         """
-        url_info_request = UrlGetInfoRequest(group_url)
+        url_info_request = UrlGetInfoRequest(url)
         url_info_response: UrlGetInfoResponse = await self.perform_batch_request(
             'group.getInfo',
             url_info_request
@@ -36,3 +38,18 @@ class OkGroupFlow(AbstractOkFlow):
         )
 
         return group_info_response.find_group_info(group_uid)
+
+
+    async def fetch_user_info(self, uid: str) -> UserItem:
+        """
+        Fetch user info by user UID
+        @param uid:
+        @return:
+        """
+        user_info_request = UserGetInfoByRequest(uid)
+        user_info_response: UserGetInfoByResponse = await self.perform_batch_request(
+            'user.getInfoBy',
+            user_info_request
+        )
+
+        return user_info_response.get_body().user

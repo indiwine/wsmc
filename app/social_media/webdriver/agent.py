@@ -3,13 +3,15 @@ import time
 from typing import Optional, List
 
 from selenium.common import NoSuchWindowException, WebDriverException
+from aiohttp import ClientConnectionError, ClientResponseError
 
 from .collectors import Collector
 from .collectors.collectorpipeline import CollectorPipeline
 from .collectors.ok.okgroupcollector import OkGroupCollector
-from .collectors.ok.okgrouppostscollector import OkGroupPostsCollector
+from .collectors.ok.okpostscollector import OkPostsCollector
 from .collectors.ok.okinitdatacollector import OkInitDataCollector
 from .collectors.ok.oklogincollector import OkLoginCollector
+from .collectors.ok.okprofilecollector import OkProfileCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
     VkGroupCollector
 from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError
@@ -20,6 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class Agent:
+
+    RESTARTABLE_EXCEPTIONS = (
+        WscmWebdriverRetryFailedException,
+        WebDriverException,
+        WsmcWebDriverLoginError,
+        ClientConnectionError,
+        ClientResponseError
+    )
 
     def __init__(self, request: Request, task_id: Optional[str] = None):
 
@@ -53,7 +63,7 @@ class Agent:
             except NoSuchWindowException:
                 logger.warning('Selenium window was closed...')
                 return
-            except (WscmWebdriverRetryFailedException, WebDriverException, WsmcWebDriverLoginError) as e:
+            except self.RESTARTABLE_EXCEPTIONS as e:
 
                 self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
                 if attempt == max_retries:
@@ -110,11 +120,15 @@ class Agent:
             if self.request.has_entity(SocialMediaEntities.LOGIN):
                 stack.append(OkLoginCollector())
 
+            if self.request.has_entity(SocialMediaEntities.PROFILE):
+                stack.append(OkProfileCollector())
+
             if self.request.has_entity(SocialMediaEntities.GROUP):
                 stack.append(OkGroupCollector())
 
-                if self.request.has_entity(SocialMediaEntities.POSTS):
-                    stack.append(OkGroupPostsCollector())
+
+            if self.request.has_entity(SocialMediaEntities.POSTS):
+                stack.append(OkPostsCollector())
         else:
             raise RuntimeError(f'No suitable filter stack for social media {sm_type}')
 

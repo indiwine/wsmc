@@ -20,12 +20,16 @@ class FeedUser(BaseFeedEntity):
     location: dict
     last_online_ms: int
     pic_full: str
-    pic_base: str
     premium: bool
     show_lock: bool
     common_friends_count: int
     executor: bool
+    pic_base: Optional[str] = None
     age: Optional[int] = None
+    badge_id: Optional[int] = None
+    badge_img: Optional[str] = None
+    badge_title: Optional[str] = None
+    badge_link: Optional[str] = None
 
     def to_author_dto(self) -> AuthorDto:
         """

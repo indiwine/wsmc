@@ -232,6 +232,9 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
                                                       'suspect_social_media': request.suspect_identity,
                                                       'was_collected': True
                                                   })
+    @sync_to_async
+    def apersist_sm_profile(self, sm_profile: SmProfileDto, request: Request):
+        return self.persist_sm_profile(sm_profile, request)
 
     def persist_author(self, author_dto: AuthorDto, request: Request) -> Tuple[Union[SmGroup, SmProfile], bool]:
         if author_dto.is_group:
@@ -295,7 +298,7 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
             profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
 
             # Checking if profile has location and it is identifiable
-            if profile.identify_location():
+            if profile.identify_location(structured_mode=True):
                 # Save profile if it is identifiable
                 profile.save()
 

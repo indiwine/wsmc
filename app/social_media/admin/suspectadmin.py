@@ -13,7 +13,7 @@ from django.urls import path
 from django.utils.safestring import mark_safe
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
-from social_media.tasks import perform_screening
+from social_media.tasks import perform_screening, perform_sm_data_collection
 from telegram_connection.admin_pages import CONFIRM_PAGE
 from telegram_connection.exceptions import AccountNotLoggedIn
 from telegram_connection.interaction.builder import BotBuilder
@@ -56,6 +56,7 @@ class VataDetectorDemoForm(Form):
 
 class SuspectAdmin(ModelAdmin):
     # inlines = [LinkedSmAccounts, LinkedSmProfile]
+    inlines = [LinkedSmAccounts]
     search_fields = ['name']
     readonly_fields = ['score']
     list_display = ['__str__', 'score']
@@ -65,12 +66,12 @@ class SuspectAdmin(ModelAdmin):
         if 'profile_only' in request.GET:
             with_posts = False
 
-        asyncio.run(collect_and_process(object_id, with_posts), debug=settings.DEBUG)
+
 
         # perform_sm_data_collection(object_id, with_posts)
-        # result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
-        # self._send_message(request, result)
-        # return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
+        result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
+        self._send_message(request, result)
+        return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
 
     def perform_screening(self, request: HttpRequest, object_id):
         result: AsyncResult = perform_screening.delay(object_id)

@@ -1,5 +1,5 @@
 from social_media.mimic.ok.client import OkHttpClient
-from social_media.models import SmGroup
+from social_media.models import SmGroup, SmProfile
 
 
 class OkRequestData:
@@ -7,9 +7,9 @@ class OkRequestData:
     This is a simple class that holds necessary data between different collectors
     """
 
-    client: OkHttpClient
+    client: OkHttpClient = None
 
-    group_uid: str
+    group_uid: str = None
     """
     Group UID
     
@@ -20,5 +20,17 @@ class OkRequestData:
     """
     Group model
     Fill by OkGroupCollector
+    """
+
+    user_id: str = None
+    """
+    User ID
+    Filled by OkProfileCollector
+    """
+
+    profile_model: SmProfile = None
+    """
+    Profile model
+    Filled by OkProfileCollector
     """
 

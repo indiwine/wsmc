@@ -25,7 +25,6 @@ class FeedVideo(BaseFeedEntity):
     big_thumbnail_url: str
 
     base_thumbnail_url: str
-    cover_preview: str
     duration: int
     created_ms: int
     total_views: int
@@ -37,6 +36,7 @@ class FeedVideo(BaseFeedEntity):
     added_to_watch_later: bool
     m_subscribed: bool
 
+    cover_preview: Optional[str] = None
     discussion_summary: Optional[dict] = None
     like_summary: Optional[FeedLikeSummary] = None
     reshare_summary: Optional[FeedReShareSummary] = None
@@ -49,6 +49,9 @@ class FeedVideo(BaseFeedEntity):
     url_tiny: Optional[str] = None
     url_dash: Optional[str] = None
     url_hls: Optional[str] = None
+    url_live_hls: Optional[str] = None
+    live_stream: Optional[str] = None
+    vpix: Optional[list] = None
     failover_host: Optional[str] = None
     high_thumbnail_url: Optional[str] = None
     hd_thumbnail_url: Optional[str] = None
@@ -56,3 +59,4 @@ class FeedVideo(BaseFeedEntity):
     url_medium: Optional[str] = None
     url_provider: Optional[str] = None
     video_advertisement: Optional[dict] = None
+    pin_count: Optional[int] = None

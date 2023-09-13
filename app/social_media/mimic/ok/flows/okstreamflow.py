@@ -10,16 +10,21 @@ class OkStreamFlow(AbstractOkFlow):
     Ok stream flow for feed-related requests
     """
 
-    async def fetch_feed(self, gid: str, previous_anchor: Optional[str] = None) -> StreamGetResponse:
+    async def fetch_feed(self,
+                         gid: Optional[str] = None,
+                         uid: Optional[str] = None,
+                         previous_anchor: Optional[str] = None
+                         ) -> StreamGetResponse:
         """
         Fetch feed for group by group UID
+        @param uid:
         @param gid:
         @param previous_anchor:
         @return:
         """
         batch_id = 'stream.get-first' if not previous_anchor else 'stream.get-more'
 
-        stream_get_request = StreamGetRequest(gid, previous_anchor)
+        stream_get_request = StreamGetRequest(gid, uid, previous_anchor)
         stream_get_response: StreamGetResponse = await self.perform_batch_request(
             batch_id,
             stream_get_request

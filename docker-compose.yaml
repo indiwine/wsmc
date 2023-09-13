@@ -170,8 +170,6 @@ services:
       REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
       NOMINATIM_PASSWORD: very_secure_password
       IMPORT_STYLE: "admin"
-    ports:
-      - "8080:8080"
     volumes:
       - nominatim-data:/var/lib/postgresql/14/main
       - type: tmpfs

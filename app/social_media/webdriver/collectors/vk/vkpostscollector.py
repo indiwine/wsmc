@@ -174,7 +174,7 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
     def get_vk_post_stat_kwargs(self, request: Request):
         if request.is_group_request:
             return {'suspect_group': request.suspect_identity}
-        return {'suspect_social_media', request.suspect_identity}
+        return {'suspect_social_media': request.suspect_identity}
 
     def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[
         int, None, None]:

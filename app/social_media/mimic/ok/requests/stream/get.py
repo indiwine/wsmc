@@ -72,6 +72,9 @@ class StreamGetResponseBody(GenericResponseBody):
         @param feed_item:
         @return:
         """
+        if feed_item.is_valid() is False:
+            raise ValueError('Feed item is not valid')
+
         author_dto = self.find_author(feed_item)
         target_entity = self.find_entity_by_ref(feed_item.first_target_ref)
         permalink = target_entity.extract_permalink()
@@ -94,6 +97,9 @@ class StreamGetResponseBody(GenericResponseBody):
         @return:
         """
         for feed_item in self.feeds:
+            if feed_item.is_valid() is False:
+                continue
+
             post_dto, target_entity = self.item_to_post_dto(feed_item)
             yield post_dto, target_entity
 
@@ -129,7 +135,7 @@ class StreamGetParams(AbstractRequestParams):
     def to_execute_dict(self) -> dict:
         return dataclass_asdict_skip_none(self)
 
-    gid: str
+
     app_suffix: str = 'android.1'
     banner_opt: str = None
     count: str = '20'
@@ -139,13 +145,21 @@ class StreamGetParams(AbstractRequestParams):
     mark_as_read: bool = False
     patternset: str = 'android.80'
     reason: str = 'USER_REQUEST'
+    gid: Optional[str] = None
+    uid: Optional[str] = None
     seen_info: Optional[str] = None
     anchor: Optional[str] = None
 
+    def __post_init__(self):
+        assert self.gid or self.uid, 'Either gid or uid must be present'
+
 
 class StreamGetRequest(GenericRequest[AbstractRequestParams]):
-    def __init__(self, gid: str, anchor: Optional[str] = None):
-        params = StreamGetParams(gid, anchor=anchor)
+    def __init__(self, gid: Optional[str] = None, uid: Optional[str] = None, anchor: Optional[str] = None):
+        params = StreamGetParams(
+            gid=gid,
+            uid=uid,
+            anchor=anchor)
         super().__init__('stream', 'get', params)
 
     @staticmethod

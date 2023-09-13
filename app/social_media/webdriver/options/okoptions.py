@@ -13,3 +13,5 @@ class OkOptions(BaseOptions):
     """
 
     post_count_limit: Optional[int] = None
+
+    skip_likes_for_known_posts: bool = True
