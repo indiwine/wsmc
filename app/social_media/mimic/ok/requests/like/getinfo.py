@@ -50,6 +50,7 @@ class UserItem:
     location_of_birth: Optional[UserLocation] = None
     url_profile: Optional[str] = None
     ref: Optional[str] = None
+    is_hobby_expert: Optional[bool] = None
 
     def to_author_dto(self) -> AuthorDto:
         return AuthorDto(
