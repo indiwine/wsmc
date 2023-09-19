@@ -1,9 +1,6 @@
 # WSMC - Wartime Social Media Crawler
 
-A Django based OSINT scraping tool.
-
-Can scrape data from a Fb, Vk and Ok social media platforms.
-As well as interact with certain Telegram bots.
+A Django based scraping tool.
 
 ## How to start
 ### For users
