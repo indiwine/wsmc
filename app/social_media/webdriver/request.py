@@ -62,10 +62,14 @@ class Request(Generic[REQUEST_DATA_TYPE]):
         @todo Move driver building to separate class, so the request will not be responsible for driver building
         @return:
         """
-        if self._driver is None:
+        if not self.has_driver:
             logger.info('Building selenium driver')
             self._driver = DriverBuilder.build(self.driver_build_options)
         return self._driver
+
+    @property
+    def has_driver(self) -> bool:
+        return self._driver is not None
 
     @property
     def is_group_request(self):

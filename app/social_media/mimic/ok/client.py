@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class OkHttpClient:
+    LOG_REQUESTS = False
+
     def __init__(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions()):
         logger.debug(f'Creating OkHttpClient with device: {device}')
         self.auth_options = auth_options
@@ -31,7 +33,8 @@ class OkHttpClient:
 
     async def make(self, request: AbstractRequest) -> AbstractResponse:
         url = f'{BASE_URL}{request.pathed_method_name}'
-        logger.debug(f'Making request to {request}')
+        if self.LOG_REQUESTS:
+            logger.debug(f'Making request to {request}')
 
         async with self._build_session() as session:
             # Configure request params
@@ -41,9 +44,11 @@ class OkHttpClient:
             payload = self.get_payload(request)
             # Inject required app keys and tokens
             payload.update(self.get_app_keys())
-            logger.debug(f'Payload: {payload}')
+            if self.LOG_REQUESTS:
+                logger.debug(f'Payload: {payload}')
 
             if request.http_method == OkRequestHttpMethod.GET:
+
                 logger.info(f'GET {url}')
                 async with session.get(url, params=payload) as response:
                     return await self.build_response(request, response)
@@ -54,7 +59,7 @@ class OkHttpClient:
                 headers = {}
 
                 if isinstance(request, AbstractCustomPayloadEncoderMixin):
-                    logger.debug(f'Using custom payload encoder for {request}')
+                    # logger.debug(f'Using custom payload encoder for {request}')
                     payload = request.encode(payload)
                     headers['content-type'] = request.get_content_type()
                     if request.get_content_encoding():
@@ -63,12 +68,12 @@ class OkHttpClient:
                     post_params['data'] = payload
                 else:
                     param_key = 'json' if request.is_json() else 'data'
-                    logger.debug(f'Using default payload encoder for {request}, with param key: {param_key}')
+                    # logger.debug(f'Using default payload encoder for {request}, with param key: {param_key}')
                     post_params[param_key] = payload
 
                 async with session.post(url, headers=headers, **post_params) as response:
                     response_text = await response.text()
-                    logger.debug(f'Response text: {response_text}')
+                    # logger.debug(f'Response text: {response_text}')
                     return await self.build_response(request, response)
             else:
                 raise RuntimeError(f'Unknown Http request method: {request.http_method}')

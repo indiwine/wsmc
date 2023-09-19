@@ -36,6 +36,8 @@ class FeedVideo(BaseFeedEntity):
     added_to_watch_later: bool
     m_subscribed: bool
 
+    url_ultrahd: Optional[str] = None
+    url_quadhd: Optional[str] = None
     cover_preview: Optional[str] = None
     discussion_summary: Optional[dict] = None
     like_summary: Optional[FeedLikeSummary] = None

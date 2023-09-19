@@ -44,6 +44,7 @@ class GroupInfoItem:
     profile_buttons: dict
     pin_notifications_off: bool
     has_group_agreement: bool
+    admin_id: Optional[str] = None
     description: Optional[str] = None
     min_age: Optional[int] = None
     cover: Optional[dict] = None

@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from social_media.dtos.oksessiondto import OkSessionDto
+from social_media.mimic.ok.exceptions import OkApiCallException, OkErrorCodes
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.auth.anonymlogin import AnonymLoginRequest, AnonymLoginResponseBody
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody, LoginRequest, LoginResponse
@@ -36,7 +37,14 @@ class OkLoginFlow(AbstractOkFlow):
 
         # If we have session dto, we can try to login by token
         if session_dto and session_dto.auth_token:
-            return await self.login_by_token(session_dto.auth_token)
+            try:
+                return await self.login_by_token(session_dto.auth_token)
+            except OkApiCallException as e:
+                logger.warning(f'Failed to login by token: {e}')
+                if e.ok_code != OkErrorCodes.PARAM_SESSION_EXPIRED:
+                    raise
+                
+
         # Otherwise, we need to perform full login procedure
         return await self.full_login_procedure(username, password)
 

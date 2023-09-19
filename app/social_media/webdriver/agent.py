@@ -65,7 +65,8 @@ class Agent:
                 return
             except self.RESTARTABLE_EXCEPTIONS as e:
 
-                self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
+                if self.request.has_driver:
+                    self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
                 if attempt == max_retries:
                     raise
 
