@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+from typing import Optional
 
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
@@ -20,8 +21,11 @@ logger = logging.getLogger(__name__)
 class OkHttpClient:
     LOG_REQUESTS = False
 
-    def __init__(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions()):
+    def __init__(self, device: AndroidDevice, auth_options: Optional[OkHttpClientAuthOptions] = None):
         logger.debug(f'Creating OkHttpClient with device: {device}')
+        if auth_options is None:
+            auth_options = OkHttpClientAuthOptions()
+
         self.auth_options = auth_options
         self.device = device
         self.jar = SerializableCookieJar()
