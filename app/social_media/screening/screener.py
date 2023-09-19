@@ -5,6 +5,7 @@ from .screening_modules.abstractscreeningmodule import AbstractScreeningModule
 from .screening_modules.confidentialinformationscreener import ConfidentialInformationScreener
 from .screening_modules.postkeywordscreener import PostKeywordScreener
 from .screening_modules.profilelocationscreener import ProfileLocationScreener
+from .screening_modules.symbolsscreener import SymbolsScreener
 from .screeningrequest import ScreeningRequest
 
 
@@ -21,8 +22,8 @@ class Screener:
     def _build_chain(self) -> AbstractScreeningModule:
         return ProfileLocationScreener() \
             .set_next(ConfidentialInformationScreener()
-                      .set_next(PostKeywordScreener())
-                      )
+                      .set_next(PostKeywordScreener()
+                                .set_next(SymbolsScreener())))
 
     @staticmethod
     def build(suspect: Suspect) -> Screener:

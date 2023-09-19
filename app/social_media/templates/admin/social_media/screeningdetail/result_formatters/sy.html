@@ -1,0 +1,9 @@
+{% load vata_to_annotation %}
+<div class="screening-result-post screening-result-pk-wrapper">
+    <img
+            class="annotated-image"
+            src="{{ item.content_object.image.url }}"
+            data-annotations="{{ item.content_object.prediction|vata_to_annotation }}"
+            style="max-width: 500px"
+    >
+</div>

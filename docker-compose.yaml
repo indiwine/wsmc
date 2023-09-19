@@ -1,4 +1,5 @@
 version: '3.8'
+
 x-app-common: &common-variables
   POSTGRES_NAME: wsmc
   POSTGRES_USER: user
@@ -6,57 +7,233 @@ x-app-common: &common-variables
   FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY} # Precalculated key
   WEBDRIVER_URL: 'http://webdriver:4444'
   SELENIUM_DRIVER: 'chrome'
-  NOMINATIM_USER_AGENT: 'wsmc_test_app'
   CELERY_BROKER_URL: 'redis://redis:6379/'
-  DEBUG: '1' # This will be here unless we decide what to do with static files
   WSMC_LOAD_AI: ${WSMC_LOAD_AI}
+  NOMINATIM_USER_AGENT: 'wsmc_test_app'
+  NOMINATIM_DOMAIN: 'nominatim:8080'
+  NOMINATIM_SCHEME: 'http'
+  DEBUG: ${DEBUG}
+  TEST_VK_LOGIN: ${TEST_VK_LOGIN}
+  TEST_VK_PASSWORD: ${TEST_VK_PASSWORD}
+  TEST_OK_LOGIN: ${TEST_OK_LOGIN}
+  TEST_OK_PASSWORD: ${TEST_OK_PASSWORD}
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+x-selenium-nodes: &selenium-nodes
+  SE_EVENT_BUS_HOST: 'webdriver'
+  SE_EVENT_BUS_PUBLISH_PORT: 4442
+  SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+  SE_VNC_NO_PASSWORD: 1
+#  SE_SCREEN_WIDTH: 1920
+#  SE_SCREEN_HEIGHT: 1080
+  SE_OPTS: "--log-level OFF"
+  SE_NODE_SESSION_TIMEOUT: 800
 
 services:
   app:
-    image: indiwine/wsmc:latest
+    image: indiwine/wsmc:dev
     hostname: 'app'
     ports:
       - "8000:8000"
     environment:
-      <<: *common-variables
-      <<: *telegram-vars
+      <<: [ *common-variables, *telegram-vars ]
     volumes:
       - tdlib:/tmp/.tdlib_files/
+      - wsmc-storage:/app/storage
     depends_on:
       - postgres
       - webdriver
       - redis
       - celery
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+      placement:
+        constraints:
+          - "node.role==manager"
   celery:
-    image: indiwine/wsmc:latest
+    image: indiwine/wsmc:dev
     hostname: 'celery'
-    command: celery -A wsmc worker
-    environment: *common-variables
+    command: celery -A wsmc worker --concurrency=6 -n webdriver-worker@%h -Q webdriver
+    volumes:
+      - wsmc-storage:/app/storage
+    environment:
+      <<: *common-variables
     depends_on:
       - redis
       - postgres
       - webdriver
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 1500M
+        reservations:
+          cpus: '0.25'
+          memory: 700M
+
+  celery-common:
+    image: indiwine/wsmc:dev
+    hostname: 'celery-common'
+    command: celery -A wsmc worker --concurrency=1 -n default-worker@%h -Q default
+    environment:
+      <<: *common-variables
+    depends_on:
+      - redis
+      - postgres
+      - webdriver
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 1500M
+        reservations:
+          cpus: '0.25'
+          memory: 700M
+
   redis:
     image: redis:7-alpine
+    deploy:
+      replicas: 1
+      labels:
+        wsmc.services.redis: 'true'
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+
   postgres:
-    image: postgres:14
+    image: postgis/postgis:14-3.3-alpine
     environment:
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "741963"
       POSTGRES_DB: "wsmc"
     volumes:
       - postgresql:/var/lib/postgresql/data
-  webdriver:
-    image: selenium/standalone-chrome:105.0
-    shm_size: "2g"
+      - ./deploy_config/postgres.custom.conf:/var/lib/postgresql/data/postgresql.conf
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 2684354560
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
+      labels:
+        wsmc.services.pg: 'true'
+      resources:
+        limits:
+          cpus: '6'
+          memory: 8G
+        reservations:
+          cpus: '5'
+          memory: 7G
+
+  chrome:
+    image: selenium/node-chrome:114.0
     environment:
-      SE_VNC_NO_PASSWORD: 1
+      <<: *selenium-nodes
     ports:
-      - "7900:7900"
-      - "5900:5900"
+      - "7900"
+    deploy:
+      replicas: 6
+      placement:
+        max_replicas_per_node: 4
+        constraints:
+          - "node.role!=manager"
+      resources:
+        limits:
+          cpus: '2'
+          memory: 3G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    volumes:
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 2684354560
+
+
+  webdriver:
+    image: selenium/hub:4.10.0
+    environment:
+      SE_NODE_SESSION_TIMEOUT: 800
+      SE_SESSION_REQUEST_TIMEOUT: 800
+      SE_OPTS: "--log-level OFF"
+#    ports:
+#      - "4442:4442"
+#      - "4443:4443"
+#      - "4444:4444"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
+
+  nominatim:
+    image: mediagis/nominatim:4.2
+    expose:
+      - "8080"
+    environment:
+      PBF_URL: https://download.geofabrik.de/europe/ukraine-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/europe/ukraine-updates
+      NOMINATIM_PASSWORD: very_secure_password
+      IMPORT_STYLE: "admin"
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+      - type: tmpfs
+        target: /dev/shm
+        tmpfs:
+          size: 268435456
+    shm_size: 256m
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.hostname==swarm-2"
+
+  pg_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    ports:
+      - target: 9187
+        published: 10224
+        mode: host
+    environment:
+      DATA_SOURCE_NAME: 'postgresql://user:741963@postgres:5432/postgres?sslmode=disable'
+    deploy:
+      replicas: 1
+      labels:
+        wsmc.monitoring.pg: 'true'
+
+
+  celery_exporter:
+    image: danihodovic/celery-exporter
+    ports:
+      - target: 9808
+        published: 10223
+        mode: host
+    environment:
+      CE_BROKER_URL: 'redis://redis:6379/'
+    deploy:
+      replicas: 1
+      labels:
+        wsmc.monitoring.celery: 'true'
+
+
+
 volumes:
   postgresql:
   tdlib:
+  wsmc-storage:
+  nominatim-data:

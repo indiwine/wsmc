@@ -1,10 +1,13 @@
 import urllib.parse
+import uuid
 from enum import Enum
-from typing import Optional, Union, Type
+from typing import Optional, Union, Type, List
 
 from django.db.models import Model
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+
+from social_media.ai.models.vatapredictionitem import VataPredictionItem
 
 
 class LinkTypes(Enum):
@@ -112,3 +115,31 @@ def generate_link_for_model_object(
         kwargs,
         params
     )
+
+
+def convert_vata_prediction_to_w3c(prediction: List[VataPredictionItem | dict]) -> List[dict]:
+    result = []
+    for prediction_item in prediction:
+        item = prediction_item
+        if not isinstance(item, VataPredictionItem):
+            item = VataPredictionItem.from_dict(item)
+
+        result.append({
+            "@context": "http://www.w3.org/ns/anno.jsonld",
+            "id": f"#{uuid.uuid4()}",
+            "type": "Annotation",
+            "body": [{
+                "type": "TextualBody",
+                "value": f'{item.label}: {round(item.pr * 100)}%',
+                "label": item.label
+            }],
+            "target": {
+                "selector": {
+                    "type": "FragmentSelector",
+                    "conformsTo": "http://www.w3.org/TR/media-frags/",
+                    "value": f"xywh=pixel:{item.x},{item.y},{item.width},{item.height}"
+                }
+            }
+        })
+
+    return result

@@ -46,7 +46,7 @@ class OkPostsPage(AbstractOkPageObject):
                 try:
                     self.init_end_of_page_count()
                     btn = self.load_more()
-                    self.scroll_into_view(btn)
+                    self.driver.scroll_into_view(btn)
                     btn.click()
                 except (NoSuchElementException, ElementNotInteractableException):
                     return
@@ -58,14 +58,7 @@ class OkPostsPage(AbstractOkPageObject):
                 yield dto
             except WsmcWebDriverPostException:
                 pass
-            self._clear_post(node)
-
-
-    def _clear_post(self, node: WebElement):
-        self.driver.execute_script(
-            "arguments[0].remove()",
-            node
-        )
+            self.driver.remove_element(node)
 
     def _wait_until_timeline_settles(self):
         self.get_wait().until(

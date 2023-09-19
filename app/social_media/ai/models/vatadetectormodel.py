@@ -1,8 +1,7 @@
 import logging
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Tuple, Literal
+from typing import Optional, List, Tuple
 
 import keras_cv
 import tensorflow as tf
@@ -13,18 +12,9 @@ from tensorflow import keras
 from .basicmodel import BasicModel
 from .utils.imagepredictionsequence import ImagePredictionSequence
 from .utils.imagesizesequence import ImageSizeSequence
+from .vatapredictionitem import VataPredictionItem
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class VataPredictionItem:
-    x: int
-    y: int
-    width: int
-    height: int
-    label: Literal['z', 'v', 'colorado', 'russian_flag']
-    pr: float
 
 
 class VataDetectorModel(BasicModel):
@@ -76,7 +66,7 @@ class VataDetectorModel(BasicModel):
         IoU threshold for two boxes to be considered same for suppression.
         @return: predictions per images. index in images list are corresponding to index in resulting list
         """
-        logger.debug(f'Starting prediction')
+        logger.debug(f'Starting prediction of {len(images)} image(s)')
         t0 = time.perf_counter()
 
         prediction_decoder = self.get_predication_decoder(confidence, iou)

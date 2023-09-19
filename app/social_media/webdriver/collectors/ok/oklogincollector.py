@@ -1,14 +1,22 @@
-from social_media.social_media import SocialMediaEntities
-from ..abstractcollector import AbstractCollector
-from ...link_builders.ok import OkLinkBuilder
-from ...page_objects.ok.okloginpage import OkLoginPage
-from ...request import Request
+from social_media.mimic.ok.flows.okloginflow import OkLoginFlow
+from social_media.webdriver.collectors import AbstractCollector
+from social_media.webdriver.options.okoptions import OkOptions
+from social_media.webdriver.request import Request
+from social_media.webdriver.request_data.okrequestdata import OkRequestData
 
 
-class OkLoginCollector(AbstractCollector):
+class OkLoginCollector(AbstractCollector[OkRequestData, OkOptions]):
+    async def handle(self, request: Request[OkRequestData]):
+        login_flow = OkLoginFlow(request.data.client)
+        login_response = await login_flow.login(
+            request.credentials.user_name,
+            request.credentials.password,
+            session_dto=request.credentials.session_dto
+        )
 
-    def handle(self, request: Request):
-        if request.can_process_entity(SocialMediaEntities.LOGIN, False):
-            OkLoginPage(request.driver, OkLinkBuilder.build('')).perform_login(request.credentials.user_name,
-                                                                               request.credentials.password)
-        super().handle(request)
+        session_dto = login_response.to_session_dto()
+        session_dto.cookie_jar = request.data.client.jar.to_base64()
+
+        request.credentials.session = session_dto.to_json()
+        await request.credentials.asave()
+

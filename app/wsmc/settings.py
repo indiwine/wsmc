@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+from kombu import Queue, Exchange
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,11 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rj&+$ma$$l@i#r4x1f0h&kvx2)hwc)3)&nm1yy--pq5lkha&c6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get('DEBUG', False))
+DEBUG = bool(int(os.environ.get('DEBUG', '0')))
 
 ALLOWED_HOSTS = [
     '0.0.0.0',
-    'localhost'
+    'localhost',
+    '192.168.1.100',
+    '10.8.0.100',
 ]
 
 # Application definition
@@ -40,11 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',
+    'django.contrib.gis',
     'encrypted_model_fields',
     'django_celery_results',
     'social_media.apps.SocialMediaConfig',
     'telegram_connection.apps.TelegramConfig',
     'phonenumber_field',
+    'import_export',
+    'tinymce',
 ]
 
 MIDDLEWARE = [
@@ -70,13 +77,13 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media'
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'wsmc.wsgi.application'
-
 
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler']
 
@@ -85,12 +92,21 @@ FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHand
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        # 'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRES_NAME'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': 'postgres',
         'PORT': 5432,
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get('CELERY_BROKER_URL', ''),
+        "TIMEOUT": 1800,
     }
 }
 
@@ -128,10 +144,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = '/app/static'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = 'storage/'
+MEDIA_ROOT = '/app/storage'
+
+log_level = 'DEBUG' if DEBUG else 'WARNING'
 
 LOGGING = {
     'version': 1,
@@ -150,20 +173,36 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'WARNING',
     },
     'loggers': {
         'social_media': {
-            'level': 'DEBUG',
+            'level': log_level,
         },
         'telegram_connection': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
         },
         'hpack': {
             'level': 'WARNING'
         },
         'seleniumwire': {
-            'level': 'INFO'
+            'level': 'WARNING'
+        },
+        # 'django.db.backends': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        # }
+        'aiohttp.client': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.internal': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.access': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
         }
     }
 }
@@ -180,17 +219,31 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_RESULT_EXTENDED = True
 CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_TASK_SEND_SENT_EVENT = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_QUEUES = (
+    Queue('default', Exchange('default'), routing_key='default'),
+    Queue('webdriver', Exchange('webdriver'), routing_key='webdriver.#'),
+)
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
-NOMINATIM_USER_AGENT = os.environ.get('NOMINATIM_USER_AGENT', 'wsmc_test_app')
 
-WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
+NOMINATIM_USER_AGENT = os.environ.get('NOMINATIM_USER_AGENT', 'wsmc_test_app')
+NOMINATIM_DOMAIN = os.environ.get('NOMINATIM_DOMAIN', 'nominatim.openstreetmap.org')
+NOMINATIM_SCHEME = os.environ.get('NOMINATIM_SCHEME', 'https')
+NOMINATIM_TIMEOUT = 10
+
+# WSMC_LOAD_AI = bool(int(os.environ.get('WSMC_LOAD_AI', '1')))
+WSMC_LOAD_AI = False
 
 WSMC_WEBDRIVER_URL = os.environ.get('WEBDRIVER_URL', '')
 WSMC_SELENIUM_DRIVER = os.environ.get('SELENIUM_DRIVER', 'chrome')
+WSMC_SELENIUM_SCREENSHOT_DIR = 'selenium'
 
 # Wait timeout in seconds
-WSMC_SELENIUM_WAIT_TIMEOUT = 120
+WSMC_SELENIUM_WAIT_TIMEOUT = 60
+WSMC_SELENIUM_SCRIPT_TIMEOUT = 30
 
 WSMC_WEBDRIVER_LOCALE = 'ru_RU'
 PG_SEARCH_LANG = 'pg_catalog.russian'
@@ -203,3 +256,31 @@ TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
 
+# OK MIMIC module config
+# OK App Key
+MIMIC_OK_APP_KEY = 'CBAFJIICABABABABA'
+
+# OK App build and version
+MIMIC_OK_APP_BUILD = '23071000'
+MIMIC_OK_APP_VER = '23.7.10'
+
+# Test setting
+TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
+TEST_VK_PASSWORD = os.environ.get('TEST_VK_PASSWORD', '')
+TEST_OK_LOGIN = os.environ.get('TEST_OK_LOGIN', '')
+TEST_OK_PASSWORD = os.environ.get('TEST_OK_PASSWORD', '')
+
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 500,
+    "menubar": True,
+    "paste_data_images": True,
+    "plugins": "advlist,autolink,lists,link,image,imagetools,charmap,print,preview,anchor,"
+               "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,"
+               "code,help,wordcount",
+    "toolbar": "undo redo | "
+               "bold italic backcolor | alignleft aligncenter "
+               "alignright alignjustify | bullist numlist outdent indent | "
+               "removeformat | fullscreen",
+
+}

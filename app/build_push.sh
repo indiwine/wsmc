@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker build -t indiwine/wsmc .
-docker push indiwine/wsmc
+docker build -t indiwine/wsmc:dev .
+docker push indiwine/wsmc:dev

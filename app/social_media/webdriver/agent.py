@@ -1,41 +1,140 @@
 import logging
+import time
+from typing import Optional, List
+
+from selenium.common import NoSuchWindowException, WebDriverException
+from aiohttp import ClientConnectionError, ClientResponseError
 
 from .collectors import Collector
-from .collectors.fb import FbLoginCollector, FbProfileCollector, FbPostsCollector
-from .collectors.ok import OkLoginCollector, OkProfileCollector, OkPostsCollector
-from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector
+from .collectors.collectorpipeline import CollectorPipeline
+from .collectors.ok.okgroupcollector import OkGroupCollector
+from .collectors.ok.okpostscollector import OkPostsCollector
+from .collectors.ok.okinitdatacollector import OkInitDataCollector
+from .collectors.ok.oklogincollector import OkLoginCollector
+from .collectors.ok.okprofilecollector import OkProfileCollector
+from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
+    VkGroupCollector
+from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError
 from .request import Request
-from ..social_media import SocialMediaTypes
+from ..social_media import SocialMediaTypes, SocialMediaEntities
 
 logger = logging.getLogger(__name__)
 
 
 class Agent:
-    def __init__(self, request: Request):
+
+    RESTARTABLE_EXCEPTIONS = (
+        WscmWebdriverRetryFailedException,
+        WebDriverException,
+        WsmcWebDriverLoginError,
+        ClientConnectionError,
+        ClientResponseError
+    )
+
+    def __init__(self, request: Request, task_id: Optional[str] = None):
+
         self.request = request
+        self.task_id = task_id
         logger.info(f'Agent created for {request}')
 
-    def run(self):
-        logger.info('Starting Agent')
-        try:
-            self._construct_chain().handle(self.request)
-        finally:
-            self.request.close_driver()
+    def _get_screenshot_prefix(self, attempt: int) -> str:
+        result = f'agent_error_attempt_{attempt}'
+        if self.task_id:
+            result = f'{self.task_id}__{result}'
+        return result
 
-    def _construct_chain(self) -> Collector:
-        sm_type = self.request.credentials.social_media
-        logger.info(f'Generating chain for {sm_type}')
+    async def run(self, max_retries: int = 5, base_delay: int = 30):
+        """
+        Run agent
+        :param max_retries: the maximum number of retries before giving up
+        :param base_delay: the initial delay between retries, in seconds
+        @return:
+        """
+        logger.info('Starting Agent')
+
+        attempt = 0
+
+        while True:
+            attempt += 1
+            try:
+                pipeline = self.construct_pipeline()
+                await pipeline.execute(self.request)
+                return
+            except NoSuchWindowException:
+                logger.warning('Selenium window was closed...')
+                return
+            except self.RESTARTABLE_EXCEPTIONS as e:
+
+                if self.request.has_driver:
+                    self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
+                if attempt == max_retries:
+                    raise
+
+                if attempt > 1 and self.request.was_retry_successful:
+                    logger.warning('Resetting agent attempt count')
+                    attempt = 1
+
+                delay = base_delay * 2 ** (attempt - 1)
+
+                logger.error(
+                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...",
+                    exc_info=e
+                )
+
+                self.request.configure_for_retry()
+
+                self.request.close_driver()
+                time.sleep(delay)
+            finally:
+                self.request.close_driver()
+
+    def construct_pipeline(self) -> CollectorPipeline:
+        pipeline = CollectorPipeline()
+        pipeline.pipe(*self.construct_filter_stack())
+        return pipeline
+
+    def construct_filter_stack(self) -> List[Collector]:
+        sm_type = self.request.get_social_media_type
+        logger.info(f'Generating filter stack for {sm_type}')
+
+        stack = []
+
         if sm_type == SocialMediaTypes.FB:
-            login_handler = FbLoginCollector()
-            login_handler.set_next(FbProfileCollector().set_next(FbPostsCollector()))
-            return login_handler
+            raise NotImplementedError('FB pipeline not implemented')
         elif sm_type == SocialMediaTypes.VK:
-            login_handler = VkLoginCollector()
-            login_handler.set_next(VkProfileCollector().set_next(VkPostsCollector()))
-            return login_handler
+            if self.request.has_entity(SocialMediaEntities.LOGIN):
+                stack.append(VkLoginCollector())
+
+            if self.request.has_entity(SocialMediaEntities.PROFILE):
+                stack.append(VkProfileCollector())
+
+            if self.request.has_entity(SocialMediaEntities.GROUP):
+                stack.append(VkGroupCollector())
+
+            if self.request.has_entity(SocialMediaEntities.POSTS):
+                stack.append(VkPostsCollector())
+
+            if self.request.has_entity(SocialMediaEntities.UNKNOWN_PROFILES):
+                stack.append(VkSecondaryProfilesCollector())
         elif sm_type == SocialMediaTypes.OK:
-            login_handler = OkLoginCollector()
-            login_handler.set_next(OkProfileCollector().set_next(OkPostsCollector()))
-            return login_handler
+            stack.append(OkInitDataCollector())
+            if self.request.has_entity(SocialMediaEntities.LOGIN):
+                stack.append(OkLoginCollector())
+
+            if self.request.has_entity(SocialMediaEntities.PROFILE):
+                stack.append(OkProfileCollector())
+
+            if self.request.has_entity(SocialMediaEntities.GROUP):
+                stack.append(OkGroupCollector())
+
+
+            if self.request.has_entity(SocialMediaEntities.POSTS):
+                stack.append(OkPostsCollector())
         else:
-            raise RuntimeError(f'No suitable chain for social media {sm_type}')
+            raise RuntimeError(f'No suitable filter stack for social media {sm_type}')
+
+        # Apply request options
+        for collector in stack:
+            collector.set_options(self.request.options)
+
+        return stack

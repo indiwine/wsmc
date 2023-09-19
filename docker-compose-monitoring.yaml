@@ -1,0 +1,90 @@
+version: "3.9"
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    user: root
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - monitoring_stack
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+      placement:
+        constraints:
+          - "node.role==manager"
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+    ports:
+      - target: 9100
+        published: 9100
+        mode: host
+    networks:
+      - monitoring_stack
+    deploy:
+      mode: global
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
+    container_name: cadvisor
+    user: root
+    ports:
+      - target: 8080
+        published: 10222
+        mode: host
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring_stack
+    deploy:
+      mode: global
+  grafana:
+    image: grafana/grafana:9.5.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_home:/usr/share/grafana
+      - grafana_config:/etc/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring_stack
+    deploy:
+      replicas: 1
+      endpoint_mode: vip
+      placement:
+        constraints:
+          - "node.role==manager"
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  grafana_config:
+  grafana_home:
+
+networks:
+  monitoring_stack:
+    driver: overlay
+    attachable: true

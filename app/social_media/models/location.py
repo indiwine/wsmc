@@ -1,5 +1,8 @@
 from typing import Optional
+from django.contrib.gis.db.models import MultiPolygonField
 
+from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.db.models.functions import Intersection
 import geopandas
 from django.conf import settings
 from django.db.models import Model, CharField, JSONField, PositiveIntegerField, BooleanField
@@ -8,6 +11,7 @@ from geopy.geocoders import Nominatim
 from shapely.geometry import Point
 
 from social_media.exceptions import LocationRequestInvalidError
+from social_media.geo.geocoderhelper import GeoCoderHelper
 
 
 class Location(Model):
@@ -17,6 +21,8 @@ class Location(Model):
     location_data = JSONField(editable=False, null=True)
     is_valid = BooleanField(default=False, verbose_name='Коректна Локація?',
                             help_text='Чи може бути використана ця локація для ідентифікації')
+
+    pol = MultiPolygonField(default=None, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Локація'
@@ -77,13 +83,16 @@ class Location(Model):
             self, *args, **kwargs
     ):
 
-        geolocator = self._get_geocoder()
-        real_location: GeoPyLocation = geolocator.geocode(self.name, geometry='wkt')
+        coder = GeoCoderHelper()
+        lookup_result = coder.geocode(self.name)
 
-        if real_location:
-            self.name = real_location.address
-            self.location_data = real_location.raw
-            if 'geotext' in self.location_data:
+        if lookup_result:
+            GeoCoderHelper.normalize_to_multipolygon(lookup_result)
+
+            self.name = lookup_result.location.address
+
+            if lookup_result.geometry:
+                self.pol = lookup_result.geometry
                 self.is_valid = True
 
         return super().save(*args, **kwargs)

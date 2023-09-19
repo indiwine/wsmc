@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+        <a class="viewsitelink" href="{% url 'admin:social_media_suspectgroup_perform_scan' object_id %}">Group</a>
+
+        <a class="viewsitelink" href="{% url 'admin:social_media_suspectgroup_perform_unknown_scan' object_id %}">Profiles</a>
+
+    </li>
+{% endblock %}

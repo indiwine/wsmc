@@ -42,7 +42,7 @@ class FacebookPostsPage(AbstractFbPageObject):
     def collect_posts(self, date_to_check: date) -> Generator[SmPostDto, None, None]:
         self.found_count = self.skip_count = 0
         logger.info('Start collecting FB posts')
-        self.clear_requests()
+        self.driver.clear_requests()
 
         profile_url = self.navigation_strategy.generate_profile_link()
         if self.driver.current_url != profile_url:
@@ -101,7 +101,7 @@ class FacebookPostsPage(AbstractFbPageObject):
                                          'div[role=article] > div[role=progressbar]'))
 
     def _iterate_over_requests(self) -> Generator[FacebookPostNode, None, None]:
-        for body in self.request_iterator():
+        for body in self.driver.request_iterator():
             for line in body.splitlines():
                 for node in self._process_raw_json(line):
                     yield node

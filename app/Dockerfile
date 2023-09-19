@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.11
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -17,11 +17,16 @@ RUN cd /tmp/ && \
     rm -rf /tmp/td
 
 
+RUN apt-get -y install binutils libproj-dev gdal-bin
+
 WORKDIR /app
 COPY requirements.txt /app/
-RUN pip install -r requirements.txt && \
-    pip cache remove * && \
-    pip cache purge
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+
+COPY social_media/ai/model_files/ /app/social_media/ai/model_files/
+
 COPY . /app/
 
 CMD python manage.py runserver 0.0.0.0:8000

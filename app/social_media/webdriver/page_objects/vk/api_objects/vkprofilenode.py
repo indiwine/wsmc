@@ -1,6 +1,8 @@
+import html
 from datetime import datetime
 from typing import Optional
 
+from social_media.dtos import SmProfileDto, SmProfileMetadata
 from social_media.webdriver.common import date_time_parse
 
 
@@ -13,32 +15,94 @@ class VkProfileNode:
         result = f'{self.raw_node["first_name"]} {self.raw_node["last_name"]}'
         if 'maiden_name' in self.raw_node and self.raw_node['maiden_name']:
             result += f" ({self.raw_node['maiden_name']})"
-        return result
+        return html.unescape(result)
 
-    @property
-    def home_town(self) -> Optional[str]:
-        if 'home_town' in self.raw_node:
-            return self.raw_node['home_town']
+    def _get_prop_if_truthful(self, prop_name: str, unescape = True) -> Optional[any]:
+        if prop_name in self.raw_node and self.raw_node[prop_name]:
+            if unescape:
+                return html.unescape(self.raw_node[prop_name])
+            return self.raw_node[prop_name]
+
         return None
 
     @property
+    def has_meta(self):
+        return self.twitter or self.site
+
+    @property
+    def mobile_phone(self):
+        return self._get_prop_if_truthful('mobile_phone')
+
+    @property
+    def twitter(self):
+        return self._get_prop_if_truthful('twitter')
+
+    @property
+    def site(self):
+        return self._get_prop_if_truthful('site')
+
+    @property
+    def domain(self):
+        return self._get_prop_if_truthful('domain')
+
+    @property
+    def home_town(self) -> Optional[str]:
+        return self._get_prop_if_truthful('home_town')
+
+    @property
     def location(self) -> Optional[str]:
-        if 'city' in self.raw_node:
-            result = self.raw_node['city']['title']
-            if 'country' in self.raw_node:
-                result += f", {self.raw_node['country']['title']}"
-            return result
+        city_node = self._get_prop_if_truthful('city', False)
+        if city_node:
+            return html.unescape(city_node['title'])
+        return None
+
+    @property
+    def country(self) -> Optional[str]:
+        country_node = self._get_prop_if_truthful('country', False)
+        if country_node:
+            return html.unescape(country_node['title'])
+
         return None
 
     @property
     def education(self) -> Optional[str]:
         if 'universities' in self.raw_node and len(self.raw_node['universities']) > 0:
             university_node = self.raw_node['universities'][0]
-            return f'{university_node["name"]} {university_node["faculty_name"]}'
+            result = f'{university_node["name"]}'
+            if 'faculty_name' in university_node:
+                result += f' {university_node["faculty_name"]}'
+
+            return html.unescape(result)
         return None
 
     @property
     def birthday(self) -> Optional[datetime]:
-        if 'bdate' in self.raw_node:
-            return date_time_parse(self.raw_node['bdate'])
+        bdate = self._get_prop_if_truthful('bdate')
+        if bdate:
+            return date_time_parse(bdate)
         return None
+
+    @property
+    def oid(self) -> str:
+        return str(self.raw_node['id'])
+    
+    def to_dto(self) -> SmProfileDto:
+        dto = SmProfileDto(name=self.name,
+                           location=self.location,
+                           home_town=self.home_town,
+                           university=self.education,
+                           birthdate=self.birthday,
+                           oid=self.oid,
+                           country=self.country,
+                           domain=self.domain
+                           )
+        metadata = None
+        if self.has_meta:
+            metadata = SmProfileMetadata(
+                mobile_phone=self.mobile_phone,
+                twitter=self.twitter,
+                site=self.site
+            )
+
+        dto.metadata = metadata
+        return dto

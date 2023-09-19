@@ -4,7 +4,7 @@ import random
 from social_media.screening.screening_modules.confidentialinformationscreener import ConfidentialInformationScreener
 
 
-class MyTestCase(SimpleTestCase):
+class TestConfidentialInformationLookup(SimpleTestCase):
     def test_extraction(self):
         test_numbers = [
             # IBAN

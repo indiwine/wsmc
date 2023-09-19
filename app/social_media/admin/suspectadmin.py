@@ -1,8 +1,8 @@
+import asyncio
 import json
-import uuid
-from typing import List
 
 from celery.result import AsyncResult
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin, StackedInline
 from django.forms import Form, IntegerField, ImageField, ClearableFileInput
@@ -13,7 +13,7 @@ from django.urls import path
 from django.utils.safestring import mark_safe
 
 from social_media.models import SuspectSocialMediaAccount, Suspect, SmProfile, OsintReport, OsintDetail
-from social_media.tasks import perform_sm_data_collection, perform_screening
+from social_media.tasks import perform_screening, perform_sm_data_collection
 from telegram_connection.admin_pages import CONFIRM_PAGE
 from telegram_connection.exceptions import AccountNotLoggedIn
 from telegram_connection.interaction.builder import BotBuilder
@@ -22,11 +22,11 @@ from telegram_connection.interaction.name_check.namecheckrequest import NameChec
 from telegram_connection.interaction.phone_check.phonecheckrequest import PhoneCheckRequest
 from telegram_connection.interaction.sm_check.smcheckrequest import SmCheckRequest
 from .helpers import LinkTypes
-from .helpers import generate_url_for_model, generate_url_for_model_object
+from .helpers import generate_url_for_model, generate_url_for_model_object, convert_vata_prediction_to_w3c
 from ..ai.loader import get_model
-from ..ai.models.vatadetectormodel import VataPredictionItem
 from ..osint.holehe_connector.holeheagent import HoleheAgent
 from ..osint.osintmodules import OsintModules
+from ..webdriver.management import collect_and_process
 
 
 class LinkedSmProfile(StackedInline):
@@ -51,11 +51,12 @@ class LinkedSmAccounts(StackedInline):
 class VataDetectorDemoForm(Form):
     probability = IntegerField(label='Поріг впевненості (%)', min_value=1, max_value=99, initial=50)
     iou = IntegerField(label='IoU', min_value=1, max_value=99, initial=50)
-    images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
+    # images = ImageField(label='Зображення', widget=ClearableFileInput(attrs={'multiple': True}))
 
 
 class SuspectAdmin(ModelAdmin):
-    inlines = [LinkedSmAccounts, LinkedSmProfile]
+    # inlines = [LinkedSmAccounts, LinkedSmProfile]
+    inlines = [LinkedSmAccounts]
     search_fields = ['name']
     readonly_fields = ['score']
     list_display = ['__str__', 'score']
@@ -65,6 +66,9 @@ class SuspectAdmin(ModelAdmin):
         if 'profile_only' in request.GET:
             with_posts = False
 
+
+
+        # perform_sm_data_collection(object_id, with_posts)
         result: AsyncResult = perform_sm_data_collection.delay(object_id, with_posts)
         self._send_message(request, result)
         return redirect(generate_url_for_model(LinkTypes.CHANGE, Suspect, (object_id,)))
@@ -143,7 +147,7 @@ class SuspectAdmin(ModelAdmin):
                     })
                 predictions = model.predict(img_paths, pr, iou)
                 for i, prediction in enumerate(predictions):
-                    check_results[i]['boxes'] = json.dumps(self._convert_prediction_to_w3c(prediction))
+                    check_results[i]['boxes'] = json.dumps(convert_vata_prediction_to_w3c(prediction))
 
         else:
             form = VataDetectorDemoForm()
@@ -158,30 +162,6 @@ class SuspectAdmin(ModelAdmin):
 
         return TemplateResponse(
             request, 'admin/social_media/suspect/detector_demo.html', context)
-
-    @staticmethod
-    def _convert_prediction_to_w3c(prediction: List[VataPredictionItem]) -> List[dict]:
-        result = []
-        for item in prediction:
-            result.append({
-                "@context": "http://www.w3.org/ns/anno.jsonld",
-                "id": f"#{uuid.uuid4()}",
-                "type": "Annotation",
-                "body": [{
-                    "type": "TextualBody",
-                    "value": f'{item.label}: {round(item.pr * 100)}%',
-                    "label": item.label
-                }],
-                "target": {
-                    "selector": {
-                        "type": "FragmentSelector",
-                        "conformsTo": "http://www.w3.org/TR/media-frags/",
-                        "value": f"xywh=pixel:{item.x},{item.y},{item.width},{item.height}"
-                    }
-                }
-            })
-
-        return result
 
     def _send_message(self, request: HttpRequest, result: AsyncResult):
         self.message_user(request,
@@ -198,8 +178,8 @@ class SuspectAdmin(ModelAdmin):
                  name='%s_%s_perform_screening' % (opts.app_label, opts.model_name)),
             path('<path:object_id>/perform-osint', self.perform_osint,
                  name='%s_%s_perform_osint' % (opts.app_label, opts.model_name)),
-            path('detector-demo', self.detector_demo,
-                 name='%s_%s_detector_demo' % (opts.app_label, opts.model_name))
+            # path('detector-demo', self.detector_demo,
+            #      name='%s_%s_detector_demo' % (opts.app_label, opts.model_name))
         ]
         return ursl + additional_urls
 
