@@ -13,4 +13,3 @@ class FbLoginCollector(AbstractCollector):
             FacebookLoginPage(request.driver) \
                 .set_navigation_strategy(FbLinkBuilder.get_default_navigation_strategy('')) \
                 .perform_login(credentials.user_name, credentials.password)
-        return super().handle(request)

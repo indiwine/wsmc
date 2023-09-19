@@ -1,44 +1,46 @@
 import asyncio
 import logging
 import time
-from typing import List
+from typing import List, Optional
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 from pyee.base import EventEmitter
 
 from social_media.models import Suspect, SuspectSocialMediaAccount, SuspectGroup
 from social_media.social_media import SocialMediaEntities
-from social_media.webdriver import Request, Agent
+from social_media.webdriver import  Agent
 from .post_process_pipeline.filters.downloadpostimagesfilter import DownloadPostImagesFilter
 from .post_process_pipeline.filters.persistpostimagesfilter import PersistPostImagesFilter
 from .post_process_pipeline.filters.suitablepostimagesfilter import SuitablePostImagesFilter
 from .post_process_pipeline.filters.vatapredictionpostimagesfilter import VataPredictionPostImagesFilter
 from .post_process_pipeline.postprocesspipeline import PostProcessPipeline
 from .post_process_pipeline.postprocesstask import PostProcessTask
+from .request import Request
 from ..dtos.smpostdto import SmPostDto
 
 logger = logging.getLogger(__name__)
 
 POST_BATCH_SIZE = 50
 
-
-def collect_groups(suspect_group_id: int, task_id: str):
-    suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
+@async_to_sync
+async def collect_groups(suspect_group_id: int, task_id: str):
+    suspect_group = await SuspectGroup.objects.aget(id=suspect_group_id)
+    credentials = await suspect_group.afetch_next_credential()
     collect_request = Request(
         [
             SocialMediaEntities.LOGIN,
             SocialMediaEntities.GROUP,
             SocialMediaEntities.POSTS
         ],
-        suspect_group.credentials,
+        credentials,
         suspect_group
     )
 
     agent = Agent(collect_request, task_id)
-    agent.run()
+    await agent.run()
 
-
-def collect_unknown_profiles(suspect_group_id: int):
+@async_to_sync
+async def collect_unknown_profiles(suspect_group_id: int):
     suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
     collect_request = Request(
         [
@@ -49,19 +51,20 @@ def collect_unknown_profiles(suspect_group_id: int):
     )
 
     agent = Agent(collect_request)
-    agent.run()
+    await agent.run()
 
-
+@async_to_sync()
 async def collect_and_process(suspect_id: int, with_posts: bool):
     event_emitter = EventEmitter()
-    await asyncio.gather(data_processing(event_emitter), data_collection(suspect_id, with_posts, event_emitter))
+    await asyncio.gather(data_processing(event_emitter), post_data_collection(suspect_id, with_posts, event_emitter))
 
+@async_to_sync
+async def collect_profiles(suspect_id: int, with_posts: bool):
+    await post_data_collection(suspect_id, with_posts)
 
-@sync_to_async
-def data_collection(suspect_id: int, with_posts: bool, ee: EventEmitter):
-    suspect: Suspect = Suspect.objects.get(id=suspect_id)
-    sm_accounts = SuspectSocialMediaAccount.objects.filter(suspect=suspect)
-    for sm_account in sm_accounts:
+async def post_data_collection(suspect_id: int, with_posts: bool, ee: Optional[EventEmitter] = None):
+    suspect: Suspect = await Suspect.objects.aget(id=suspect_id)
+    async for sm_account in SuspectSocialMediaAccount.objects.select_related('credentials').filter(suspect=suspect):
         entities = [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE]
         if with_posts:
             entities.append(SocialMediaEntities.POSTS)
@@ -72,11 +75,14 @@ def data_collection(suspect_id: int, with_posts: bool, ee: EventEmitter):
             sm_account,
             ee=ee
         )
+
         agent = Agent(collect_request)
         try:
-            agent.run()
+            await agent.run()
         finally:
-            ee.emit('finish')
+            if ee:
+                ee.emit('finish')
+
 
 
 async def data_processing(ee: EventEmitter):

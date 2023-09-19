@@ -2,6 +2,7 @@ import logging
 from time import time
 from typing import Generator, Optional, Callable, Tuple
 
+from asgiref.sync import sync_to_async
 from django.db import transaction
 from selenium.common import ElementNotInteractableException, TimeoutException
 
@@ -21,8 +22,7 @@ from ...request import Request
 logger = logging.getLogger(__name__)
 
 
-class VkPostsCollector(AbstractCollector):
-    _options: VkOptions = None
+class VkPostsCollector(AbstractCollector[None, VkOptions]):
     _last_profile_collected_at: Optional[int] = None
 
     DELAY_BETWEEN_PROFILES = 60 * 15
@@ -33,7 +33,14 @@ class VkPostsCollector(AbstractCollector):
     post_count = 0
 
     def do_collect_profiles(self, request: Request):
-        if self._last_profile_collected_at and (int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
+        """
+        Collect profiles in background
+        @todo - move to separate task
+        @param request:
+        @return:
+        """
+        if self._last_profile_collected_at and (
+            int(time()) - self._last_profile_collected_at) < self.DELAY_BETWEEN_PROFILES:
             logger.info('Skipping profile collection')
             return
 
@@ -50,17 +57,14 @@ class VkPostsCollector(AbstractCollector):
 
             try:
                 for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
-                    for profile_dto in profile_dto_list:
-                        SmProfile.objects.filter(oid=profile_dto.oid, social_media=request.get_social_media_type) \
-                            .update(was_collected=True, **self.as_dict_for_model(profile_dto))
-                        profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
 
-                        if profile.identify_location():
-                            profile.save()
+                    self.update_collected_profiles(profile_dto_list, request)
+
             except (TimeoutException, WsmcWebDriverNativeApiCallTimout) as e:
                 self._last_profile_collected_at = int(time())
                 logger.error(f'Collecting profiles - timeout', exc_info=e)
 
+    @sync_to_async
     def handle(self, request: Request):
         if request.can_process_entity(SocialMediaEntities.POSTS):
             logger.debug('Start collecting posts')
@@ -86,8 +90,6 @@ class VkPostsCollector(AbstractCollector):
             finally:
                 self._update_offset(request, offset)
 
-        return super().handle(request)
-
     def _update_offset(self, request: Request, offset: int):
         try:
             VkPostStat.objects.update_or_create(**self.get_vk_post_stat_kwargs(request),
@@ -107,7 +109,7 @@ class VkPostsCollector(AbstractCollector):
 
                 post_dto = post_page_object.collect()
 
-                if self._options.post_date_limit and post_dto.datetime < self._options.post_date_limit:
+                if self.get_options().post_date_limit and post_dto.datetime < self.get_options().post_date_limit:
                     raise WsmcStopPostCollection('Post date limit reached')
 
                 post_item, is_new = self.persist_post(post_dto, self.request_origin, request)
@@ -124,8 +126,8 @@ class VkPostsCollector(AbstractCollector):
                                              additional_exceptions=[ElementNotInteractableException]
                                              )
         request.mark_retry_successful()
-        if self._options.post_count_limit and self.post_count >= self._options.post_count_limit:
-            raise WsmcStopPostCollection(f'Post limit of {self._options.post_count_limit} reached')
+        if self.get_options().post_count_limit and self.post_count >= self.get_options().post_count_limit:
+            raise WsmcStopPostCollection(f'Post limit of {self.get_options().post_count_limit} reached')
 
         return new_count
 
@@ -153,7 +155,7 @@ class VkPostsCollector(AbstractCollector):
             _, new_likes_num = self.batch_persist_likes(like_authors, post_item, request)
             likes_in_db += new_likes_num
 
-            if likes_in_db == total_likes_count:
+            if likes_in_db >= total_likes_count:
                 fan_box_object.close()
                 break
 
@@ -172,7 +174,7 @@ class VkPostsCollector(AbstractCollector):
     def get_vk_post_stat_kwargs(self, request: Request):
         if request.is_group_request:
             return {'suspect_group': request.suspect_identity}
-        return {'suspect_social_media', request.suspect_identity}
+        return {'suspect_social_media': request.suspect_identity}
 
     def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[
         int, None, None]:
@@ -192,7 +194,7 @@ class VkPostsCollector(AbstractCollector):
             nonlocal page, current_offset
             page = int(current_offset / self.STEP)
 
-        if not self._options.post_do_load_latest:
+        if not self.get_options().post_do_load_latest:
             logger.debug('Skipping newest posts')
             fwd_skipped = True
             if last_offset:

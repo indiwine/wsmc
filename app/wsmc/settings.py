@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+from kombu import Queue, Exchange
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -190,6 +192,18 @@ LOGGING = {
         #     'level': 'DEBUG',
         #     'handlers': ['console'],
         # }
+        'aiohttp.client': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.internal': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+        'aiohttp.access': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        }
     }
 }
 
@@ -207,6 +221,11 @@ CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 CELERY_WORKER_SEND_TASK_EVENTS = True
 CELERY_TASK_SEND_SENT_EVENT = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_QUEUES = (
+    Queue('default', Exchange('default'), routing_key='default'),
+    Queue('webdriver', Exchange('webdriver'), routing_key='webdriver.#'),
+)
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', '')
 
@@ -237,10 +256,19 @@ TELEGRAM_API_ID = os.environ.get('TELEGRAM_API_ID', '')
 TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH', '')
 TELEGRAM_DATABASE_ENCRYPTION_KEY = os.environ.get('TELEGRAM_DATABASE_ENCRYPTION_KEY', 'changeme1234')
 
+# OK MIMIC module config
+# OK App Key
+MIMIC_OK_APP_KEY = 'CBAFJIICABABABABA'
+
+# OK App build and version
+MIMIC_OK_APP_BUILD = '23071000'
+MIMIC_OK_APP_VER = '23.7.10'
+
 # Test setting
 TEST_VK_LOGIN = os.environ.get('TEST_VK_LOGIN', '')
 TEST_VK_PASSWORD = os.environ.get('TEST_VK_PASSWORD', '')
-
+TEST_OK_LOGIN = os.environ.get('TEST_OK_LOGIN', '')
+TEST_OK_PASSWORD = os.environ.get('TEST_OK_PASSWORD', '')
 
 TINYMCE_DEFAULT_CONFIG = {
     "theme": "silver",
@@ -248,11 +276,11 @@ TINYMCE_DEFAULT_CONFIG = {
     "menubar": True,
     "paste_data_images": True,
     "plugins": "advlist,autolink,lists,link,image,imagetools,charmap,print,preview,anchor,"
-    "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,"
-    "code,help,wordcount",
+               "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,"
+               "code,help,wordcount",
     "toolbar": "undo redo | "
-    "bold italic backcolor | alignleft aligncenter "
-    "alignright alignjustify | bullist numlist outdent indent | "
-    "removeformat | fullscreen",
+               "bold italic backcolor | alignleft aligncenter "
+               "alignright alignjustify | bullist numlist outdent indent | "
+               "removeformat | fullscreen",
 
 }

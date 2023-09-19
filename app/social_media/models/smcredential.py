@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional, Union
 
 from django.core.exceptions import EmptyResultSet
 from django.db import models, transaction
 from encrypted_model_fields.fields import EncryptedCharField
 
+from social_media.dtos.oksessiondto import OkSessionDto
 from social_media.social_media.socialmediatypes import SocialMediaTypes
 
 
@@ -58,6 +59,23 @@ class SmCredential(models.Model):
     was_last_used = models.BooleanField(default=False, editable=False)
     last_used_date = models.DateTimeField(null=True, default=None, editable=False)
     in_use = models.BooleanField(default=True)
+    session = models.JSONField(default=None, null=True, editable=False)
+
+    @property
+    def session_dto(self) -> Optional[Union[OkSessionDto]]:
+        """
+        Get session DTO for this credential
+
+        @raise NotImplementedError in case if no session DTO is implemented for this social media
+        @return:
+        """
+        if self.session is None:
+            return None
+
+        if self.social_media == SocialMediaTypes.OK:
+            return OkSessionDto.from_json(self.session)
+
+        raise NotImplementedError(f'No session DTO for {self.social_media}')
 
     def __str__(self):
         return f'{self.user_name} ({self.get_social_media_display()})'

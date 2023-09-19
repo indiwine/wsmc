@@ -21,6 +21,9 @@ class GeoCoderLookup:
     point: Point
     geometry: Optional[GEOSGeometry]
 
+    def __str__(self):
+        return f'Location: {self.location.address}'
+
 
 
 class GeoCoderHelper:
@@ -39,14 +42,17 @@ class GeoCoderHelper:
         return cls._GEOCODER_INST
 
     def geocode(self,
-                query: Union[str],
+                query: Union[str, dict],
                 country_codes: Union[str, List[str]] = None,
                 max_retries: int = 10,
-                delay: int = 15) -> Optional[GeoCoderLookup]:
+                delay: int = 15,
+                featuretype: Optional[str] = None,
+                ) -> Optional[GeoCoderLookup]:
 
-        cache_key = f'nominatium_location_{hashlib.md5(query.encode()).hexdigest()}'
+        # cache_key = f'nominatium_location_{hashlib.md5(query.encode()).hexdigest()}'
 
-        cache_item = cache.get(cache_key)
+        # cache_item = cache.get(cache_key)
+        cache_item = None
 
         if cache_item is None:
 
@@ -54,7 +60,8 @@ class GeoCoderHelper:
                     query=query,
                     geometry='wkt',
                     language='ru',
-                    country_codes=country_codes
+                    country_codes=country_codes,
+                    featuretype=featuretype
                 ), base_delay=delay, max_retries=max_retries)
                 if not lookup_result:
                     lookup_result = False

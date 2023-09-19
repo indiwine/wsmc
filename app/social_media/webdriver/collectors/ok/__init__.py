@@ -1,3 +1,3 @@
-from .oklogincollector import OkLoginCollector
-from .okprofilecollector import OkProfileCollector
-from .okpostscollector import OkPostsCollector
+from .okseleniumlogincollector import OkSeleniumLoginCollector
+from .okseleniumprofilecollector import OkSeleniumProfileCollector
+from .okseleniumpostscollector import OkSeleniumPostsCollector

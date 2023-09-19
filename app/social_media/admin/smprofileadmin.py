@@ -59,6 +59,7 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'authenticity_status',
         'person_responsible',
         ProfileLocationPreciseFilter,
+        'social_media'
         # 'is_reviewed',
         # 'country'
     ]

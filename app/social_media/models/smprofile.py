@@ -2,9 +2,9 @@ import logging
 from typing import Optional
 
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.contrib.gis.db.models import PointField
 from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
-from django.contrib.auth.models import User
 from tinymce.models import HTMLField
 
 from .smcredential import SmCredential
@@ -80,7 +80,9 @@ class SmProfile(Model):
                 return f'https://vk.com/id{self.oid}'
 
             if sm == SocialMediaTypes.OK:
-                return f'https://ok.ru/profile/{self.oid}'
+                if self.metadata and 'permalink' in self.metadata:
+                    return self.metadata['permalink']
+                return None
 
         return None
 
@@ -88,46 +90,94 @@ class SmProfile(Model):
     def permalink(self):
         return self.id_url()
 
-    def identify_location(self):
-        if self.country != 'Украина':
-            return False
+    @property
+    def has_location_or_home_town(self) -> bool:
+        return bool(self.location) or bool(self.home_town)
 
-        # Already known
-        if self.location_known:
-            logger.debug('Location already known')
-            return True
+    @property
+    def has_country(self) -> bool:
+        return bool(self.country)
 
-        # We cannot found location without at least approximate
-        if not self.location and not self.home_town:
-            logger.warning('Cannot determine location without "location" or "home_town"')
-            return False
+    def get_geo_query(self) -> str:
+        """
+        Get query for geocoding in plain text representation
+        @return:
+        """
+        assert self.has_location_or_home_town is True, 'Cannot get query without location or home_town'
 
-        has_country = True
         country_request = None
-        query_country_codes = None
 
         if self.country:
             country_request = f'{self.country}, '
 
         location_query = self.location
+
         if not location_query:
             location_query = self.home_town
 
         if country_request:
             location_query = country_request + location_query
+
+        return location_query
+
+    def get_geo_query_structured(self) -> dict:
+        """
+        Get query for geocoding in structured representation
+        @return:
+        """
+        assert self.has_location_or_home_town is True, 'Cannot get structured query without location or home_town'
+
+        result = {}
+
+        if self.country:
+            result['country'] = self.country
+
+        if self.location:
+            result['city'] = self.location
+
+        if self.home_town and 'city' not in result:
+            result['city'] = self.home_town
+
+        return result
+
+    def identify_location(self, force: bool = False, structured_mode=False) -> bool:
+        """
+        Identify location for profile using geocoding and profile data (location, home_town, country)
+
+        @note This method is not idempotent, it will change location_point, location_known and location_precise fields
+        @param force: Force location discovery. Typically, we don't want to force geocoding if location is already known
+        @param structured_mode: Use structured geocoding instead of plain text
+        @return: True if location was found, False otherwise
+        """
+        if not force:
+            if self.country is not None and self.country != 'Украина':
+                return False
+
+            # Already known
+            if self.location_known:
+                logger.debug('Location already known')
+                return True
+
+        # We cannot found location without at least approximate
+        if not self.has_location_or_home_town:
+            logger.warning(f'Cannot determine location without "location" or "home_town" for id={self.id}')
+            return False
+
+        if structured_mode:
+            location_query = self.get_geo_query_structured()
         else:
-            query_country_codes = LOOKUP_COUNTRY_CODES
+            location_query = self.get_geo_query()
 
         coder = GeoCoderHelper()
-        lookup_result = coder.geocode(query=location_query, country_codes=query_country_codes)
+        lookup_result = coder.geocode(query=location_query, country_codes=LOOKUP_COUNTRY_CODES)
         if lookup_result:
-            logger.info(f'Profile determent to be {lookup_result}')
+            logger.info(f'Request "{location_query}" resolved to "{lookup_result}"')
             self.location_point = lookup_result.point
             self.location_known = True
-            self.location_precise = has_country
+            self.location_precise = self.has_country
             return True
 
-        logger.info(f'Profile location was not found')
+        # logger.info(f'Profile location was not found for query "{location_query}"')
         return False
 
     class Meta:

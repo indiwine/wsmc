@@ -15,6 +15,8 @@ x-app-common: &common-variables
   DEBUG: ${DEBUG}
   TEST_VK_LOGIN: ${TEST_VK_LOGIN}
   TEST_VK_PASSWORD: ${TEST_VK_PASSWORD}
+  TEST_OK_LOGIN: ${TEST_OK_LOGIN}
+  TEST_OK_PASSWORD: ${TEST_OK_PASSWORD}
 x-app-telegram: &telegram-vars
   TELEGRAM_API_ID: ${TELEGRAM_API_ID}
   TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
@@ -53,7 +55,7 @@ services:
   celery:
     image: indiwine/wsmc:dev
     hostname: 'celery'
-    command: celery -A wsmc worker --concurrency=6 -n webdriver-worker@%h
+    command: celery -A wsmc worker --concurrency=6 -n webdriver-worker@%h -Q webdriver
     volumes:
       - wsmc-storage:/app/storage
     environment:
@@ -67,6 +69,26 @@ services:
       placement:
         constraints:
           - "node.role==manager"
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 1500M
+        reservations:
+          cpus: '0.25'
+          memory: 700M
+
+  celery-common:
+    image: indiwine/wsmc:dev
+    hostname: 'celery-common'
+    command: celery -A wsmc worker --concurrency=1 -n default-worker@%h -Q default
+    environment:
+      <<: *common-variables
+    depends_on:
+      - redis
+      - postgres
+      - webdriver
+    deploy:
+      replicas: 1
       resources:
         limits:
           cpus: '0.9'
@@ -149,10 +171,10 @@ services:
       SE_NODE_SESSION_TIMEOUT: 800
       SE_SESSION_REQUEST_TIMEOUT: 800
       SE_OPTS: "--log-level OFF"
-    ports:
-      - "4442:4442"
-      - "4443:4443"
-      - "4444:4444"
+#    ports:
+#      - "4442:4442"
+#      - "4443:4443"
+#      - "4444:4444"
     deploy:
       replicas: 1
       placement:
