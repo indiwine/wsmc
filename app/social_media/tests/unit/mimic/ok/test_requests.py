@@ -95,7 +95,7 @@ class OkRequestsTestCase(SimpleTestCase):
 
         await self.login_or_restore_session(self.ok_http_client)
         group_flow = OkCommonFlow(self.ok_http_client)
-        group_uuid = await group_flow.resolve_url_to_uid('https://ok.ru/group/52740117168208')
+        group_uuid = await group_flow.resolve_url_to_uid('https://ok.ru/group/70000000550380')
 
         self.assertTrue(group_uuid)
         group_info = await group_flow.fetch_group_info(group_uuid)

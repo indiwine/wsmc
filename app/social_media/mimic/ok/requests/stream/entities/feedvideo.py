@@ -62,3 +62,4 @@ class FeedVideo(BaseFeedEntity):
     url_provider: Optional[str] = None
     video_advertisement: Optional[dict] = None
     pin_count: Optional[int] = None
+    annotations_info: Optional[dict] = None
