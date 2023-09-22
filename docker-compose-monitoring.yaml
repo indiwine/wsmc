@@ -8,6 +8,9 @@ services:
       - "9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=6d
+      - --web.console.templates=/usr/share/prometheus/consoles
     volumes:
       - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -21,7 +24,7 @@ services:
       endpoint_mode: vip
       placement:
         constraints:
-          - "node.role==manager"
+          - "node.hostname==swarm-3"
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node-exporter
