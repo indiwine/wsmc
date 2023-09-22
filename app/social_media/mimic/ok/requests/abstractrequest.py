@@ -8,6 +8,7 @@ from typing import TypeVar, Generic, Type, Optional, Union, TypedDict
 
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
 
 
 class OkRequestHttpMethod(Enum):
@@ -47,12 +48,12 @@ class AbstractRequestParams(ABC):
         """
         pass
 
-    @abc.abstractmethod
+
     def to_execute_dict(self) -> dict:
         """
         Convert params to a dict method to use with
         """
-        pass
+        return dataclass_asdict_skip_none(self)
 
 
 class AbstractResponseBody(ABC):

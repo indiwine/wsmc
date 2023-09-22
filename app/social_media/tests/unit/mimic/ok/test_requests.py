@@ -1,10 +1,9 @@
+import asyncio
 import json
 from pathlib import Path
 from pprint import pprint
 from typing import Optional
-import asyncio
 
-from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.test import SimpleTestCase
 
@@ -18,6 +17,7 @@ from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
 from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
 from social_media.mimic.ok.requests.like.getinfo import UserItem
+from social_media.mimic.ok.requests.search.locationsforfilter import SearchedLocation
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
 
 
@@ -25,17 +25,12 @@ class OkRequestsTestCase(SimpleTestCase):
     ok_http_client: OkHttpClient
     logged_in: bool
 
-
     @classmethod
-    @async_to_sync
-    async def setUpClass(cls):
+    def setUpClass(cls):
         if not settings.TEST_OK_LOGIN or not settings.TEST_OK_PASSWORD:
             raise ValueError('OK login and password must be present')
         cls.ok_http_client = OkHttpClient(default_device)
         cls.logged_in = False
-        # await cls.login_or_restore_session(cls.client)
-        # super().setUpClass()
-
 
     async def login_or_restore_session(self, client: OkHttpClient):
         """
@@ -68,7 +63,6 @@ class OkRequestsTestCase(SimpleTestCase):
         serialize_session(response_body.to_session_dto())
         self.logged_in = True
 
-
     async def test_profile_info(self):
         await self.login_or_restore_session(self.ok_http_client)
         group_flow = OkCommonFlow(self.ok_http_client)
@@ -81,8 +75,6 @@ class OkRequestsTestCase(SimpleTestCase):
         for post_dto, target_entity in posts.get_body().post_generator():
             pprint(post_dto)
             await self.get_likes(target_entity, stream_flow)
-
-
 
     async def test_ok_processes(self):
         """
@@ -127,9 +119,22 @@ class OkRequestsTestCase(SimpleTestCase):
 
                 await self.get_likes(target_entity, stream_flow)
 
-
             await asyncio.sleep(10)
 
+    async def test_search_locations(self):
+        await self.login_or_restore_session(self.ok_http_client)
+        search_flow = OkCommonFlow(self.ok_http_client)
+        locations = await search_flow.search_locations_for_filter('Москва')
+
+        for location in locations:
+            self.assertIsInstance(location, SearchedLocation)
+            self.assertTrue(location.text)
+            self.assertTrue(location.city)
+            self.assertTrue(location.country)
+            self.assertTrue(location.city_id)
+            self.assertTrue(location.countryId)
+            self.assertTrue(location.position)
+            pprint(location)
 
     async def get_likes(self, target_entity: BaseFeedEntity, stream_flow: OkStreamFlow):
 
