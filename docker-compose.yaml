@@ -204,7 +204,7 @@ services:
           - "node.hostname==swarm-2"
 
   pg_exporter:
-    image: quay.io/prometheuscommunity/postgres-exporter:0.13.2
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.13.2
     ports:
       - target: 9187
         published: 10224
