@@ -33,6 +33,9 @@ class FeedItem:
     discussion_summary: Optional[dict] = None
     place_refs: Optional[List[str]] = None
     holiday_refs: Optional[List[str]] = None
+    pinned: Optional[bool] = None
+    member_status: Optional[str] = None
+    
 
 
     def get_message(self) -> str:

@@ -28,3 +28,4 @@ class FeedMediaTopic(BaseFeedEntity):
     capabilities: Optional[str] = None
     is_commenting_denied: Optional[bool] = None
     presentation: Optional[dict] = None
+    with_friend_refs: Optional[list] = None

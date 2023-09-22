@@ -22,6 +22,7 @@ class FeedGroup(BaseFeedEntity):
     revenue_pp_enabled: bool
     pin_notifications_off: bool
     attrs: Optional[dict] = None
+    member_status: Optional[str] = None
 
     def to_author_dto(self) -> AuthorDto:
         """

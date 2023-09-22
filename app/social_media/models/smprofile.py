@@ -160,7 +160,7 @@ class SmProfile(Model):
 
         # We cannot found location without at least approximate
         if not self.has_location_or_home_town:
-            logger.warning(f'Cannot determine location without "location" or "home_town" for id={self.id}')
+            logger.debug(f'Cannot determine location without "location" or "home_town" for id={self.id}')
             return False
 
         if structured_mode:

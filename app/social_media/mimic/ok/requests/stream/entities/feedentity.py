@@ -30,3 +30,4 @@ class FeedEntity:
     presents: Optional[List[dict]] = None
     present_types: Optional[List[dict]] = None
     holidays: Optional[List[dict]] = None
+    photos: Optional[List[dict]] = None

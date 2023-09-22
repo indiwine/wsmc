@@ -6,15 +6,17 @@ RUN apt-get update &&  \
     apt-get -y upgrade &&  \
     apt-get install -y locales-all make git zlib1g-dev libssl-dev gperf cmake g++
 
-RUN cd /tmp/ && \
-    git clone https://github.com/tdlib/td.git && \
-    cd td && \
-    rm -rf build &&  \
-    mkdir build &&  \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib .. && \
-    cmake --build . --target install && \
-    rm -rf /tmp/td
+# Install tdlib
+#
+#RUN cd /tmp/ && \
+#    git clone https://github.com/tdlib/td.git && \
+#    cd td && \
+#    rm -rf build &&  \
+#    mkdir build &&  \
+#    cd build && \
+#    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib .. && \
+#    cmake --build . --target install && \
+#    rm -rf /tmp/td
 
 
 RUN apt-get -y install binutils libproj-dev gdal-bin

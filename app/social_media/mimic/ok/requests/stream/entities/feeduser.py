@@ -30,6 +30,7 @@ class FeedUser(BaseFeedEntity):
     badge_img: Optional[str] = None
     badge_title: Optional[str] = None
     badge_link: Optional[str] = None
+    is_hobby_expert: Optional[bool] = None
 
     def to_author_dto(self) -> AuthorDto:
         """
