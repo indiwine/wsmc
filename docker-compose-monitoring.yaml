@@ -27,7 +27,7 @@ services:
       endpoint_mode: vip
       placement:
         constraints:
-          - "node.hostname==swarm-3"
+          - "node.hostname==swarm-1"
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node-exporter
