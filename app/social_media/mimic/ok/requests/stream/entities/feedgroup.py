@@ -12,15 +12,15 @@ class FeedGroup(BaseFeedEntity):
 
     uid: str
     name: str
-    created_ms: int
-    photo_id: str
-    main_photo: dict
-    premium: bool
-    private: bool
-    paid_access: str
-    category: str
-    revenue_pp_enabled: bool
-    pin_notifications_off: bool
+    created_ms: Optional[int] = None
+    photo_id: Optional[str] = None
+    main_photo: Optional[dict] = None
+    premium: Optional[bool] = None
+    private: Optional[bool] = None
+    paid_access: Optional[str] = None
+    category: Optional[str] = None
+    revenue_pp_enabled: Optional[bool] = None
+    pin_notifications_off: Optional[bool] = None
     attrs: Optional[dict] = None
     member_status: Optional[str] = None
 
