@@ -4,10 +4,10 @@ import abc
 import json
 from abc import ABC
 from enum import Enum
-from typing import TypeVar, Generic, Type, Optional, Union, TypedDict
+from typing import TypeVar, Generic, Type, Optional, Union
 
-from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
 
 
@@ -48,7 +48,6 @@ class AbstractRequestParams(ABC):
         """
         pass
 
-
     def to_execute_dict(self) -> dict:
         """
         Convert params to a dict method to use with
@@ -63,6 +62,7 @@ class AbstractResponseBody(ABC):
 
 
 PARAMS = TypeVar('PARAMS', bound=AbstractRequestParams)
+SUPPLY_PARAMS = TypeVar('SUPPLY_PARAMS', bound=AbstractRequestParams)
 RESPONSE_BODY = TypeVar('RESPONSE_BODY', bound=AbstractResponseBody)
 RESPONSE = TypeVar('RESPONSE', bound=AbstractResponseBody)
 
@@ -85,7 +85,7 @@ class AbstractResponse(ABC, Generic[RESPONSE_BODY]):
         pass
 
 
-class AbstractRequest(ABC, Generic[PARAMS]):
+class AbstractRequest(ABC, Generic[PARAMS, SUPPLY_PARAMS]):
 
     @property
     @abc.abstractmethod
@@ -112,9 +112,20 @@ class AbstractRequest(ABC, Generic[PARAMS]):
     def params(self) -> PARAMS:
         pass
 
+    @property
+    def supply_params(self) -> Optional[SUPPLY_PARAMS]:
+        """
+        A dict of params to supply to request.
+        NOTE: This is only applicable fir executeV2 requests (so far as we know).
+        Will be ignored for other requests.
+        @return:
+        """
+        return None
+
     @abc.abstractmethod
     def to_execute_dict(self) -> dict:
         pass
+
     @abc.abstractmethod
     def is_json(self) -> bool:
         """
@@ -181,9 +192,11 @@ class GenericResponse(AbstractResponse[RESPONSE_BODY]):
         self.body = self.create_body_instance(raw_response)
 
 
+class GenericRequest(AbstractRequest[PARAMS, SUPPLY_PARAMS], Generic[PARAMS, SUPPLY_PARAMS]):
 
-
-class GenericRequest(AbstractRequest[PARAMS]):
+    @property
+    def supply_params(self) -> Optional[SUPPLY_PARAMS]:
+        return self._supply_params
 
     def is_json(self) -> bool:
         return True
@@ -211,7 +224,8 @@ class GenericRequest(AbstractRequest[PARAMS]):
     def params(self) -> PARAMS:
         return self._params
 
-    def __init__(self, method_group: str, method: str, params: AbstractRequestParams):
+    def __init__(self, method_group: str, method: str, params: PARAMS, supply_params: Optional[SUPPLY_PARAMS] = None):
         self._method = method
         self._method_group = method_group
         self._params = params
+        self._supply_params = supply_params

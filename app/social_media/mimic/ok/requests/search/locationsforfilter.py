@@ -36,7 +36,7 @@ class SearchLocationsForFilterResponse(GenericResponse[SearchLocationsForFilterR
         super().set_from_raw(response)
 
 
-class SearchLocationsForFilterRequest(GenericRequest[SearchLocationsForFilterParams]):
+class SearchLocationsForFilterRequest(GenericRequest[SearchLocationsForFilterParams, None]):
     def __init__(self, query: str):
         super().__init__('search', 'locationsForFilter', params=SearchLocationsForFilterParams(query=query))
 
