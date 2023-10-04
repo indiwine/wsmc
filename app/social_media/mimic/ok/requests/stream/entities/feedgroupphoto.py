@@ -15,13 +15,13 @@ class FeedGroupPhoto(BaseFeedEntity):
     id: str
     created_ms: int
     album_id: str
-    standard_width: int
-    standard_height: int
-    pic_base: str
-    discussion_summary: dict
-    send_as_gift_available: bool
-    text_detected: bool
-    group_id: str
+    standard_width: Optional[int] = None
+    standard_height: Optional[int] = None
+    pic_base: Optional[str] = None
+    discussion_summary: Optional[dict] = None
+    send_as_gift_available: Optional[bool] = None
+    text_detected: Optional[bool] = None
+    group_id: Optional[str] = None
     preview: Optional[str] = None
     like_summary: Optional[FeedLikeSummary] = None
     reshare_summary: Optional[FeedReShareSummary] = None
