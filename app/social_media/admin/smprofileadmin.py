@@ -1,9 +1,11 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.db.models import Union
 from django.db.models import QuerySet, OuterRef, Subquery, Count
+from django.http import HttpRequest
 from django.shortcuts import redirect
+from django.urls import path
 from django.utils.safestring import mark_safe
 from import_export.admin import ExportMixin
 from import_export.fields import Field
@@ -20,8 +22,10 @@ def redirect_to_likes(modeladmin, request, queryset: QuerySet):
 
 
 @admin.action(description="В смітник")
-def send_to_junk(modeladmin, request, queryset: QuerySet):
-    queryset.update(in_junk=True)
+def send_to_junk_action(modeladmin, request, queryset: QuerySet):
+    for profile in queryset:
+        profile.move_to_junk()
+
 
 class ProfileLocationPreciseFilter(SimpleListFilter):
     title = 'Location Filter'
@@ -66,7 +70,7 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'social_media'
     ]
     resource_classes = [SmProfileResource]
-    actions = [redirect_to_likes, send_to_junk]
+    actions = [redirect_to_likes, send_to_junk_action]
 
     show_full_result_count = False
 
@@ -110,6 +114,12 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         ))
         return queryset.filter(in_junk=False)
 
+    def move_to_junk(self, request: HttpRequest, object_id):
+        profile = SmProfile.objects.get(id=object_id)
+        profile.move_to_junk()
+        self.message_user(request, f"Профіль {profile} переміщено в смітник", level=messages.SUCCESS)
+        return redirect(generate_url_for_model(LinkTypes.CHANGELIST, SmProfile))
+
     def has_add_permission(self, request):
         return False
 
@@ -118,6 +128,15 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path('<path:object_id>/move-to-junk/', self.move_to_junk,
+                 name='%s_%s_move_to_junk' % (opts.app_label, opts.model_name)),
+        ]
+        return custom_urls + urls
 
 
 admin.site.register(SmProfile, SmProfileAdmin)
