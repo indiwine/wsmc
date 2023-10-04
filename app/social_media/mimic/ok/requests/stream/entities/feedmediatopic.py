@@ -11,7 +11,6 @@ class FeedMediaTopic(BaseFeedEntity):
     def extract_body(self) -> Optional[str]:
         return None
 
-    media: list
     id: str
     created_ms: int
     discussion_summary: dict
@@ -24,6 +23,7 @@ class FeedMediaTopic(BaseFeedEntity):
     on_moderation: bool
     has_extended_stats: bool
     is_feeling: bool
+    media: Optional[list] = None
     app_ref: Optional[str] = None
     capabilities: Optional[str] = None
     is_commenting_denied: Optional[bool] = None

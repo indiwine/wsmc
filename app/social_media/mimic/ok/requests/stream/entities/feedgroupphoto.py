@@ -29,3 +29,4 @@ class FeedGroupPhoto(BaseFeedEntity):
     topic_id: Optional[str] = None
     picmp4: Optional = None
     attrs: Optional = None
+    sensitive: Optional = None
