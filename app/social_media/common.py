@@ -1,4 +1,4 @@
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, is_dataclass, asdict
 from typing import get_origin, get_args, Union
 
 
@@ -81,3 +81,12 @@ def nested_dataclass(*args, **kwargs):
         return cls
 
     return wrapper(args[0]) if args else wrapper
+
+
+def dataclass_asdict_skip_none(obj):
+    """
+    Same as dataclasses.asdict, but skips None values
+    @param obj:
+    @return:
+    """
+    return asdict(obj, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})

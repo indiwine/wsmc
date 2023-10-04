@@ -191,7 +191,7 @@ LOGGING = {
         # 'django.db.backends': {
         #     'level': 'DEBUG',
         #     'handlers': ['console'],
-        # }
+        # },
         'aiohttp.client': {
             'level': 'DEBUG',
             'handlers': ['console'],
@@ -244,6 +244,8 @@ WSMC_SELENIUM_SCREENSHOT_DIR = 'selenium'
 # Wait timeout in seconds
 WSMC_SELENIUM_WAIT_TIMEOUT = 60
 WSMC_SELENIUM_SCRIPT_TIMEOUT = 30
+
+WSMC_PROFILE_COUNTRIES_TO_KEEP = ['ua']
 
 WSMC_WEBDRIVER_LOCALE = 'ru_RU'
 PG_SEARCH_LANG = 'pg_catalog.russian'

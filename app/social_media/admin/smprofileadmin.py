@@ -19,6 +19,10 @@ def redirect_to_likes(modeladmin, request, queryset: QuerySet):
     return redirect(generate_url_for_model(LinkTypes.CHANGELIST, SmLikes, params={'owner_id__in': id_list}))
 
 
+@admin.action(description="В смітник")
+def send_to_junk(modeladmin, request, queryset: QuerySet):
+    queryset.update(in_junk=True)
+
 class ProfileLocationPreciseFilter(SimpleListFilter):
     title = 'Location Filter'
 
@@ -60,11 +64,11 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'person_responsible',
         ProfileLocationPreciseFilter,
         'social_media'
-        # 'is_reviewed',
-        # 'country'
     ]
     resource_classes = [SmProfileResource]
-    actions = [redirect_to_likes]
+    actions = [redirect_to_likes, send_to_junk]
+
+    show_full_result_count = False
 
     @admin.display(description='Likes', empty_value='-', ordering='likes_count')
     def get_likes_view_url(self: SmProfile) -> str:
@@ -87,13 +91,11 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'location',
         'home_town',
         'birthdate',
-        'country',
         'domain',
         'metadata',
         'was_collected',
         'suspect_social_media',
-        'social_media',
-        'is_reviewed'
+        'social_media'
     ]
     list_display = ['name', 'location', 'home_town', 'person_responsible', 'screening_status', 'authenticity_status',
                     get_id_link, get_likes_view_url]
@@ -106,7 +108,7 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
             SmLikes.objects.filter(owner=OuterRef('id')).values('owner').annotate(likes_count=Count('owner')).values(
                 'likes_count')[:1]
         ))
-        return queryset
+        return queryset.filter(in_junk=False)
 
     def has_add_permission(self, request):
         return False
