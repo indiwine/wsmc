@@ -233,7 +233,7 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
                                                       'credentials': request.credentials,
                                                       'social_media': request.get_social_media_type,
                                                       'suspect_social_media': request.suspect_identity,
-                                                      'was_collected': True
+                                                      'was_collected': False
                                                   })
     @sync_to_async
     def apersist_sm_profile(self, sm_profile: SmProfileDto, request: Request):
@@ -296,8 +296,8 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
             if profile.has_country:
                 profile.identify_location(structured_mode=True)
 
-            keep_profile = profile.has_country and profile.location_known and profile.country_ref.code in settings.WSMC_PROFILE_COUNTRIES_TO_KEEP
-            if not keep_profile:
+            if not profile.should_be_kept:
+                # Moving profile to junk implies that it will be saved
                 profile.move_to_junk()
                 continue
             profile.save()

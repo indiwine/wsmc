@@ -5,31 +5,12 @@ from django.apps.registry import Apps
 from django.db import migrations
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 
+from social_media.common import print_progress_bar
 from social_media.geo.geocoderhelper import GeoCoderHelper, GeoCoderSource, GeoCoderQuery
 from social_media.models import SmProfile, Country
 
 logger = logging.getLogger(__name__)
-# Print iterations progress
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {iteration}/{total} {suffix}', end = printEnd)
-    # Print New Line on Complete
-    if iteration == total:
-        print()
+
 
 def fill_country_names(apps: Apps, schema_editor: BaseDatabaseSchemaEditor):
     sm_profile: SmProfile = apps.get_model('social_media', 'smprofile')
@@ -39,7 +20,7 @@ def fill_country_names(apps: Apps, schema_editor: BaseDatabaseSchemaEditor):
     count = 0
     total = sm_profile.objects.count()
     if total > 0:
-        printProgressBar(0, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        print_progress_bar(0, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
         for profile in sm_profile.objects.iterator(10000):
             count += 1
             if isinstance(profile.country, str) and len(profile.country) > 0:
@@ -52,7 +33,7 @@ def fill_country_names(apps: Apps, schema_editor: BaseDatabaseSchemaEditor):
                     profile.save()
                 else:
                     logger.debug(f'Country "{profile.country}" was not found')
-            printProgressBar(count, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
+            print_progress_bar(count, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
 
 

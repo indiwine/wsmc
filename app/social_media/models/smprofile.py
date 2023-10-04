@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericRelation
@@ -112,6 +113,10 @@ class SmProfile(Model):
     @property
     def has_country(self) -> bool:
         return bool(self.country_ref_id)
+
+    @property
+    def should_be_kept(self) -> bool:
+        return self.has_country and self.location_known and self.country_ref.code in settings.WSMC_PROFILE_COUNTRIES_TO_KEEP
 
     def move_to_junk(self):
         """
