@@ -6,8 +6,7 @@ from typing import Optional, List, Type, Union
 from social_media.dtos import AuthorDto, SmProfileDto, SmProfileMetadata
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, AbstractRequestParams, GenericResponseBody, \
     GenericResponse, RESPONSE_BODY, AbstractResponse
-from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
-from social_media.common import nested_dataclass
+from social_media.common import nested_dataclass, dataclass_asdict_skip_none
 from social_media.webdriver.common import date_time_parse
 
 

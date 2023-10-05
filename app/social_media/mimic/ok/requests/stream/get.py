@@ -10,7 +10,7 @@ from social_media.mimic.ok.device import AndroidDevice
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     RESPONSE_BODY, AbstractResponse, GenericResponseBody
-from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
+from social_media.common import dataclass_asdict_skip_none
 from social_media.mimic.ok.requests.okbanner import OkBannerItem
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
 from social_media.mimic.ok.requests.stream.entities.feedentity import FeedEntity

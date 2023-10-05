@@ -9,7 +9,10 @@ from dataclasses import fields, Field, is_dataclass
 from typing import Callable, Tuple, Optional, Union, List, TypeVar, Generic
 
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Model
+
 
 from ..options.baseoptions import BaseOptions
 from ..pipe.abstractasyncpipeline import AbstractPipeFilter
@@ -230,7 +233,7 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
                                                       'credentials': request.credentials,
                                                       'social_media': request.get_social_media_type,
                                                       'suspect_social_media': request.suspect_identity,
-                                                      'was_collected': True
+                                                      'was_collected': False
                                                   })
     @sync_to_async
     def apersist_sm_profile(self, sm_profile: SmProfileDto, request: Request):
@@ -282,25 +285,24 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
         @return:
         """
 
-        # TODO: Probably this method should be refactored
-
         for profile_dto in profile_dto_list:
 
-            # Update profile with a new data
-            SmProfile.objects.filter(
-                oid=profile_dto.oid,
-                social_media=request.get_social_media_type
-            ).update(
-                was_collected=True, **self.as_dict_for_model(profile_dto)
-            )
-
-            # Get updated profile
+            # Find profile
             profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
+            profile.was_collected = True
+            self.apply_dto_to_model(profile_dto, profile)
+            profile.resolve_country_ref(profile_dto.country)
 
-            # Checking if profile has location and it is identifiable
-            if profile.identify_location(structured_mode=True):
-                # Save profile if it is identifiable
-                profile.save()
+            if profile.has_country:
+                profile.identify_location(structured_mode=True)
+
+            if not profile.should_be_kept:
+                # Moving profile to junk implies that it will be saved
+                profile.move_to_junk()
+                continue
+            profile.save()
+
+
 
     @sync_to_async
     def aupdate_collected_profiles(self, profile_dto_list: List[SmProfileDto], request: Request):
@@ -333,12 +335,34 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
         else:
             return copy.deepcopy(obj)
 
+    @staticmethod
+    def _dataclass_transient_filter(field: Field) -> bool:
+        return not ('transient' in field.metadata and field.metadata['transient'])
+
     @classmethod
     def as_dict_for_model(cls, obj):
-        def conditional_filter(field: Field) -> bool:
-            return not ('transient' in field.metadata and field.metadata['transient'])
+        """
+        Convert dataclass object to dict for model
 
-        return cls.as_dict_fields_filter(obj, conditional_filter)
+        @note this is "transient" aware method
+        @param obj:
+        @return:
+        """
+        return cls.as_dict_fields_filter(obj, cls._dataclass_transient_filter)
+
+    @classmethod
+    def apply_dto_to_model(cls, obj, model: Model):
+        """
+        Apply DTO to model
+
+        @note this is "transient" aware method
+        @param obj: dataclass object from wich data will be copied
+        @param model: model to which data will be copied
+        @return:
+        """
+        for field in fields(obj):
+            if cls._dataclass_transient_filter(field) and field.name in model.__dict__:
+                setattr(model, field.name, getattr(obj, field.name))
 
     @staticmethod
     async def random_await(min_delay: int = 1, max_delay: int = 30):
