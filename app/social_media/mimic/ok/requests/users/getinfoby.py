@@ -4,7 +4,7 @@ from typing import Union, Type
 
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, GenericResponse, AbstractRequestParams, \
     GenericResponseBody, AbstractResponse
-from social_media.mimic.ok.requests.common import dataclass_asdict_skip_none
+from social_media.common import dataclass_asdict_skip_none
 from social_media.mimic.ok.requests.like.getinfo import UserItem
 
 

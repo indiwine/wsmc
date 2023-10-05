@@ -1,5 +1,5 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union, Optional
 
 from dataclasses_json import dataclass_json
@@ -23,6 +23,6 @@ class SmProfileDto:
     birthdate: Union[datetime.datetime, str] = None
     university: str = None
     home_town: str = None
-    country: str = None
+    country: str = field(default=None, metadata={'transient': True})
     domain: str = None
     metadata: Optional[SmProfileMetadata] = None

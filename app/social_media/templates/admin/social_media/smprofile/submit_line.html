@@ -1,0 +1,5 @@
+{% extends "admin/submit_line.html" %}
+{% block submit-row %}
+    {{ block.super }}
+    <a class="deletelink" href="{% url 'admin:social_media_smprofile_move_to_junk' object_id %}">В смітник</a>
+{% endblock %}

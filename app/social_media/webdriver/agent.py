@@ -2,15 +2,15 @@ import logging
 import time
 from typing import Optional, List
 
-from selenium.common import NoSuchWindowException, WebDriverException
 from aiohttp import ClientConnectionError, ClientResponseError
+from selenium.common import NoSuchWindowException, WebDriverException
 
 from .collectors import Collector
 from .collectors.collectorpipeline import CollectorPipeline
 from .collectors.ok.okgroupcollector import OkGroupCollector
-from .collectors.ok.okpostscollector import OkPostsCollector
 from .collectors.ok.okinitdatacollector import OkInitDataCollector
 from .collectors.ok.oklogincollector import OkLoginCollector
+from .collectors.ok.okpostscollector import OkPostsCollector
 from .collectors.ok.okprofilecollector import OkProfileCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
     VkGroupCollector
@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class Agent:
-
     RESTARTABLE_EXCEPTIONS = (
         WscmWebdriverRetryFailedException,
         WebDriverException,
@@ -77,7 +76,7 @@ class Agent:
                 delay = base_delay * 2 ** (attempt - 1)
 
                 logger.error(
-                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe}',  retrying in {delay} seconds...",
+                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe if self.request.has_driver else 'driver less'}',  retrying in {delay} seconds...",
                     exc_info=e
                 )
 
@@ -126,7 +125,6 @@ class Agent:
 
             if self.request.has_entity(SocialMediaEntities.GROUP):
                 stack.append(OkGroupCollector())
-
 
             if self.request.has_entity(SocialMediaEntities.POSTS):
                 stack.append(OkPostsCollector())

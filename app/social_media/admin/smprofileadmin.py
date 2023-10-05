@@ -1,9 +1,11 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.db.models import Union
 from django.db.models import QuerySet, OuterRef, Subquery, Count
+from django.http import HttpRequest
 from django.shortcuts import redirect
+from django.urls import path
 from django.utils.safestring import mark_safe
 from import_export.admin import ExportMixin
 from import_export.fields import Field
@@ -17,6 +19,12 @@ from social_media.models import SmProfile, SmLikes, SmProfileLocationFilter
 def redirect_to_likes(modeladmin, request, queryset: QuerySet):
     id_list = ",".join(str(item_id) for item_id in queryset.values_list('id', flat=True))
     return redirect(generate_url_for_model(LinkTypes.CHANGELIST, SmLikes, params={'owner_id__in': id_list}))
+
+
+@admin.action(description="В смітник")
+def send_to_junk_action(modeladmin, request, queryset: QuerySet):
+    for profile in queryset:
+        profile.move_to_junk()
 
 
 class ProfileLocationPreciseFilter(SimpleListFilter):
@@ -60,11 +68,11 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'person_responsible',
         ProfileLocationPreciseFilter,
         'social_media'
-        # 'is_reviewed',
-        # 'country'
     ]
     resource_classes = [SmProfileResource]
-    actions = [redirect_to_likes]
+    actions = [redirect_to_likes, send_to_junk_action]
+
+    show_full_result_count = False
 
     @admin.display(description='Likes', empty_value='-', ordering='likes_count')
     def get_likes_view_url(self: SmProfile) -> str:
@@ -87,13 +95,11 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'location',
         'home_town',
         'birthdate',
-        'country',
         'domain',
         'metadata',
         'was_collected',
         'suspect_social_media',
-        'social_media',
-        'is_reviewed'
+        'social_media'
     ]
     list_display = ['name', 'location', 'home_town', 'person_responsible', 'screening_status', 'authenticity_status',
                     get_id_link, get_likes_view_url]
@@ -106,7 +112,13 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
             SmLikes.objects.filter(owner=OuterRef('id')).values('owner').annotate(likes_count=Count('owner')).values(
                 'likes_count')[:1]
         ))
-        return queryset
+        return queryset.filter(in_junk=False)
+
+    def move_to_junk(self, request: HttpRequest, object_id):
+        profile = SmProfile.objects.get(id=object_id)
+        profile.move_to_junk()
+        self.message_user(request, f"Профіль {profile} переміщено в смітник", level=messages.SUCCESS)
+        return redirect(generate_url_for_model(LinkTypes.CHANGELIST, SmProfile))
 
     def has_add_permission(self, request):
         return False
@@ -116,6 +128,15 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path('<path:object_id>/move-to-junk/', self.move_to_junk,
+                 name='%s_%s_move_to_junk' % (opts.app_label, opts.model_name)),
+        ]
+        return custom_urls + urls
 
 
 admin.site.register(SmProfile, SmProfileAdmin)

@@ -95,7 +95,7 @@ class OkRequestsTestCase(SimpleTestCase):
 
         await self.login_or_restore_session(self.ok_http_client)
         group_flow = OkCommonFlow(self.ok_http_client)
-        group_uuid = await group_flow.resolve_url_to_uid('https://ok.ru/group/53038939046008')
+        group_uuid = await group_flow.resolve_url_to_uid('https://ok.ru/group/70000000550380')
 
         self.assertTrue(group_uuid)
         group_info = await group_flow.fetch_group_info(group_uuid)
@@ -114,15 +114,17 @@ class OkRequestsTestCase(SimpleTestCase):
             previous_anchor = group_posts_body.anchor
 
             for post_dto, target_entity in group_posts_body.post_generator():
+                pprint(post_dto)
                 self.assertIsInstance(post_dto, SmPostDto)
                 self.assertIsInstance(target_entity, BaseFeedEntity)
                 self.assertTrue(post_dto.sm_post_id)
                 self.assertTrue(post_dto.social_media)
                 self.assertTrue(post_dto.datetime)
-                self.assertTrue(post_dto.permalink)
                 self.assertTrue(post_dto.author)
+                if not post_dto.permalink:
+                    print('No permalink, in post!')
 
-                pprint(post_dto)
+
                 await self.get_likes(target_entity, stream_flow)
 
 

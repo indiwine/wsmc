@@ -8,8 +8,14 @@ services:
       - "9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=6d
+      - --web.console.templates=/usr/share/prometheus/consoles
+    configs:
+      - source: prom_config
+        target: /etc/prometheus/prometheus.yml
     volumes:
-      - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#      - ./deploy_config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
@@ -21,7 +27,7 @@ services:
       endpoint_mode: vip
       placement:
         constraints:
-          - "node.role==manager"
+          - "node.hostname==swarm-1"
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node-exporter
@@ -88,3 +94,7 @@ networks:
   monitoring_stack:
     driver: overlay
     attachable: true
+
+configs:
+  prom_config:
+    file: ./deploy_config/prometheus.yml

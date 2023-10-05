@@ -1,15 +1,20 @@
 import logging
 from typing import Optional
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import PointField
-from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, JSONField
+from django.db.models import Model, ForeignKey, RESTRICT, CharField, DateField, Index, BooleanField, SET_NULL, \
+    JSONField, Q
+from django.db.transaction import atomic
 from tinymce.models import HTMLField
 
+from .country import Country
 from .smcredential import SmCredential
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
-from ..geo.geocoderhelper import GeoCoderHelper
+from ..geo.geocoderhelper import GeoCoderHelper, GeoCoderQuery, GeoCoderSource
 from ..social_media import SocialMediaTypes
 from ..social_media.profileauthenticitystatus import ProfileAuthenticityStatus
 from ..social_media.profilescreeningstatus import ProfileScreeningStatus
@@ -21,9 +26,8 @@ LOOKUP_COUNTRY_CODES = ['UA']
 
 class SmProfile(Model):
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
-
-    # TODO Removal
-    # suspect = ForeignKey(Suspect, null=True, on_delete=CASCADE)
+    suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True, editable=False)
+    country_ref = ForeignKey(Country, on_delete=RESTRICT, null=True, editable=False, default=None)
 
     oid = CharField(max_length=512, verbose_name='ID', help_text='ID користувача в соціальній мережі')
     name = CharField(max_length=512, verbose_name="Ім'я", help_text="Ім'я як вказано в соціальній мережі")
@@ -32,17 +36,11 @@ class SmProfile(Model):
     home_town = CharField(max_length=512, null=True, verbose_name='Місце народження')
     birthdate = DateField(null=True, verbose_name="Дата народження",
                           help_text='Може бути вказаний поточний рік у випадку якщо рік не вказан в соц мережі')
-    country = CharField(max_length=512, null=True)
+
     domain = CharField(max_length=512, null=True)
     metadata = JSONField(null=True)
 
     was_collected = BooleanField(default=False)
-    is_reviewed = BooleanField(default=False)
-    """
-    DEPRECATED
-    """
-
-    suspect_social_media = ForeignKey(SuspectSocialMediaAccount, on_delete=SET_NULL, null=True, editable=False)
 
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
@@ -65,6 +63,24 @@ class SmProfile(Model):
     )
 
     comment = HTMLField(default='', blank=True)
+
+    in_junk = BooleanField(default=False, editable=False)
+
+    authored_posts = GenericRelation(
+        'SmPost',
+        object_id_field='author_id',
+        content_type_field='author_type',
+        related_query_name='author',
+        editable=False
+    )
+
+    wall = GenericRelation(
+        'SmPost',
+        object_id_field='origin_id',
+        content_type_field='origin_type',
+        related_query_name='wall',
+        editable=False
+    )
 
     def __str__(self):
         return self.name
@@ -96,7 +112,62 @@ class SmProfile(Model):
 
     @property
     def has_country(self) -> bool:
-        return bool(self.country)
+        return bool(self.country_ref_id)
+
+    @property
+    def should_be_kept(self) -> bool:
+        return self.has_country and self.location_known and self.country_ref.code in settings.WSMC_PROFILE_COUNTRIES_TO_KEEP
+
+    def move_to_junk(self):
+        """
+        Move profile to junk
+        Removes all associated data as well (likes, posts, comments, etc)
+        Removal done inside the transaction
+        @return:
+        """
+        from .smcomment import SmComment
+        from .smlikes import SmLikes
+        from .smpost import SmPost
+        with atomic():
+            SmLikes.objects.filter(owner=self).delete()
+            SmPost.objects.filter(
+                Q(author=self) | Q(wall=self)
+            ).delete()
+            SmComment.objects.filter(owner=self).delete()
+
+            self.in_junk = True
+            self.save()
+
+    def resolve_country_ref(self, country_name: Optional[str]):
+        """
+        Resolve country reference by name and set appropriate field
+        @param country_name:
+        @return: True if country was found, False otherwise
+        """
+        if not country_name:
+            logger.debug('Country name is empty')
+            return False
+
+        if len(country_name) == 0:
+            logger.debug('Country name is empty')
+            return False
+
+        query = GeoCoderQuery(country=country_name)
+        coder = GeoCoderHelper(source=GeoCoderSource.REMOTE)
+        lookup_result = coder.gecode_country(query=query)
+        if not lookup_result:
+            logger.debug(f'Country "{country_name}" was not found')
+            self.country_ref = None
+            return False
+
+        self.country_ref, _ = Country.objects.get_or_create(code=lookup_result['country_code'], defaults={
+            'name': lookup_result['country'],
+            'code': lookup_result['country_code'],
+        })
+
+        logger.debug(f'Country "{country_name}" was resolved to "{self.country_ref}"')
+
+        return True
 
     def get_geo_query(self) -> str:
         """
@@ -107,8 +178,8 @@ class SmProfile(Model):
 
         country_request = None
 
-        if self.country:
-            country_request = f'{self.country}, '
+        if self.has_country:
+            country_request = f'{self.country_ref.name}, '
 
         location_query = self.location
 
@@ -120,23 +191,23 @@ class SmProfile(Model):
 
         return location_query
 
-    def get_geo_query_structured(self) -> dict:
+    def get_geo_query_structured(self) -> GeoCoderQuery:
         """
         Get query for geocoding in structured representation
         @return:
         """
         assert self.has_location_or_home_town is True, 'Cannot get structured query without location or home_town'
 
-        result = {}
+        result = GeoCoderQuery()
 
-        if self.country:
-            result['country'] = self.country
+        if self.has_country:
+            result.country = self.country_ref.name
 
         if self.location:
-            result['city'] = self.location
+            result.city = self.location
 
         if self.home_town and 'city' not in result:
-            result['city'] = self.home_town
+            result.city = self.home_town
 
         return result
 
@@ -150,7 +221,7 @@ class SmProfile(Model):
         @return: True if location was found, False otherwise
         """
         if not force:
-            if self.country is not None and self.country != 'Украина':
+            if not self.has_country:
                 return False
 
             # Already known
@@ -160,7 +231,7 @@ class SmProfile(Model):
 
         # We cannot found location without at least approximate
         if not self.has_location_or_home_town:
-            logger.warning(f'Cannot determine location without "location" or "home_town" for id={self.id}')
+            logger.debug(f'Cannot determine location without "location" or "home_town" for id={self.id}')
             return False
 
         if structured_mode:
@@ -186,16 +257,11 @@ class SmProfile(Model):
         unique_together = ['oid', 'social_media']
         indexes = [
             Index(fields=[
-                'credentials',
                 'oid',
                 'was_collected',
-                'suspect_social_media',
                 'social_media',
-                'location_known',
-                'location_precise',
-                'is_reviewed',
+                'in_junk',
                 'screening_status',
-                'person_responsible',
-                'authenticity_status'
+                'authenticity_status',
             ])
         ]

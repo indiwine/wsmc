@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+from typing import Optional
 
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
@@ -18,10 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class OkHttpClient:
-    LOG_REQUESTS = False
+    LOG_REQUESTS = True
 
-    def __init__(self, device: AndroidDevice, auth_options: OkHttpClientAuthOptions = OkHttpClientAuthOptions()):
+    def __init__(self, device: AndroidDevice, auth_options: Optional[OkHttpClientAuthOptions] = None):
         logger.debug(f'Creating OkHttpClient with device: {device}')
+        if auth_options is None:
+            auth_options = OkHttpClientAuthOptions()
+
         self.auth_options = auth_options
         self.device = device
         self.jar = SerializableCookieJar()
@@ -73,7 +77,7 @@ class OkHttpClient:
 
                 async with session.post(url, headers=headers, **post_params) as response:
                     response_text = await response.text()
-                    # logger.debug(f'Response text: {response_text}')
+                    logger.debug(f'Response text: {response_text}')
                     return await self.build_response(request, response)
             else:
                 raise RuntimeError(f'Unknown Http request method: {request.http_method}')
@@ -118,6 +122,10 @@ class OkHttpClient:
 
     def get_app_keys(self) -> dict:
         result = dataclasses.asdict(self.auth_options, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
+
+        if 'current_login_data' in result:
+            del result['current_login_data']
+
         if 'screen' in result:
             result['__screen'] = result['screen']
             del result['screen']
