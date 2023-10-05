@@ -124,6 +124,8 @@ services:
         target: /dev/shm
         tmpfs:
           size: 2684354560
+    ports:
+      - "5432:5432"
     deploy:
       replicas: 1
       placement:
