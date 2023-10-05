@@ -36,6 +36,7 @@ def move_to_junk(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    atomic = False
     dependencies = [
         ('social_media', '0034_remove_smprofile_social_medi_oid_2579fa_idx_and_more'),
     ]
