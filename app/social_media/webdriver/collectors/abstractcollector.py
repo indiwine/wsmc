@@ -340,7 +340,7 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
         return not ('transient' in field.metadata and field.metadata['transient'])
 
     @classmethod
-    def as_dict_for_model(cls, obj):
+    def as_dict_for_model(cls, obj) -> dict:
         """
         Convert dataclass object to dict for model
 
@@ -360,9 +360,9 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
         @param model: model to which data will be copied
         @return:
         """
-        for field in fields(obj):
-            if cls._dataclass_transient_filter(field) and field.name in model.__dict__:
-                setattr(model, field.name, getattr(obj, field.name))
+        for key, value in cls.as_dict_for_model(obj).items():
+            if key in model.__dict__:
+                setattr(model, key, value)
 
     @staticmethod
     async def random_await(min_delay: int = 1, max_delay: int = 30):

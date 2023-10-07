@@ -23,6 +23,7 @@ class FeedMediaTopic(BaseFeedEntity):
     on_moderation: bool
     has_extended_stats: bool
     is_feeling: bool
+    decorator_id: Optional = None
     media: Optional[list] = None
     app_ref: Optional[str] = None
     capabilities: Optional[str] = None

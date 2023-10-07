@@ -31,3 +31,4 @@ class FeedEntity:
     present_types: Optional[List[dict]] = None
     holidays: Optional[List[dict]] = None
     photos: Optional[List[dict]] = None
+    promo_apps: Optional[List] = None
