@@ -21,7 +21,7 @@ class LoginByTokenParams(AbstractRequestParams):
     def to_execute_dict(self) -> dict:
         return dataclasses.asdict(self)
 
-class LoginByTokenRequest(GenericRequest[LoginByTokenParams]):
+class LoginByTokenRequest(GenericRequest[LoginByTokenParams, None]):
     def __init__(self, auth_token: str):
         params = LoginByTokenParams(auth_token)
         super().__init__('auth', 'loginByToken', params)

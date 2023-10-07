@@ -92,7 +92,7 @@ class GroupGetInfoResponse(GenericResponse[GroupGetInfoResponseBody]):
         return self.get_body().find_group_info_by_id(group_id)
 
 
-class GroupGetInfoRequest(GenericRequest[GroupGetInfoParams]):
+class GroupGetInfoRequest(GenericRequest[GroupGetInfoParams, None]):
     def __init__(self, group_id: str):
         params = GroupGetInfoParams(group_id)
 

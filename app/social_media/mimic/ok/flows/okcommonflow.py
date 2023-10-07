@@ -2,7 +2,7 @@ from typing import List
 
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.group.getinfo import GroupGetInfoRequest, GroupGetInfoResponse, GroupInfoItem
-from social_media.mimic.ok.requests.like.getinfo import UserItem
+from social_media.mimic.ok.requests.entities.user import UserItem
 from social_media.mimic.ok.requests.search.locationsforfilter import SearchLocationsForFilterRequest, \
     SearchLocationsForFilterResponse, SearchedLocation
 from social_media.mimic.ok.requests.url.getinfo import UrlGetInfoRequest, UrlGetInfoResponse

@@ -32,7 +32,7 @@ class UrlGetInfoResponse(GenericResponse[UrlGetInfoBody]):
         return UrlGetInfoBody
 
 
-class UrlGetInfoRequest(GenericRequest[UrlGetInfoParams]):
+class UrlGetInfoRequest(GenericRequest[UrlGetInfoParams, None]):
     def __init__(self, url: str):
         super().__init__('url', 'getInfo', UrlGetInfoParams(url=url))
 

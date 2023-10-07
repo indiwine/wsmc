@@ -5,7 +5,7 @@ from social_media.common import nested_dataclass
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponseBody, \
     GenericResponse
 from social_media.mimic.ok.requests.common import to_json_slim
-from social_media.mimic.ok.requests.like.getinfo import UserItem
+from social_media.mimic.ok.requests.entities.user import UserItem
 
 
 @dataclasses.dataclass

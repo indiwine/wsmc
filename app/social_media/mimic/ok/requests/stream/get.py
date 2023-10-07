@@ -161,7 +161,7 @@ class StreamGetParams(AbstractRequestParams):
         assert self.gid or self.uid, 'Either gid or uid must be present'
 
 
-class StreamGetRequest(GenericRequest[AbstractRequestParams]):
+class StreamGetRequest(GenericRequest[AbstractRequestParams, None]):
     def __init__(self, gid: Optional[str] = None, uid: Optional[str] = None, anchor: Optional[str] = None):
         params = StreamGetParams(
             gid=gid,

@@ -16,7 +16,7 @@ from social_media.mimic.ok.flows.okloginflow import OkLoginFlow
 from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
 from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
-from social_media.mimic.ok.requests.like.getinfo import UserItem
+from social_media.mimic.ok.requests.entities.user import UserItem
 from social_media.mimic.ok.requests.search.locationsforfilter import SearchedLocation
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
 

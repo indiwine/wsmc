@@ -78,7 +78,7 @@ class ExecuteV2Response(GenericResponse[ExecuteV2ResponseBody]):
         raise OkResponseNotFoundException(f'Response for request {request} not found')
 
 
-class ExecuteV2Request(AbstractRequest[BatchExecuteParams]):
+class ExecuteV2Request(AbstractRequest[BatchExecuteParams, None]):
     def is_json(self) -> bool:
         return False
 
