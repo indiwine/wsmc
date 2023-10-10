@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import logging
 from copy import copy
 from typing import Optional, Union, Type, List, Tuple, Generator
 
@@ -23,10 +24,11 @@ from social_media.mimic.ok.requests.stream.entities.feeduser import FeedUser
 from social_media.mimic.ok.requests.stream.entities.feedvideo import FeedVideo
 from social_media.social_media import SocialMediaTypes
 
+logger = logging.getLogger(__name__)
 
 class StreamGetResponseBody(GenericResponseBody):
     def __init__(self, raw_params: Union[dict, list]):
-        self.feeds: List[FeedItem] = []
+        self.feeds: Optional[List[FeedItem]] = None
         self.entities: Optional[FeedEntity] = None
         self.anchor: Optional[str] = None
         self.available: Optional[bool] = None
@@ -42,6 +44,9 @@ class StreamGetResponseBody(GenericResponseBody):
 
         entity_type = ref.split(':')[0]
         attr_name = f'{entity_type}s'
+
+        if self.entities is None:
+            raise ValueError(f'Entities are not present')
 
         if not hasattr(self.entities, attr_name):
             raise ValueError(f'No entity {entity_type} found')
@@ -112,8 +117,10 @@ class StreamGetResponse(GenericResponse[StreamGetResponseBody]):
     def set_from_raw(self, raw_response: Union[dict, list]):
         self.raw_body = raw_response
         response = copy(raw_response)
-        response['feeds'] = self.build_feed_items(response['feeds'])
-        response['entities'] = self.build_feed_entities(response['entities'])
+        response['feeds'] = self.build_feed_items(response['feeds']) if 'feeds' in response else None
+        response['entities'] = self.build_feed_entities(response['entities']) if 'entities' in response else None
+        if response['entities'] is None or response['feeds'] is None:
+            logger.warning(f'No entities or feeds found in response, {raw_response}')
         self.create_and_set_body(response)
 
     @staticmethod
