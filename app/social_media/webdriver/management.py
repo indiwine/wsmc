@@ -7,7 +7,7 @@ from asgiref.sync import sync_to_async, async_to_sync
 from pyee.base import EventEmitter
 
 from social_media.models import Suspect, SuspectSocialMediaAccount, SuspectGroup
-from social_media.social_media import SocialMediaEntities
+from social_media.social_media import SocialMediaActions
 from social_media.webdriver import  Agent
 from .post_process_pipeline.filters.downloadpostimagesfilter import DownloadPostImagesFilter
 from .post_process_pipeline.filters.persistpostimagesfilter import PersistPostImagesFilter
@@ -28,9 +28,9 @@ async def collect_groups(suspect_group_id: int, task_id: str):
     credentials = await suspect_group.afetch_next_credential()
     collect_request = Request(
         [
-            SocialMediaEntities.LOGIN,
-            SocialMediaEntities.GROUP,
-            SocialMediaEntities.POSTS
+            SocialMediaActions.LOGIN,
+            SocialMediaActions.GROUP,
+            SocialMediaActions.POSTS
         ],
         credentials,
         suspect_group
@@ -44,8 +44,8 @@ async def collect_unknown_profiles(suspect_group_id: int):
     suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
     collect_request = Request(
         [
-            SocialMediaEntities.LOGIN,
-            SocialMediaEntities.UNKNOWN_PROFILES
+            SocialMediaActions.LOGIN,
+            SocialMediaActions.UNKNOWN_PROFILES
         ],
         suspect_group.credentials,
     )
@@ -65,9 +65,9 @@ async def collect_profiles(suspect_id: int, with_posts: bool):
 async def post_data_collection(suspect_id: int, with_posts: bool, ee: Optional[EventEmitter] = None):
     suspect: Suspect = await Suspect.objects.aget(id=suspect_id)
     async for sm_account in SuspectSocialMediaAccount.objects.select_related('credentials').filter(suspect=suspect):
-        entities = [SocialMediaEntities.LOGIN, SocialMediaEntities.PROFILE]
+        entities = [SocialMediaActions.LOGIN, SocialMediaActions.PROFILE]
         if with_posts:
-            entities.append(SocialMediaEntities.POSTS)
+            entities.append(SocialMediaActions.POSTS)
 
         collect_request = Request(
             entities,

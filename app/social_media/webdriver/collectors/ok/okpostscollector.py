@@ -30,43 +30,40 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
         offset = 0
         previous_session_anchor, previous_session_offset = await self.try_find_anchor_from_db()
 
-        try:
+        # Main loop of this collector
+        while True:
+            offset += 1
 
-            # Main loop of this collector
-            while True:
-                offset += 1
+            logger.debug(f'Fetching posts with offset {offset} and anchor {current_anchor}')
 
-                logger.debug(f'Fetching posts with offset {offset} and anchor {current_anchor}')
+            total_fetched, new_post_count, current_anchor, can_continue = await self.posts_loop(feed_kwargs,
+                                                                                                request,
+                                                                                                current_anchor)
+            num_posts_collected += total_fetched
 
-                total_fetched, new_post_count, current_anchor, can_continue = await self.posts_loop(feed_kwargs,
-                                                                                                    request,
-                                                                                                    current_anchor)
-                num_posts_collected += total_fetched
+            if not can_continue:
+                logger.info('No more posts available, stopping')
+                return
 
-                if not can_continue:
-                    logger.info('No more posts available, stopping')
-                    return
+            # If post count limit is reached, let's stop
+            if self.get_options().post_count_limit and num_posts_collected >= self.get_options().post_count_limit:
+                logger.info('Post count limit reached, stopping')
+                return
 
-                # If post count limit is reached, let's stop
-                if self.get_options().post_count_limit and num_posts_collected >= self.get_options().post_count_limit:
-                    logger.info('Post count limit reached, stopping')
-                    return
+            # If no new posts present on page, and we have anchor from previous session, let jump to it
+            if (was_previous_anchor_jump is False
+                and new_post_count == 0
+                and previous_session_anchor):
+                logger.info('No new posts, jumping to previous session anchor')
+                current_anchor = previous_session_anchor
+                offset += previous_session_offset
+                was_previous_anchor_jump = True
 
-                # If no new posts present on page, and we have anchor from previous session, let jump to it
-                if (was_previous_anchor_jump is False
-                    and new_post_count == 0
-                    and previous_session_anchor):
-
-                    logger.info('No new posts, jumping to previous session anchor')
-                    current_anchor = previous_session_anchor
-                    offset += previous_session_offset
-                    was_previous_anchor_jump = True
-
-                # Maintain a healthy amount of delays between requests
-                await self.random_await()
-        finally:
-            logger.info(f'Collected {num_posts_collected} posts')
+            # Maintain a healthy amount of delays between requests
             await self.write_anchor_to_db(current_anchor, offset)
+            await self.random_await()
+
+            logger.info(f'Collected {num_posts_collected} posts')
 
     def write_properties(self, request: Request[OkRequestData]) -> dict:
         """

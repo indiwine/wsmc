@@ -4,7 +4,7 @@ from time import sleep
 
 from asgiref.sync import sync_to_async
 
-from social_media.social_media import SocialMediaEntities
+from social_media.social_media import SocialMediaActions
 from ..abstractcollector import AbstractCollector
 from ...link_builders.vk import VkLinkBuilder
 from ...options.vkoptions import VkOptions
@@ -22,7 +22,7 @@ class VkLoginCollector(AbstractCollector[None, VkOptions]):
 
     @sync_to_async
     def handle(self, request: Request):
-        if request.can_process_entity(SocialMediaEntities.LOGIN, False):
+        if request.can_process_entity(SocialMediaActions.LOGIN, False):
             if self.get_options().login_use_jitter:
                 delay = randint(self.MIN_JITTER_DELAY, self.MAX_JITTER_DELAY)
                 logger.debug(f'Login delay jitter is active, waiting for {delay}s before login')

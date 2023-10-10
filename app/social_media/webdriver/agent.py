@@ -12,11 +12,12 @@ from .collectors.ok.okinitdatacollector import OkInitDataCollector
 from .collectors.ok.oklogincollector import OkLoginCollector
 from .collectors.ok.okpostscollector import OkPostsCollector
 from .collectors.ok.okprofilecollector import OkProfileCollector
+from .collectors.ok.okprofilediscoverycollector import OkProfileDiscoveryCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
     VkGroupCollector
 from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError
 from .request import Request
-from ..social_media import SocialMediaTypes, SocialMediaEntities
+from ..social_media import SocialMediaTypes, SocialMediaActions
 
 logger = logging.getLogger(__name__)
 
@@ -101,33 +102,44 @@ class Agent:
         if sm_type == SocialMediaTypes.FB:
             raise NotImplementedError('FB pipeline not implemented')
         elif sm_type == SocialMediaTypes.VK:
-            if self.request.has_entity(SocialMediaEntities.LOGIN):
+            if self.request.has_action_assigned(SocialMediaActions.LOGIN):
                 stack.append(VkLoginCollector())
 
-            if self.request.has_entity(SocialMediaEntities.PROFILE):
+            if self.request.has_action_assigned(SocialMediaActions.PROFILE):
                 stack.append(VkProfileCollector())
 
-            if self.request.has_entity(SocialMediaEntities.GROUP):
+            if self.request.has_action_assigned(SocialMediaActions.GROUP):
                 stack.append(VkGroupCollector())
 
-            if self.request.has_entity(SocialMediaEntities.POSTS):
+            if self.request.has_action_assigned(SocialMediaActions.POSTS):
                 stack.append(VkPostsCollector())
 
-            if self.request.has_entity(SocialMediaEntities.UNKNOWN_PROFILES):
+            if self.request.has_action_assigned(SocialMediaActions.UNKNOWN_PROFILES):
                 stack.append(VkSecondaryProfilesCollector())
+                logger.warning('Secondary profiles are deprecated and will be removed soon')
+
+            if self.request.has_action_assigned(SocialMediaActions.PROFILES_DISCOVERY):
+                logger.error('Profiles discovery is not implemented yet for VK')
+
         elif sm_type == SocialMediaTypes.OK:
             stack.append(OkInitDataCollector())
-            if self.request.has_entity(SocialMediaEntities.LOGIN):
+            if self.request.has_action_assigned(SocialMediaActions.LOGIN):
                 stack.append(OkLoginCollector())
 
-            if self.request.has_entity(SocialMediaEntities.PROFILE):
+            if self.request.has_action_assigned(SocialMediaActions.PROFILE):
                 stack.append(OkProfileCollector())
 
-            if self.request.has_entity(SocialMediaEntities.GROUP):
+            if self.request.has_action_assigned(SocialMediaActions.GROUP):
                 stack.append(OkGroupCollector())
 
-            if self.request.has_entity(SocialMediaEntities.POSTS):
+            if self.request.has_action_assigned(SocialMediaActions.POSTS):
                 stack.append(OkPostsCollector())
+
+            if self.request.has_action_assigned(SocialMediaActions.UNKNOWN_PROFILES):
+                logger.error('Unknown profiles are not implemented yet for OK')
+
+            if self.request.has_action_assigned(SocialMediaActions.PROFILES_DISCOVERY):
+                stack.append(OkProfileDiscoveryCollector())
         else:
             raise RuntimeError(f'No suitable filter stack for social media {sm_type}')
 

@@ -1,10 +1,6 @@
-from typing import List
-
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.group.getinfo import GroupGetInfoRequest, GroupGetInfoResponse, GroupInfoItem
 from social_media.mimic.ok.requests.entities.user import UserItem
-from social_media.mimic.ok.requests.search.locationsforfilter import SearchLocationsForFilterRequest, \
-    SearchLocationsForFilterResponse, SearchedLocation
 from social_media.mimic.ok.requests.url.getinfo import UrlGetInfoRequest, UrlGetInfoResponse
 from social_media.mimic.ok.requests.users.getinfoby import UserGetInfoByRequest, UserGetInfoByResponse
 
@@ -57,14 +53,3 @@ class OkCommonFlow(AbstractOkFlow):
         )
 
         return user_info_response.get_body().user
-
-
-    async def search_locations_for_filter(self, query: str) -> List[SearchedLocation]:
-        """
-        Search locations for filter
-        @param query:
-        @return:
-        """
-        search_locations_request = SearchLocationsForFilterRequest(query)
-        search_result: SearchLocationsForFilterResponse = await self.client.make(request=search_locations_request)
-        return search_result.get_body().locations

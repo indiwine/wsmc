@@ -3,7 +3,7 @@ from django.db.models import Model, URLField, CharField, ForeignKey, SET_NULL, R
 
 from .smcredential import SmCredential
 from .smpost import SmPost
-from .suspect_group import SuspectGroup
+from .suspectgroup import SuspectGroup
 from ..social_media import SocialMediaTypes
 
 

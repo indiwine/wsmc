@@ -7,6 +7,11 @@ from social_media.webdriver.request_data.okrequestdata import OkRequestData
 
 class OkLoginCollector(AbstractCollector[OkRequestData, OkOptions]):
     async def handle(self, request: Request[OkRequestData]):
+        """
+        Perform login
+        @param request:
+        @return:
+        """
         login_flow = OkLoginFlow(request.data.client)
         login_response = await login_flow.login(
             request.credentials.user_name,

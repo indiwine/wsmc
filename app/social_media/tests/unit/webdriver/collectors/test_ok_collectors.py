@@ -4,7 +4,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount
-from social_media.social_media import SocialMediaTypes, SocialMediaEntities
+from social_media.social_media import SocialMediaTypes, SocialMediaActions
 from social_media.webdriver import Agent
 from social_media.webdriver.options.okoptions import OkOptions
 from social_media.webdriver.request import Request
@@ -28,7 +28,7 @@ class TestOkCollectors(TestCase):
         return inst
 
     async def test_login(self):
-        request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
+        request = Request([SocialMediaActions.LOGIN], credentials=self.credential)
         run_agent = Agent(request)
         await run_agent.run()
 
@@ -43,10 +43,10 @@ class TestOkCollectors(TestCase):
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.LOGIN,
-                SocialMediaEntities.GROUP,
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.GROUP,
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_group
@@ -73,10 +73,10 @@ class TestOkCollectors(TestCase):
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.LOGIN,
-                SocialMediaEntities.PROFILE,
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.PROFILE,
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_account

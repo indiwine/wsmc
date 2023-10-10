@@ -13,6 +13,7 @@ from social_media.mimic.ok.client import OkHttpClient
 from social_media.mimic.ok.device import default_device
 from social_media.mimic.ok.flows.okcommonflow import OkCommonFlow
 from social_media.mimic.ok.flows.okloginflow import OkLoginFlow
+from social_media.mimic.ok.flows.oksearchflow import OkSearchFlow
 from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
 from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
@@ -123,7 +124,7 @@ class OkRequestsTestCase(SimpleTestCase):
 
     async def test_search_locations(self):
         await self.login_or_restore_session(self.ok_http_client)
-        search_flow = OkCommonFlow(self.ok_http_client)
+        search_flow = OkSearchFlow(self.ok_http_client)
         locations = await search_flow.search_locations_for_filter('Москва')
 
         for location in locations:

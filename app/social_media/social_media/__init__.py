@@ -1,2 +1,2 @@
-from .socialmediaentities import SocialMediaEntities
+from .socialmediaactions import SocialMediaActions
 from .socialmediatypes import SocialMediaTypes

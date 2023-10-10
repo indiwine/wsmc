@@ -4,6 +4,7 @@ from typing import Optional, Type, List, Union
 
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, OkRequestHttpMethod, \
     GenericResponse, GenericResponseBody, RESPONSE_BODY, AbstractResponse
+from .global_ import SearchGlobalFilter
 
 
 @dataclasses.dataclass
@@ -19,6 +20,13 @@ class SearchedLocation:
     text: str
     city_id: int
     position: Optional[dict] = None
+
+    def to_search_global_filter(self) -> SearchGlobalFilter:
+        """
+        Convert to search global filter
+        @return:
+        """
+        return SearchGlobalFilter(city=self.city, country_ids=[self.countryId])
 
 
 class SearchLocationsForFilterResponseBody(GenericResponseBody):

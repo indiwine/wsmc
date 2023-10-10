@@ -1,6 +1,6 @@
 from django.db.models import Model, CASCADE, PositiveIntegerField, OneToOneField
 
-from .suspect_group import SuspectGroup
+from .suspectgroup import SuspectGroup
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 
 
