@@ -57,6 +57,9 @@ class GeoCoderQuery:
     def to_dict(self):
         return dataclass_asdict_skip_none(self)
 
+    def to_query_string(self):
+        return ', '.join(filter(None, [self.street, self.city, self.county, self.state, self.country, self.postalcode]))
+
 
 class LocationAddressDetails(TypedDict):
     country: str

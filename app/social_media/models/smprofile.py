@@ -174,22 +174,7 @@ class SmProfile(Model):
         Get query for geocoding in plain text representation
         @return:
         """
-        assert self.has_location_or_home_town is True, 'Cannot get query without location or home_town'
-
-        country_request = None
-
-        if self.has_country:
-            country_request = f'{self.country_ref.name}, '
-
-        location_query = self.location
-
-        if not location_query:
-            location_query = self.home_town
-
-        if country_request:
-            location_query = country_request + location_query
-
-        return location_query
+        return self.get_geo_query_structured().to_query_string()
 
     def get_geo_query_structured(self) -> GeoCoderQuery:
         """
@@ -206,7 +191,7 @@ class SmProfile(Model):
         if self.location:
             result.city = self.location
 
-        if self.home_town and 'city' not in result:
+        if self.home_town and result.city is None:
             result.city = self.home_town
 
         return result

@@ -21,6 +21,29 @@ class TestSmProfile(TestCase):
         )
 
 
+    def test_geo_query_generation(self):
+        profile = SmProfile.objects.create(
+            credentials=self.credential,
+            oid='456',
+            name='test',
+            social_media=SocialMediaTypes.VK,
+            location='Киев',
+        )
+        profile.resolve_country_ref('Украина')
+        profile.save()
+
+        geo_query = profile.get_geo_query_structured()
+        self.assertEqual('Украина', geo_query.country)
+        self.assertEqual('Киев', geo_query.city)
+
+        profile.location = None
+        profile.home_town = 'Киев'
+        geo_query = profile.get_geo_query_structured()
+        self.assertEqual('Украина', geo_query.country)
+        self.assertEqual('Киев', geo_query.city)
+        plain_query = profile.get_geo_query()
+        self.assertEqual('Киев, Украина', plain_query)
+
 
     def test_resolve_country_ref(self):
         self.profile.resolve_country_ref('Ukraine')
