@@ -24,11 +24,11 @@ class UserItem:
     birthdaySet: bool
     first_name: str
     last_name: str
-    gender: str
-    pic190x190: str
-    can_vmail: bool
-    premium: bool
-    show_lock: bool
+    gender: Optional[str] = None
+    pic190x190: Optional[str] = None
+    can_vmail: Optional[bool] = None
+    premium: Optional[bool] = None
+    show_lock: Optional[bool] = None
     pic_base: Optional[str] = None
     online: Optional[bool] = None
     location: Optional[UserLocation] = None
@@ -36,6 +36,16 @@ class UserItem:
     url_profile: Optional[str] = None
     ref: Optional[str] = None
     is_hobby_expert: Optional[bool] = None
+    last_online_ms: Optional[int] = None
+    pic128x128: Optional[str] = None
+    pic240min: Optional[str] = None
+    pic320min: Optional[str] = None
+    private: Optional = None
+    age: Optional[int] = None
+
+    @property
+    def has_url(self):
+        return self.url_profile is not None
 
     def to_author_dto(self) -> AuthorDto:
         return AuthorDto(
@@ -63,7 +73,6 @@ class UserItem:
 
         if self.location_of_birth is not None and self.location_of_birth.city is not None:
             dto.home_town = self.location_of_birth.city
-
 
         if self.url_profile is not None:
             dto.metadata = SmProfileMetadata(permalink=self.url_profile)

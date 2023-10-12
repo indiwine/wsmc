@@ -3,7 +3,8 @@ from pprint import pprint
 from django.conf import settings
 from django.test import TestCase
 
-from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount
+from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount, SuspectPlace, \
+    Country
 from social_media.social_media import SocialMediaTypes, SocialMediaActions
 from social_media.webdriver import Agent
 from social_media.webdriver.options.okoptions import OkOptions
@@ -25,6 +26,7 @@ class TestOkCollectors(TestCase):
     def build_ok_options():
         inst = OkOptions()
         inst.post_count_limit = 45
+        inst.discover_profiles_limit = 500
         return inst
 
     async def test_login(self):
@@ -85,5 +87,29 @@ class TestOkCollectors(TestCase):
 
         run_agent = Agent(request)
         await run_agent.run()
+
+    async def test_profile_discovery_collector(self):
+        country = await Country.objects.acreate(
+            name='Украина',
+            code='ua'
+        )
+        suspect_place = await SuspectPlace.objects.acreate(
+            city='Киев',
+            country=country
+        )
+
+        request = Request(
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.PROFILES_DISCOVERY
+            ],
+            credentials=self.credential,
+            suspect_identity=suspect_place
+        )
+        request.options = self.build_ok_options()
+
+        run_agent = Agent(request)
+        await run_agent.run()
+
 
 

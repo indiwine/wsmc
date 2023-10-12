@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Union, Type
+from typing import List, Union, Type, Optional
 
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponseBody, \
     GenericResponse, AbstractResponse
@@ -7,12 +7,8 @@ from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams
 
 @dataclasses.dataclass
 class UsersGetRelationInfoParams(AbstractRequestParams):
-    fields: str = '*'
-
-
-@dataclasses.dataclass
-class UsersGetRelationInfoSupplyParams(AbstractRequestParams):
-    friend_ids: str = "search.global.user_ids"
+    fields: Optional[str] = None
+    friend_ids: Optional[str] = None
 
 
 @dataclasses.dataclass
@@ -42,13 +38,14 @@ class UsersGetRelationInfoResponse(GenericResponse[UsersGetRelationInfoResponseB
         super().set_from_raw(response)
 
 
-class UsersGetRelationInfoRequest(GenericRequest[UsersGetRelationInfoParams, UsersGetRelationInfoSupplyParams]):
-    def __init__(self):
+class UsersGetRelationInfoRequest(GenericRequest[UsersGetRelationInfoParams, None]):
+    def __init__(self, params: Optional[UsersGetRelationInfoParams] = None, supply_params: Optional[UsersGetRelationInfoParams] = None):
+        assert params or supply_params, 'Either params or supply_params must be provided'
         super().__init__(
             'users',
             'getRelationInfo',
-            params=UsersGetRelationInfoParams(),
-            supply_params=UsersGetRelationInfoSupplyParams()
+            params=params,
+            supply_params=supply_params
         )
 
     @staticmethod

@@ -9,7 +9,7 @@ from social_media.mimic.ok.requests.entities.user import UserItem
 @dataclass
 class UsersGetInfoParams(AbstractRequestParams):
     uids: Optional[str] = None
-    fields: Optional[str] = 'first_name,last_name,url_profile'
+    fields: Optional[str] = 'first_name,last_name,url_profile,location,location_of_birth,birthday'
     emptyPictures: Optional[bool] = None
 
 class UsersGetInfoResponseBody(GenericResponseBody):
@@ -20,9 +20,7 @@ class UsersGetInfoResponseBody(GenericResponseBody):
 
 class UsersGetInfoResponse(GenericResponse[UsersGetInfoResponseBody]):
     def set_from_raw(self, raw_response: Union[dict, list]):
-        response = raw_response
-        response['users'] = [UserItem(**user) for user in response['users']]
-        super().set_from_raw(response)
+        super().set_from_raw([UserItem(**user) for user in raw_response])
 
     @staticmethod
     def get_body_class():

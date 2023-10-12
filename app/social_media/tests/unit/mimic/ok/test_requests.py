@@ -7,7 +7,7 @@ from typing import Optional
 from django.conf import settings
 from django.test import SimpleTestCase
 
-from social_media.dtos import SmPostDto, AuthorDto
+from social_media.dtos import SmPostDto, AuthorDto, SmProfileDto
 from social_media.dtos.oksessiondto import OkSessionDto
 from social_media.mimic.ok.client import OkHttpClient
 from social_media.mimic.ok.device import default_device
@@ -18,8 +18,11 @@ from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
 from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
 from social_media.mimic.ok.requests.entities.user import UserItem
+from social_media.mimic.ok.requests.search.global_ import SearchGlobalResponseBody
 from social_media.mimic.ok.requests.search.locationsforfilter import SearchedLocation
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
+from social_media.mimic.ok.requests.users.getinfo import UsersGetInfoResponseBody
+from social_media.mimic.ok.requests.users.getrelationinfo import UsersGetRelationInfoResponseBody
 
 
 class OkRequestsTestCase(SimpleTestCase):
@@ -137,6 +140,19 @@ class OkRequestsTestCase(SimpleTestCase):
             self.assertTrue(location.position)
             pprint(location)
 
+    async def test_search_users(self):
+        await self.login_or_restore_session(self.ok_http_client)
+        search_flow = OkSearchFlow(self.ok_http_client)
+        locations = await search_flow.search_locations_for_filter('Киев, Украина')
+        search_body, relations_body, users_body = await search_flow.search_users_by_location(locations[0])
+        self.assertIsInstance(search_body, SearchGlobalResponseBody)
+        self.assertIsInstance(relations_body,UsersGetRelationInfoResponseBody )
+        self.assertIsInstance(users_body, UsersGetInfoResponseBody)
+        self.assertTrue(search_body.anchor)
+        for user in users_body.users:
+            self.assertIsInstance(user, UserItem)
+            dto = user.to_profile_dto()
+            self.assertIsInstance(dto, SmProfileDto)
     async def get_likes(self, target_entity: BaseFeedEntity, stream_flow: OkStreamFlow):
 
         like_summary = target_entity.extract_like_summary()

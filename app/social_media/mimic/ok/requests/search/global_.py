@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional
+from typing import List, Optional, Final
 
 from social_media.common import nested_dataclass
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponseBody, \
@@ -24,6 +24,7 @@ class SearchGlobalParams(AbstractRequestParams):
     types: str = 'USER'
     filters: List[SearchGlobalFilter] = dataclasses.field(default_factory=lambda: [])
     queryMeta: dict = dataclasses.field(default_factory=lambda: {"sourceLocation": "DISCOVERY_SEARCH"})
+    anchor: Optional[str] = None
 
     def add_filter(self, search_fileter: SearchGlobalFilter):
         self.filters.append(search_fileter)
@@ -76,11 +77,27 @@ class SearchGlobalResponse(GenericResponse[SearchGlobalResponseBody]):
 
 
 class SearchGlobalRequest(GenericRequest[SearchGlobalParams, None]):
-    def __init__(self):
-        super().__init__('search', 'global', params=SearchGlobalParams())
+    EXECUTE_USER_ID_SUPPLY: Final[str] = 'search.global.user_ids'
+
+    def __init__(self, anchor: Optional[str] = None):
+        super().__init__('search', 'global', params=SearchGlobalParams(anchor=anchor))
 
     def add_filter_by_city(self, city: str, country_id: int):
+        """
+        Add filter by city
+        @param city:
+        @param country_id:
+        @return:
+        """
         self.params.add_filter_by_city(city, country_id)
+
+    def add_filter(self, search_fileter: SearchGlobalFilter):
+        """
+        Add filter to request
+        @param search_fileter:
+        @return:
+        """
+        self.params.add_filter(search_fileter)
 
     @staticmethod
     def bound_response_cls():

@@ -4,7 +4,6 @@ from typing import Union, Type
 
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, GenericResponse, AbstractRequestParams, \
     GenericResponseBody, AbstractResponse
-from social_media.common import dataclass_asdict_skip_none
 from social_media.mimic.ok.requests.entities.user import UserItem
 
 
@@ -21,6 +20,7 @@ class UserGetInfoByResponseBody(GenericResponseBody):
         self.user: UserItem = None
         super().__init__(raw_params)
 
+
 class UserGetInfoByResponse(GenericResponse[UserGetInfoByResponseBody]):
     @staticmethod
     def get_body_class():
@@ -31,10 +31,10 @@ class UserGetInfoByResponse(GenericResponse[UserGetInfoByResponseBody]):
         response['user'] = UserItem(**response['user'])
         super().set_from_raw(response)
 
+
 class UserGetInfoByRequest(GenericRequest[UserGetInfoByParams, None]):
     def __init__(self, uid: str):
         super().__init__('users', 'getInfoBy', UserGetInfoByParams(uid))
-
 
     @staticmethod
     def bound_response_cls() -> Type[AbstractResponse]:
