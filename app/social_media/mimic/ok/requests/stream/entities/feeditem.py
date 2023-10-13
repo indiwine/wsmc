@@ -2,11 +2,14 @@ import dataclasses
 from enum import Enum
 from typing import List, Optional
 
+from social_media.common import nested_dataclass
+
+
 class FeedItemPatterns(Enum):
     CONTENT = 'CONTENT'
     PRESENT = 'PRESENT'
 
-@dataclasses.dataclass
+@nested_dataclass
 class FeedItem:
     pattern: str
     type: str

@@ -3,8 +3,9 @@ from pprint import pprint
 from django.conf import settings
 from django.test import TestCase
 
-from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount
-from social_media.social_media import SocialMediaTypes, SocialMediaEntities
+from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount, SuspectPlace, \
+    Country
+from social_media.social_media import SocialMediaTypes, SocialMediaActions
 from social_media.webdriver import Agent
 from social_media.webdriver.options.okoptions import OkOptions
 from social_media.webdriver.request import Request
@@ -25,10 +26,11 @@ class TestOkCollectors(TestCase):
     def build_ok_options():
         inst = OkOptions()
         inst.post_count_limit = 45
+        inst.discover_profiles_limit = 85
         return inst
 
     async def test_login(self):
-        request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
+        request = Request([SocialMediaActions.LOGIN], credentials=self.credential)
         run_agent = Agent(request)
         await run_agent.run()
 
@@ -36,17 +38,16 @@ class TestOkCollectors(TestCase):
         self.assertIsNotNone(self.credential.session)
         pprint(self.credential.session)
 
-
     async def test_group_collector(self):
         suspect_group = await SuspectGroup.objects.acreate(
             url='https://ok.ru/radiorussia1',
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.LOGIN,
-                SocialMediaEntities.GROUP,
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.GROUP,
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_group
@@ -63,7 +64,6 @@ class TestOkCollectors(TestCase):
         self.assertEquals(group.permalink, 'https://ok.ru/group/54523677844453')
         self.assertEquals(group.social_media, SocialMediaTypes.OK)
 
-
     async def test_profile_collector(self):
         suspect = await Suspect.objects.acreate(name='test')
         suspect_account = await SuspectSocialMediaAccount.objects.acreate(
@@ -73,10 +73,10 @@ class TestOkCollectors(TestCase):
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.LOGIN,
-                SocialMediaEntities.PROFILE,
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.PROFILE,
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_account
@@ -86,4 +86,28 @@ class TestOkCollectors(TestCase):
         run_agent = Agent(request)
         await run_agent.run()
 
+    async def test_profile_discovery_collector(self):
+        country = await Country.objects.acreate(
+            name='Украина',
+            code='ua'
+        )
+        suspect_place = await SuspectPlace.objects.acreate(
+            city='Киев',
+            country=country
+        )
 
+        request = Request(
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.PROFILES_DISCOVERY
+            ],
+            credentials=self.credential,
+            suspect_identity=suspect_place
+        )
+        request.options = self.build_ok_options()
+
+        run_agent = Agent(request)
+        await run_agent.run()
+        # self.assertEquals(85, await SmProfile.objects.acount())
+        # self.assertEquals(85, await Suspect.objects.acount())
+        # self.assertEquals(85, await SuspectSocialMediaAccount.objects.acount())

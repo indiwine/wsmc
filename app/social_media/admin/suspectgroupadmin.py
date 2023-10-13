@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def distribute_task_to_groups(group: SuspectGroup):
-    if group.social_media_type == SocialMediaTypes.OK:
+    if group.sm_type == SocialMediaTypes.OK:
         collect_group_common.delay(group.id)
         return
     collect_group_webdriver.delay(group.id)
@@ -30,9 +30,12 @@ def perform_collect(modeladmin, request, queryset: QuerySet[SuspectGroup]):
 
 
 class SuspectGroupAdmin(ModelAdmin):
-    list_display = ['url', 'id']
+    list_display = ['id', 'url', 'sm_type', 'has_been_collected']
+    list_filter = ['sm_type', 'has_been_collected']
+    search_fields = ['url']
     ordering = ['-id']
     actions = [perform_collect]
+    readonly_fields = ['sm_type', 'has_been_collected']
 
     def perform_scan(self, request: HttpRequest, object_id):
         group: SuspectGroup = self.get_object(request, object_id)

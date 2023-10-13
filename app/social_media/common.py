@@ -1,5 +1,9 @@
+import logging
 from dataclasses import dataclass, is_dataclass, asdict
+from pprint import pprint
 from typing import get_origin, get_args, Union
+
+logger = logging.getLogger(__name__)
 
 
 def is_optional(type_):
@@ -40,23 +44,44 @@ def is_list_of_dataclasses(type_):
     )
 
 
-def nested_dataclass(*args, **kwargs):
+def nested_dataclass(*dec_args, **dec_kwargs):
     """
     Decorator for nested dataclasses
+    Supports nested dataclasses, Optional, List of dataclasses, List of Optional dataclasses
 
-    However, modified to support `List` annotation
-    @see Shamelessly stolen from https://stackoverflow.com/a/51565863
-    @param args:
-    @param kwargs:
+    Clears all unknown fields from kwargs and generates soft warning. This is done to avoid errors when new fields are added to dataclass.
+    Takes into account all fields from parent dataclasses.
+
+
     @return:
     """
 
     def wrapper(cls):
 
-        cls = dataclass(cls, **kwargs)
+        cls = dataclass(cls, **dec_kwargs)
         original_init = cls.__init__
 
-        def __init__(self, *args, **kwargs):
+        def __init__(_selfish_, *args, **kwargs):
+            # Nested dataclasses are always initialized with kwargs
+            if args:
+                raise ValueError(f'Nested dataclasses are always initialized with kwargs. Got {args} for {cls}')
+
+            # Let's check if dataclass is extended from another dataclass
+            # If so, then we need to take to account all fields from parent dataclasses
+            # We will use __annotations__ for this
+            cls_fields = set(cls.__annotations__.keys())
+            for base in cls.__bases__:
+                if is_dataclass(base):
+                    cls_fields.update(set(base.__annotations__.keys()))
+
+            # Remove all unknown fields from kwargs
+            unknown_fields = set(kwargs.keys()) - cls_fields
+            if unknown_fields:
+                logger.warning(f'Unknown fields {unknown_fields} for {cls}. They will be removed.')
+                for field in unknown_fields:
+                    del kwargs[field]
+
+            # Create new objects for nested dataclasses
             for name, value in kwargs.items():
                 field_type = cls.__annotations__.get(name, None)
 
@@ -66,23 +91,28 @@ def nested_dataclass(*args, **kwargs):
 
                 # If field is dataclass and value is dict, then create new object
                 if is_dataclass(field_type) and isinstance(value, dict):
+                    pprint(value)
                     new_obj = field_type(**value)
                     kwargs[name] = new_obj
 
                 # If filed is List of dataclasses and value is list, then create new list of objects
                 elif is_list_of_dataclasses(field_type) and isinstance(value, list):
+                    # Let's check if all items are dicts
+                    if not all(isinstance(item, dict) for item in value):
+                        logger.info(f'List of dataclasses {field_type} contains non-dict items. They will be skipped. At {cls} field {name}.')
+                        continue
 
                     cls_to_create = get_args(field_type)[0]
                     new_list = [cls_to_create(**item) for item in value]
                     kwargs[name] = new_list
 
             # Call original init with new kwargs
-            original_init(self, *args, **kwargs)
+            original_init(_selfish_, **kwargs)
 
         cls.__init__ = __init__
         return cls
 
-    return wrapper(args[0]) if args else wrapper
+    return wrapper(dec_args[0]) if dec_args else wrapper
 
 
 def dataclass_asdict_skip_none(obj):

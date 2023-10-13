@@ -16,6 +16,7 @@ from .smpostimage import SmPostImage
 from .smprofile import SmProfile
 from .smprofilelocationfilter import SmProfileLocationFilter
 from .suspect import Suspect
-from .suspect_group import SuspectGroup
+from .suspectgroup import SuspectGroup
+from .suspectplace import SuspectPlace
 from .suspectsocialmediaaccount import SuspectSocialMediaAccount
 from .vkpoststat import VkPostStat

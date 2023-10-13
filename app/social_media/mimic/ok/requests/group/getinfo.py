@@ -1,6 +1,7 @@
 import dataclasses
 from typing import Type, Union, Dict, Optional
 
+from social_media.common import nested_dataclass
 from social_media.dtos import SmGroupDto
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, GenericResponse, RESPONSE_BODY, \
     AbstractResponse, AbstractRequestParams, AbstractResponseBody
@@ -17,7 +18,7 @@ class GroupGetInfoParams(AbstractRequestParams):
         return dataclasses.asdict(self)
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class GroupInfoItem:
     uid: str
     name: str
@@ -92,7 +93,7 @@ class GroupGetInfoResponse(GenericResponse[GroupGetInfoResponseBody]):
         return self.get_body().find_group_info_by_id(group_id)
 
 
-class GroupGetInfoRequest(GenericRequest[GroupGetInfoParams]):
+class GroupGetInfoRequest(GenericRequest[GroupGetInfoParams, None]):
     def __init__(self, group_id: str):
         params = GroupGetInfoParams(group_id)
 

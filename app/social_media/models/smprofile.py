@@ -66,6 +66,9 @@ class SmProfile(Model):
 
     in_junk = BooleanField(default=False, editable=False)
 
+    is_wall_available = BooleanField(default=True, editable=False)
+    posts_collected = BooleanField(default=False)
+
     authored_posts = GenericRelation(
         'SmPost',
         object_id_field='author_id',
@@ -248,5 +251,6 @@ class SmProfile(Model):
                 'in_junk',
                 'screening_status',
                 'authenticity_status',
+                'posts_collected'
             ])
         ]

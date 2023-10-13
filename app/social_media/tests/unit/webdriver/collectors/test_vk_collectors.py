@@ -6,7 +6,7 @@ from django.conf import settings
 from django.test import TestCase
 
 from social_media.models import SmCredential, SuspectGroup, SmProfile, VkPostStat
-from social_media.social_media import SocialMediaTypes, SocialMediaEntities
+from social_media.social_media import SocialMediaTypes, SocialMediaActions
 from social_media.webdriver import Agent
 from social_media.webdriver.collectors import Collector
 from social_media.webdriver.collectors.vk import VkLoginCollector
@@ -35,7 +35,7 @@ class TestVkCollectors(TestCase):
         return run_agent
 
     async def test_login(self):
-        request = Request([SocialMediaEntities.LOGIN], credentials=self.credential)
+        request = Request([SocialMediaActions.LOGIN], credentials=self.credential)
         request.driver_build_options.block_images = False
         request.driver_build_options.profile_folder_name = None
         request.options.login_use_jitter = False
@@ -52,10 +52,10 @@ class TestVkCollectors(TestCase):
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.LOGIN,
-                SocialMediaEntities.GROUP,
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.LOGIN,
+                SocialMediaActions.GROUP,
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_group
@@ -115,8 +115,8 @@ class TestVkCollectors(TestCase):
         )
 
         request = Request(
-            entities=[
-                SocialMediaEntities.POSTS
+            actions=[
+                SocialMediaActions.POSTS
             ],
             credentials=self.credential,
             suspect_identity=suspect_group

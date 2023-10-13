@@ -21,10 +21,15 @@ class BatchExecuteParams(AbstractRequestParams):
         result = []
 
         for req in self.request_storage:
+            request_payload = {
+                "params": req.params.to_execute_dict()
+            }
+
+            if req.supply_params is not None:
+                request_payload['supplyParams'] = req.supply_params.to_execute_dict()
+
             result.append({
-                req.dotted_method_name: {
-                    "params": req.params.to_execute_dict()
-                }
+                req.dotted_method_name: request_payload
             })
 
         return {
@@ -46,6 +51,7 @@ class ExecuteV2Response(GenericResponse[ExecuteV2ResponseBody]):
 
     def set_from_raw(self, raw_response: Union[dict, list]):
         assert isinstance(raw_response, list), 'We are expecting list over here'
+
         response_body: ExecuteV2ResponseBody = self.get_body_class()(raw_response)
         batch_params: BatchExecuteParams = self.request.params
 
@@ -72,7 +78,7 @@ class ExecuteV2Response(GenericResponse[ExecuteV2ResponseBody]):
         raise OkResponseNotFoundException(f'Response for request {request} not found')
 
 
-class ExecuteV2Request(AbstractRequest[BatchExecuteParams]):
+class ExecuteV2Request(AbstractRequest[BatchExecuteParams, None]):
     def is_json(self) -> bool:
         return False
 

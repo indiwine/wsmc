@@ -1,6 +1,6 @@
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.group.getinfo import GroupGetInfoRequest, GroupGetInfoResponse, GroupInfoItem
-from social_media.mimic.ok.requests.like.getinfo import UserItem
+from social_media.mimic.ok.requests.entities.user import UserItem
 from social_media.mimic.ok.requests.url.getinfo import UrlGetInfoRequest, UrlGetInfoResponse
 from social_media.mimic.ok.requests.users.getinfoby import UserGetInfoByRequest, UserGetInfoByResponse
 

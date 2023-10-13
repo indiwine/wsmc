@@ -55,7 +55,7 @@ class LoginResponse(GenericResponse[LoginResponseBody]):
         return LoginResponseBody
 
 
-class LoginRequest(GenericRequest[LoginParams]):
+class LoginRequest(GenericRequest[LoginParams, None]):
     def __init__(self, user_name: str, password: str):
         params = LoginParams(user_name, password)
 

@@ -80,7 +80,7 @@ services:
   celery-common:
     image: indiwine/wsmc:dev
     hostname: 'celery-common'
-    command: celery -A wsmc worker --concurrency=1 -n default-worker@%h -Q default
+    command: celery -A wsmc worker --concurrency=2 -n default-worker@%h -Q default
     environment:
       <<: *common-variables
     depends_on:
@@ -96,6 +96,17 @@ services:
         reservations:
           cpus: '0.25'
           memory: 700M
+  celery-flower:
+    image: mher/flower:2.0.1
+    hostname: 'celery-flower'
+    command: celery --broker=redis://redis:6379/ flower
+    ports:
+      - "5555:5555"
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - "node.role==manager"
 
   redis:
     image: redis:7-alpine

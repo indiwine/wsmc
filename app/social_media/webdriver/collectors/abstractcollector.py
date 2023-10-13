@@ -274,7 +274,8 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
     def aget_request_origin(self, request: Request) -> Union[SmProfile, SmGroup]:
         return self.get_request_origin(request)
 
-    def update_collected_profiles(self, profile_dto_list: List[SmProfileDto], request: Request):
+    def update_collected_profiles(self,
+                                  profile_dto_list: List[SmProfileDto], request: Request):
         """
         Update collected profiles
 
@@ -289,20 +290,31 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
 
             # Find profile
             profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
-            profile.was_collected = True
-            self.apply_dto_to_model(profile_dto, profile)
-            profile.resolve_country_ref(profile_dto.country)
+            self.resolve_and_save_profile(profile, profile_dto)
 
-            if profile.has_country:
-                profile.identify_location(structured_mode=True)
+    def resolve_and_save_profile(self, profile: SmProfile, profile_dto: SmProfileDto):
+        """
+        Resolve and save profile also applies dto to model
+        @param profile:
+        @param profile_dto:
+        @return:
+        """
+        profile.was_collected = True
+        self.apply_dto_to_model(profile_dto, profile)
+        profile.resolve_country_ref(profile_dto.country)
 
-            if not profile.should_be_kept:
-                # Moving profile to junk implies that it will be saved
-                profile.move_to_junk()
-                continue
-            profile.save()
+        if profile.has_country:
+            profile.identify_location(structured_mode=True)
 
+        if not profile.should_be_kept:
+            # Moving profile to junk implies that it will be saved
+            profile.move_to_junk()
+            return
+        profile.save()
 
+    @sync_to_async
+    def aresolve_and_save_profile(self, profile: SmProfile, profile_dto: SmProfileDto):
+        return self.resolve_and_save_profile(profile, profile_dto)
 
     @sync_to_async
     def aupdate_collected_profiles(self, profile_dto_list: List[SmProfileDto], request: Request):

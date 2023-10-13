@@ -1,10 +1,11 @@
 import logging
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 
 from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
-from social_media.models import SmPost, OkPostStat, SmGroup, SmProfile
+from social_media.models import SmPost, SmGroup, SmProfile
 from social_media.webdriver.collectors import AbstractCollector
+from social_media.webdriver.collectors.ok.okmainloopmixin import OkMainLoopMixin
 from social_media.webdriver.options.okoptions import OkOptions
 from social_media.webdriver.request import Request
 from social_media.webdriver.request_data.okrequestdata import OkRequestData
@@ -12,61 +13,46 @@ from social_media.webdriver.request_data.okrequestdata import OkRequestData
 logger = logging.getLogger(__name__)
 
 
-class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
+class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions], OkMainLoopMixin):
     ok_stream: OkStreamFlow
     request: Request[OkRequestData]
     origin_entity: Union[SmGroup, SmProfile]
+    feed_kwargs: dict
+    num_posts_collected: int
+    new_post_count: int
+
+    async def fetch_data(self, request: Request[OkRequestData], previous_anchor: Optional[str]) -> Tuple[str, bool]:
+        total_fetched, self.new_post_count, current_anchor, can_continue = await self.posts_loop(self.feed_kwargs,
+                                                                                                 request,
+                                                                                                 previous_anchor)
+        self.num_posts_collected += total_fetched
+
+        post_limit_reached = (self.get_options().post_count_limit and
+                              self.num_posts_collected >= self.get_options().post_count_limit)
+
+        continue_loop = can_continue and not post_limit_reached
+        if continue_loop:
+            await self.random_await()
+
+        return current_anchor, continue_loop
+
+    async def can_jump_to_previous_anchor(self) -> bool:
+        return self.new_post_count == 0
+
+    async def on_end_of_loop(self):
+        if isinstance(self.origin_entity, SmGroup):
+            await SmGroup.objects.filter(id=self.origin_entity.id).aupdate(posts_collected=True)
+        elif isinstance(self.origin_entity, SmProfile):
+            await SmProfile.objects.filter(id=self.origin_entity.id).aupdate(posts_collected=True)
+        else:
+            raise ValueError(f'Unknown origin entity type: {self.origin_entity}')
 
     async def handle(self, request: Request[OkRequestData]):
         assert request.data.group_uid is not None or request.data.user_id is not None, 'Group UID or User ID must be present'
 
         # Write properties for this collector and construct feed kwargs
-        feed_kwargs = self.write_properties(request)
-
-        # Initialize collector pipeline
-        was_previous_anchor_jump = False
-        current_anchor = None
-        num_posts_collected = 0
-        offset = 0
-        previous_session_anchor, previous_session_offset = await self.try_find_anchor_from_db()
-
-        try:
-
-            # Main loop of this collector
-            while True:
-                offset += 1
-
-                logger.debug(f'Fetching posts with offset {offset} and anchor {current_anchor}')
-
-                total_fetched, new_post_count, current_anchor, can_continue = await self.posts_loop(feed_kwargs,
-                                                                                                    request,
-                                                                                                    current_anchor)
-                num_posts_collected += total_fetched
-
-                if not can_continue:
-                    logger.info('No more posts available, stopping')
-                    return
-
-                # If post count limit is reached, let's stop
-                if self.get_options().post_count_limit and num_posts_collected >= self.get_options().post_count_limit:
-                    logger.info('Post count limit reached, stopping')
-                    return
-
-                # If no new posts present on page, and we have anchor from previous session, let jump to it
-                if (was_previous_anchor_jump is False
-                    and new_post_count == 0
-                    and previous_session_anchor):
-
-                    logger.info('No new posts, jumping to previous session anchor')
-                    current_anchor = previous_session_anchor
-                    offset += previous_session_offset
-                    was_previous_anchor_jump = True
-
-                # Maintain a healthy amount of delays between requests
-                await self.random_await()
-        finally:
-            logger.info(f'Collected {num_posts_collected} posts')
-            await self.write_anchor_to_db(current_anchor, offset)
+        self.write_properties(request)
+        await self.main_loop(request)
 
     def write_properties(self, request: Request[OkRequestData]) -> dict:
         """
@@ -74,6 +60,8 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
         @param request:
         @return: feed kwargs
         """
+        self.num_posts_collected = 0
+        self.new_post_count = 0
         self.ok_stream = OkStreamFlow(request.data.client)
         self.request = request
 
@@ -85,7 +73,7 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
             feed_kwargs['uid'] = request.data.user_id
             self.origin_entity = request.data.profile_model
 
-        return feed_kwargs
+        self.feed_kwargs = feed_kwargs
 
     async def posts_loop(self,
                          feed_kwargs: dict,
@@ -140,40 +128,6 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
         can_continue = has_more and stream_body.available
 
         return total_posts, new_post_count, stream_body.anchor or current_anchor, can_continue
-
-    async def try_find_anchor_from_db(self) -> Tuple[str | None, int | None]:
-        """
-        Try to find anchor from DB
-        @return: anchor, offset
-        """
-        try:
-            post_stat = await OkPostStat.objects.aget(**self.get_post_stat_kwargs())
-            return post_stat.last_anchor, post_stat.last_offset
-        except OkPostStat.DoesNotExist:
-            return None, None
-
-    async def write_anchor_to_db(self, current_anchor: str | None, offset: int):
-        """
-        Write anchor to DB
-
-        Write occurs only if anchor is not None and offset is greater than offset in DB
-        @param current_anchor:
-        @param offset:
-        @return:
-        """
-        if current_anchor:
-            _, offset_in_db = await self.try_find_anchor_from_db()
-
-            if offset_in_db is None or offset > offset_in_db:
-                logger.debug(f'Writing anchor {current_anchor} to DB')
-
-                await OkPostStat.objects.aupdate_or_create(
-                    **self.get_post_stat_kwargs(),
-                    defaults={
-                        'last_offset': offset,
-                        'last_anchor': current_anchor,
-                    }
-                )
 
     async def collect_likes(self, post_item: SmPost, target_item: BaseFeedEntity):
         """
@@ -239,8 +193,3 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions]):
 
             # Maintain a healthy amount of delays between requests
             await self.random_await(max_delay=15)
-
-    def get_post_stat_kwargs(self):
-        return {
-            'suspect_group' if self.request.is_group_request else 'suspect_social_media': self.request.suspect_identity
-        }

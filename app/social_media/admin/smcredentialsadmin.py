@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
 from social_media.models import SmCredential
-from ..social_media import SocialMediaEntities
+from ..social_media import SocialMediaActions
 from ..webdriver import Agent
 from ..webdriver.exceptions import WsmcWebDriverLoginError
 from ..webdriver.request import Request
@@ -24,7 +24,7 @@ class SmCredentialsAdmin(ModelAdmin):
         credential: SmCredential = self.get_object(request, object_id)
 
         if request.method == "POST":
-            login_request = Request([SocialMediaEntities.LOGIN], credential)
+            login_request = Request([SocialMediaActions.LOGIN], credential)
             agent = Agent(login_request)
             try:
                 await agent.run()

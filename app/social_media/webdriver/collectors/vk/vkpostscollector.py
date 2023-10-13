@@ -7,7 +7,7 @@ from django.db import transaction
 from selenium.common import ElementNotInteractableException, TimeoutException
 
 from social_media.models import VkPostStat, SmPost, SmProfile
-from social_media.social_media import SocialMediaEntities
+from social_media.social_media import SocialMediaActions
 from ..abstractcollector import AbstractCollector
 from ...exceptions import WsmcStopPostCollection, WsmcWebDriverNativeApiCallTimout
 from ...link_builders.vk import VkLinkBuilder
@@ -57,7 +57,6 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
 
             try:
                 for profile_dto_list in api_page_object.bulk_users_get(list(profiles)):
-
                     self.update_collected_profiles(profile_dto_list, request)
 
             except (TimeoutException, WsmcWebDriverNativeApiCallTimout) as e:
@@ -66,7 +65,7 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
 
     @sync_to_async
     def handle(self, request: Request):
-        if request.can_process_entity(SocialMediaEntities.POSTS):
+        if request.can_process_entity(SocialMediaActions.POSTS):
             logger.debug('Start collecting posts')
             self.request_origin = self.get_request_origin(request)
             wall, has_posts = self._navigate_to_post_wall(request)
@@ -87,11 +86,20 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
 
             except WsmcStopPostCollection:
                 pass
-            finally:
-                self._update_offset(request, offset)
 
     def _update_offset(self, request: Request, offset: int):
+        """
+        Update offset in DB
+        Update occurs only if offset is greater than offset in DB
+        @param request:
+        @param offset:
+        @return:
+        """
         try:
+            previous_offset = self.get_last_offset(request)
+            if previous_offset is not None and previous_offset >= offset:
+                return
+
             VkPostStat.objects.update_or_create(**self.get_vk_post_stat_kwargs(request),
                                                 defaults={'last_offset': offset})
         except Exception as e:
@@ -176,16 +184,22 @@ class VkPostsCollector(AbstractCollector[None, VkOptions]):
             return {'suspect_group': request.suspect_identity}
         return {'suspect_social_media': request.suspect_identity}
 
-    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) -> Generator[
-        int, None, None]:
-        last_offset: Optional[int] = None
-        current_offset: int = 0
-
+    def get_last_offset(self, request: Request) -> Optional[int]:
+        """
+        Get last offset from DB
+        @param request:
+        @return:
+        """
         try:
             post_stat = VkPostStat.objects.get(**self.get_vk_post_stat_kwargs(request))
-            last_offset = post_stat.last_offset
+            return post_stat.last_offset
         except VkPostStat.DoesNotExist:
-            pass
+            return None
+
+    def offset_generator(self, request: Request, new_amount_cb: Callable[[], int], max_offset: int) \
+        -> Generator[int, None, None]:
+        current_offset: int = 0
+        last_offset: Optional[int] = self.get_last_offset(request)
 
         page = 0
         fwd_skipped = False

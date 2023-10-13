@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import EmptyResultSet
 from django.db import models, transaction
 from encrypted_model_fields.fields import EncryptedCharField
@@ -46,7 +47,10 @@ class SmCredentialManager(models.Manager):
 
             return extract_and_update(0)
 
-
+    @sync_to_async
+    def aget_next_credential(self, social_media: SocialMediaTypes):
+        return self.get_next_credential(social_media)
+    
 class SmCredential(models.Model):
     objects = SmCredentialManager()
     user_name = models.CharField(max_length=255)

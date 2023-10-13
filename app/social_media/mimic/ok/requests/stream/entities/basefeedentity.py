@@ -2,6 +2,7 @@ import abc
 import dataclasses
 from typing import Optional
 
+from social_media.common import nested_dataclass
 from social_media.mimic.ok.requests.stream.entities.feedlikesummary import FeedLikeSummary
 
 

@@ -1,11 +1,11 @@
-import dataclasses
 from typing import Optional
 
+from social_media.common import nested_dataclass
 from social_media.dtos import AuthorDto
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class FeedUser(BaseFeedEntity):
     def extract_body(self) -> Optional[str]:
         return self.name
