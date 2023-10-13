@@ -55,4 +55,3 @@ class SearchLocationsForFilterRequest(GenericRequest[SearchLocationsForFilterPar
     @staticmethod
     def bound_response_cls() -> Type[AbstractResponse]:
         return SearchLocationsForFilterResponse
-

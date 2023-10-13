@@ -39,7 +39,7 @@ class SearchGlobalParams(AbstractRequestParams):
         return result
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class SearchFoundItem:
     item_type: str
     entity_ref: str

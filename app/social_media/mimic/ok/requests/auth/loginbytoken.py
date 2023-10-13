@@ -21,6 +21,7 @@ class LoginByTokenParams(AbstractRequestParams):
     def to_execute_dict(self) -> dict:
         return dataclasses.asdict(self)
 
+
 class LoginByTokenRequest(GenericRequest[LoginByTokenParams, None]):
     def __init__(self, auth_token: str):
         params = LoginByTokenParams(auth_token)
@@ -32,4 +33,3 @@ class LoginByTokenRequest(GenericRequest[LoginByTokenParams, None]):
     @staticmethod
     def bound_response_cls() -> Type[AbstractResponse]:
         return LoginResponse
-

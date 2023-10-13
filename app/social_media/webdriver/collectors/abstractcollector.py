@@ -290,7 +290,7 @@ class AbstractCollector(Collector, Generic[REQUEST_DATA, OPTIONS], metaclass=ABC
 
             # Find profile
             profile = SmProfile.objects.get(oid=profile_dto.oid, social_media=request.get_social_media_type)
-            self.resolve_and_save_profile(profile)
+            self.resolve_and_save_profile(profile, profile_dto)
 
     def resolve_and_save_profile(self, profile: SmProfile, profile_dto: SmProfileDto):
         """

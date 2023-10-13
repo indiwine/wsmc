@@ -10,7 +10,7 @@ from social_media.mimic.ok.requests.stream.entities.feeduser import FeedUser
 from social_media.mimic.ok.requests.stream.entities.feedvideo import FeedVideo
 
 
-@dataclasses.dataclass
+
 @nested_dataclass
 class FeedEntity:
     music_albums: list

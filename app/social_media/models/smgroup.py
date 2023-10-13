@@ -1,5 +1,5 @@
 from django.contrib.contenttypes.fields import GenericRelation
-from django.db.models import Model, URLField, CharField, ForeignKey, SET_NULL, RESTRICT, Index
+from django.db.models import Model, URLField, CharField, ForeignKey, SET_NULL, RESTRICT, Index, BooleanField
 
 from .smcredential import SmCredential
 from .smpost import SmPost
@@ -14,7 +14,8 @@ class SmGroup(Model):
 
     suspect_group = ForeignKey(SuspectGroup, on_delete=SET_NULL, null=True)
     credentials = ForeignKey(SmCredential, on_delete=RESTRICT, editable=False)
-
+    posts_collected = BooleanField(default=False, editable=False)
+    
     social_media = CharField(max_length=4, choices=SocialMediaTypes.choices, verbose_name='Соціальна мережа')
 
     posts = GenericRelation(SmPost)

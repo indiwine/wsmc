@@ -50,6 +50,10 @@ class OkProfileDiscoveryCollector(AbstractCollector[OkRequestData, OkOptions], O
             await self.random_await()
         return anchor, has_more
 
+
+    async def on_end_of_loop(self):
+        await SuspectPlace.objects.filter(id=self.request.suspect_identity.id).aupdate(place_collected=True)
+
     async def can_jump_to_previous_anchor(self) -> bool:
         return self.num_of_new_profiles == 0
 

@@ -6,7 +6,7 @@ from social_media.dtos import AuthorDto, SmProfileDto, SmProfileMetadata
 from social_media.webdriver.common import date_time_parse
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class UserLocation:
     city: Optional[str] = None
     country: Optional[str] = None

@@ -1,6 +1,7 @@
 import dataclasses
 from typing import List, Union, Type, Optional
 
+from social_media.common import nested_dataclass
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponseBody, \
     GenericResponse, AbstractResponse
 
@@ -11,7 +12,7 @@ class UsersGetRelationInfoParams(AbstractRequestParams):
     friend_ids: Optional[str] = None
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class UserRelationItem:
     uid: str
     friend: bool

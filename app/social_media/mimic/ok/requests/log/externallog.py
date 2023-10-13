@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from django.conf import settings
 
+from social_media.common import nested_dataclass
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.device import AndroidDevice
 from social_media.mimic.ok.log_requests.reader import OkLogStreamEncoder
@@ -24,7 +25,7 @@ class OkLogEncoderMixin(AbstractCustomPayloadEncoderMixin):
         return 'gzip'
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class ExternalLogItem:
     timestamp: int
     type: int
@@ -36,7 +37,7 @@ class ExternalLogItem:
 
 
 
-@dataclasses.dataclass
+@nested_dataclass
 class ExternalLogData:
     application: str = f'ru.ok.android:{settings.MIMIC_OK_APP_VER}:{settings.MIMIC_OK_APP_BUILD}'
     platform: str = 'unknown'

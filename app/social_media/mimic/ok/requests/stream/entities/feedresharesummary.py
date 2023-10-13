@@ -1,8 +1,9 @@
-import dataclasses
 from typing import Optional
 
+from social_media.common import nested_dataclass
 
-@dataclasses.dataclass
+
+@nested_dataclass
 class FeedReShareSummary:
     count: int
     self: bool

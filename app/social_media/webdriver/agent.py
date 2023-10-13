@@ -2,6 +2,8 @@ import logging
 import time
 from typing import Optional, List
 
+import psycopg2
+import urllib3
 from aiohttp import ClientConnectionError, ClientResponseError
 from selenium.common import NoSuchWindowException, WebDriverException
 
@@ -28,7 +30,9 @@ class Agent:
         WebDriverException,
         WsmcWebDriverLoginError,
         ClientConnectionError,
-        ClientResponseError
+        ClientResponseError,
+        psycopg2.OperationalError,
+        urllib3.exceptions.ProtocolError
     )
 
     def __init__(self, request: Request, task_id: Optional[str] = None):

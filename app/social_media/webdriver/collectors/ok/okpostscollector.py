@@ -39,6 +39,14 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions], OkMainLoopMi
     async def can_jump_to_previous_anchor(self) -> bool:
         return self.new_post_count == 0
 
+    async def on_end_of_loop(self):
+        if isinstance(self.origin_entity, SmGroup):
+            await SmGroup.objects.filter(id=self.origin_entity.id).aupdate(posts_collected=True)
+        elif isinstance(self.origin_entity, SmProfile):
+            await SmProfile.objects.filter(id=self.origin_entity.id).aupdate(posts_collected=True)
+        else:
+            raise ValueError(f'Unknown origin entity type: {self.origin_entity}')
+
     async def handle(self, request: Request[OkRequestData]):
         assert request.data.group_uid is not None or request.data.user_id is not None, 'Group UID or User ID must be present'
 

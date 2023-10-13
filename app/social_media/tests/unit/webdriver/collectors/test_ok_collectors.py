@@ -26,7 +26,7 @@ class TestOkCollectors(TestCase):
     def build_ok_options():
         inst = OkOptions()
         inst.post_count_limit = 45
-        inst.discover_profiles_limit = 500
+        inst.discover_profiles_limit = 85
         return inst
 
     async def test_login(self):
@@ -37,7 +37,6 @@ class TestOkCollectors(TestCase):
         await self.credential.arefresh_from_db()
         self.assertIsNotNone(self.credential.session)
         pprint(self.credential.session)
-
 
     async def test_group_collector(self):
         suspect_group = await SuspectGroup.objects.acreate(
@@ -64,7 +63,6 @@ class TestOkCollectors(TestCase):
         self.assertEquals(group.name, 'Радио России')
         self.assertEquals(group.permalink, 'https://ok.ru/group/54523677844453')
         self.assertEquals(group.social_media, SocialMediaTypes.OK)
-
 
     async def test_profile_collector(self):
         suspect = await Suspect.objects.acreate(name='test')
@@ -110,6 +108,6 @@ class TestOkCollectors(TestCase):
 
         run_agent = Agent(request)
         await run_agent.run()
-
-
-
+        # self.assertEquals(85, await SmProfile.objects.acount())
+        # self.assertEquals(85, await Suspect.objects.acount())
+        # self.assertEquals(85, await SuspectSocialMediaAccount.objects.acount())

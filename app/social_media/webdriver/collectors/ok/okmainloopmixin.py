@@ -39,12 +39,9 @@ class OkMainLoopMixin:
 
             returned_anchor, can_continue = await self.fetch_data(request, current_anchor)
 
-            if not returned_anchor:
-                logger.info('Empty anchor, stopping')
-                return
-
-            if not can_continue:
+            if not can_continue or not returned_anchor:
                 logger.info('No more data available or empty anchor, stopping')
+                await self.on_end_of_loop()
                 return
 
             current_anchor = returned_anchor
@@ -73,6 +70,14 @@ class OkMainLoopMixin:
         Can we jump to previous anchor in case of no more new items?
         Implement this method in the collector if you wish to use this functionality
         @return: True if we can jump, False otherwise
+        """
+        pass
+
+    async def on_end_of_loop(self):
+        """
+        Called at the end of the loop
+        Implement this method in the collector if you wish to use this functionality
+        @return:
         """
         pass
 
