@@ -63,7 +63,7 @@ async def collect_profiles(suspect_id: int, with_posts: bool):
     await post_data_collection(suspect_id, with_posts)
 
 @async_to_sync
-async def discover_profiles(suspect_place: int, task_id: str):
+async def do_discover_profiles(suspect_place: int, task_id: str):
     suspect_group = await SuspectPlace.objects.aget(id=suspect_place)
 
     # Only OK is supported for now

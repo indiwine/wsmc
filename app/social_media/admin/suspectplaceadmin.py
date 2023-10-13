@@ -9,7 +9,7 @@ from social_media.tasks import discover_profiles
 @admin.action(description="Discover profiles")
 def perform_discovery(modeladmin, request, queryset: QuerySet[SuspectPlace]):
     for place in queryset:
-        discover_profiles(place.id)
+        discover_profiles.delay(place.id)
 
 class SuspectPlaceAdmin(ModelAdmin):
     readonly_fields = ['place_collected']
