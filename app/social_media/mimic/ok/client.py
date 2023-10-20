@@ -5,7 +5,7 @@ from typing import Optional
 import aiohttp
 from aiohttp import ClientResponse, ClientSession
 
-from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.devices.androiddevice import AndroidDevice
 from social_media.mimic.ok.exceptions import OkApiCallException
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequest, OkRequestHttpMethod, AbstractResponse, \
@@ -19,15 +19,21 @@ logger = logging.getLogger(__name__)
 
 
 class OkHttpClient:
+    """
+    Client for OK API
+    Make sure to set device before making any requests
+    """
+    
     LOG_REQUESTS = True
 
-    def __init__(self, device: AndroidDevice, auth_options: Optional[OkHttpClientAuthOptions] = None):
-        logger.debug(f'Creating OkHttpClient with device: {device}')
+    device: Optional[AndroidDevice]
+
+    def __init__(self, auth_options: Optional[OkHttpClientAuthOptions] = None):
         if auth_options is None:
             auth_options = OkHttpClientAuthOptions()
 
         self.auth_options = auth_options
-        self.device = device
+        self.device = None
         self.jar = SerializableCookieJar()
 
     def _build_session(self) -> ClientSession:
@@ -35,7 +41,24 @@ class OkHttpClient:
             'user-agent': self.device.get_user_agent()
         }, cookie_jar=self.jar)
 
+    def set_device(self, device: AndroidDevice):
+        """
+        Set device for client to use
+        @param device:
+        @return:
+        """
+        self.device = device
+
+    def has_device(self) -> bool:
+        """
+        Check if device is set
+        @return:
+        """
+        return bool(self.device)
+
     async def make(self, request: AbstractRequest) -> AbstractResponse:
+        self._check_if_device_is_set()
+
         url = f'{BASE_URL}{request.pathed_method_name}'
         if self.LOG_REQUESTS:
             logger.debug(f'Making request to {request}')
@@ -90,7 +113,13 @@ class OkHttpClient:
         logger.debug(f'Building response for {request} with class {response_cls}')
 
         response = response_cls(request)
-        response.set_from_raw(raw_response)
+        try:
+            response.set_from_raw(raw_response)
+        except KeyError as e:
+            logger.error(
+                f'Cannot build response for {request} with class {response_cls}. Response was: {raw_response} ')
+            raise e
+
         return response
 
     def get_payload(self, request: AbstractRequest) -> dict:
@@ -119,6 +148,15 @@ class OkHttpClient:
                 data['error_msg'],
                 data['error_data']
             )
+
+    def _check_if_device_is_set(self):
+        """
+        Check if device is set and raise error if not
+        @raise RuntimeError: If device is not set
+        @return:
+        """
+        if not self.device:
+            raise RuntimeError('Device is not set')
 
     def get_app_keys(self) -> dict:
         result = dataclasses.asdict(self.auth_options, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})

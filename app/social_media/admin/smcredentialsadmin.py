@@ -12,8 +12,9 @@ from ..webdriver.request import Request
 
 
 class SmCredentialsAdmin(ModelAdmin):
-    list_display = ('user_name', 'social_media')
+    list_display = ('user_name', 'social_media', 'in_use')
     list_filter = ['social_media']
+    list_editable = ['in_use']
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:

@@ -7,7 +7,7 @@ from typing import Optional, Union, Type, List, Tuple, Generator
 from django.utils import timezone
 
 from social_media.dtos import AuthorDto, SmPostDto
-from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.devices.androiddevice import AndroidDevice
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.mimic.ok.requests.abstractrequest import AbstractRequestParams, GenericRequest, GenericResponse, \
     RESPONSE_BODY, AbstractResponse, GenericResponseBody
@@ -33,6 +33,10 @@ class StreamGetResponseBody(GenericResponseBody):
         self.anchor: Optional[str] = None
         self.available: Optional[bool] = None
         super().__init__(raw_params)
+
+    @property
+    def has_feeds(self) -> bool:
+        return bool(self.feeds)
 
     def find_entity_by_ref(self, ref: str) \
         -> Union[FeedGroup, FeedVideo, FeedUser, FeedMediaTopic, FeedGroupAlbum, FeedGroupPhoto]:
@@ -101,6 +105,10 @@ class StreamGetResponseBody(GenericResponseBody):
         Generate posts from feed items
         @return:
         """
+        if not self.has_feeds:
+            logger.warning('No feeds found in response. Probably we reached the end of the stream or a limit of OK api')
+            return None
+
         for feed_item in self.feeds:
             if feed_item.is_valid() is False:
                 continue

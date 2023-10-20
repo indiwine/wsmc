@@ -105,7 +105,8 @@ class OkProfileDiscoveryCollector(AbstractCollector[OkRequestData, OkOptions], O
         """
 
         # Find relevant locations
-        places = await self.search_flow.search_locations_for_filter(place.__str__())
+        query = await place.aget_location()
+        places = await self.search_flow.search_locations_for_filter(query)
 
         if len(places) == 0:
             raise RuntimeError(f'Cannot find any relevant locations for place: {place}')

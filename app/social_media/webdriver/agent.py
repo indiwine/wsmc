@@ -2,9 +2,11 @@ import logging
 import time
 from typing import Optional, List
 
-import psycopg2
 import urllib3
 from aiohttp import ClientConnectionError, ClientResponseError
+from celery import Task
+from django.db import OperationalError
+from pyee import EventEmitter
 from selenium.common import NoSuchWindowException, WebDriverException
 
 from .collectors import Collector
@@ -17,7 +19,7 @@ from .collectors.ok.okprofilecollector import OkProfileCollector
 from .collectors.ok.okprofilediscoverycollector import OkProfileDiscoveryCollector
 from .collectors.vk import VkLoginCollector, VkProfileCollector, VkPostsCollector, VkSecondaryProfilesCollector, \
     VkGroupCollector
-from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError
+from .exceptions import WscmWebdriverRetryFailedException, WsmcWebDriverLoginError, WsmcCeleryRetryException
 from .request import Request
 from ..social_media import SocialMediaTypes, SocialMediaActions
 
@@ -31,20 +33,22 @@ class Agent:
         WsmcWebDriverLoginError,
         ClientConnectionError,
         ClientResponseError,
-        psycopg2.OperationalError,
+        OperationalError,
         urllib3.exceptions.ProtocolError
     )
 
-    def __init__(self, request: Request, task_id: Optional[str] = None):
+    def __init__(self, request: Request, task: Optional[Task] = None):
 
         self.request = request
-        self.task_id = task_id
+        self.task = task
+        self.event_bus = EventEmitter()
+        self.event_bus.add_listener('progress', lambda progress, total: task.update_state(state='PROGRESS', meta={'progress': progress, 'total': total}))
         logger.info(f'Agent created for {request}')
 
     def _get_screenshot_prefix(self, attempt: int) -> str:
         result = f'agent_error_attempt_{attempt}'
-        if self.task_id:
-            result = f'{self.task_id}__{result}'
+        if self.task:
+            result = f'{self.task.request.id}__{result}'
         return result
 
     async def run(self, max_retries: int = 5, base_delay: int = 30):
@@ -56,7 +60,14 @@ class Agent:
         """
         logger.info('Starting Agent')
 
+        self.request.ee = self.event_bus
         attempt = 0
+
+        # Let's check if we have a task assigned and if we are retrying
+        if self.task and self.task.request.retries:
+            logger.debug('Agent is retrying, configuring request for retry (task is present)')
+            attempt = self.task.request.retries
+            self.request.configure_for_retry()
 
         while True:
             attempt += 1
@@ -68,26 +79,35 @@ class Agent:
                 logger.warning('Selenium window was closed...')
                 return
             except self.RESTARTABLE_EXCEPTIONS as e:
+                delay = base_delay * 2 ** (attempt - 1)
+                logger.error(
+                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe if self.request.has_driver else 'driver less'}',  retrying in {delay} seconds...",
+                    exc_info=e
+                )
 
                 if self.request.has_driver:
                     self.request.driver.save_screenshot_safe(self._get_screenshot_prefix(attempt))
+
                 if attempt == max_retries:
+                    logger.warning(f'Agent run attempt {attempt} failed, giving up...', exc_info=e)
                     raise
 
                 if attempt > 1 and self.request.was_retry_successful:
                     logger.warning('Resetting agent attempt count')
                     attempt = 1
 
-                delay = base_delay * 2 ** (attempt - 1)
-
-                logger.error(
-                    f"Agent run attempt {attempt} failed, at '{self.request.driver.get_current_url_safe if self.request.has_driver else 'driver less'}',  retrying in {delay} seconds...",
-                    exc_info=e
-                )
-
-                self.request.configure_for_retry()
-
                 self.request.close_driver()
+
+                # todo: fix retry
+                # We are in a celery task, so we can use retry
+                # if self.task:
+                #     logger.debug(f'Celery task detected, configuring for retry in {delay} seconds')
+                #     # Regular retry task.retry() will not work here, because we are in async code
+                #     # So we have to do it manually
+                #     raise WsmcCeleryRetryException(exc=e, countdown=delay, max_retries=max_retries)
+
+                # We are not in a celery task, so we have to do it manually
+                self.request.configure_for_retry()
                 time.sleep(delay)
             finally:
                 self.request.close_driver()

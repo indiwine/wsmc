@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from social_media.dtos.oksessiondto import OkSessionDto
+from social_media.mimic.ok.device import get_random_device
 from social_media.mimic.ok.exceptions import OkApiCallException, OkErrorCodes
 from social_media.mimic.ok.flows.abstractokflow import AbstractOkFlow
 from social_media.mimic.ok.requests.auth.anonymlogin import AnonymLoginRequest, AnonymLoginResponseBody
@@ -25,6 +26,7 @@ class OkLoginFlow(AbstractOkFlow):
         Login procedure for OK
 
         This method is a wrapper for full login procedure and login by token procedure
+        Login MUST be called before any other requests
         @param username:
         @param password:
         @param session_dto:
@@ -34,6 +36,13 @@ class OkLoginFlow(AbstractOkFlow):
         # Restoring cookies from session dto
         if session_dto and session_dto.cookie_jar:
             self.client.jar.from_base64(session_dto.cookie_jar)
+
+        # Restoring device from session dto
+        if session_dto and session_dto.device:
+            self.client.set_device(session_dto.device)
+        else:
+            # Setting random device if we don't have one
+            self.client.set_device(get_random_device())
 
         # If we have session dto, we can try to login by token
         if session_dto and session_dto.auth_token:

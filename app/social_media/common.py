@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass, is_dataclass, asdict
-from pprint import pprint
 from typing import get_origin, get_args, Union
 
 logger = logging.getLogger(__name__)
@@ -91,7 +90,6 @@ def nested_dataclass(*dec_args, **dec_kwargs):
 
                 # If field is dataclass and value is dict, then create new object
                 if is_dataclass(field_type) and isinstance(value, dict):
-                    pprint(value)
                     new_obj = field_type(**value)
                     kwargs[name] = new_obj
 
@@ -99,7 +97,8 @@ def nested_dataclass(*dec_args, **dec_kwargs):
                 elif is_list_of_dataclasses(field_type) and isinstance(value, list):
                     # Let's check if all items are dicts
                     if not all(isinstance(item, dict) for item in value):
-                        logger.info(f'List of dataclasses {field_type} contains non-dict items. They will be skipped. At {cls} field {name}.')
+                        logger.info(
+                            f'List of dataclasses {field_type} contains non-dict items. They will be skipped. At {cls} field {name}.')
                         continue
 
                     cls_to_create = get_args(field_type)[0]

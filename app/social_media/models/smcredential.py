@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import List, Optional, Union
 
 from asgiref.sync import sync_to_async
@@ -8,6 +9,7 @@ from django.db import models, transaction
 from encrypted_model_fields.fields import EncryptedCharField
 
 from social_media.dtos.oksessiondto import OkSessionDto
+from social_media.mimic.ok.device import default_device
 from social_media.social_media.socialmediatypes import SocialMediaTypes
 
 
@@ -77,7 +79,15 @@ class SmCredential(models.Model):
             return None
 
         if self.social_media == SocialMediaTypes.OK:
-            return OkSessionDto.from_json(self.session)
+            dto_data_source = self.session
+            # session might be a dict or a json string, lets check and convert it to dict
+            if isinstance(dto_data_source, str):
+                dto_data_source = json.loads(dto_data_source)
+
+            session = OkSessionDto(**dto_data_source)
+            if session.device is None:
+                session.device = default_device
+            return session
 
         raise NotImplementedError(f'No session DTO for {self.social_media}')
 

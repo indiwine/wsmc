@@ -10,14 +10,13 @@ from django.test import SimpleTestCase
 from social_media.dtos import SmPostDto, AuthorDto, SmProfileDto
 from social_media.dtos.oksessiondto import OkSessionDto
 from social_media.mimic.ok.client import OkHttpClient
-from social_media.mimic.ok.device import default_device
 from social_media.mimic.ok.flows.okcommonflow import OkCommonFlow
 from social_media.mimic.ok.flows.okloginflow import OkLoginFlow
 from social_media.mimic.ok.flows.oksearchflow import OkSearchFlow
 from social_media.mimic.ok.flows.okstreamflow import OkStreamFlow
 from social_media.mimic.ok.requests.auth.login import LoginResponseBody
-from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
 from social_media.mimic.ok.requests.entities.user import UserItem
+from social_media.mimic.ok.requests.group.getinfo import GroupInfoItem
 from social_media.mimic.ok.requests.search.global_ import SearchGlobalResponseBody
 from social_media.mimic.ok.requests.search.locationsforfilter import SearchedLocation
 from social_media.mimic.ok.requests.stream.entities.basefeedentity import BaseFeedEntity
@@ -33,7 +32,7 @@ class OkRequestsTestCase(SimpleTestCase):
     def setUpClass(cls):
         if not settings.TEST_OK_LOGIN or not settings.TEST_OK_PASSWORD:
             raise ValueError('OK login and password must be present')
-        cls.ok_http_client = OkHttpClient(default_device)
+        cls.ok_http_client = OkHttpClient()
         cls.logged_in = False
 
     async def login_or_restore_session(self, client: OkHttpClient):
@@ -52,7 +51,9 @@ class OkRequestsTestCase(SimpleTestCase):
 
         def serialize_session(session_dto: OkSessionDto):
             session_dto.cookie_jar = client.jar.to_base64()
+            session_dto.device = client.device
             self.assertTrue(session_dto.cookie_jar, 'Cookie jar must be present')
+            self.assertTrue(session_dto.device, 'Device must be present')
             path.write_text(session_dto.to_json())
 
         if path.exists():
@@ -120,7 +121,6 @@ class OkRequestsTestCase(SimpleTestCase):
                 if not post_dto.permalink:
                     print('No permalink, in post!')
 
-
                 await self.get_likes(target_entity, stream_flow)
 
             await asyncio.sleep(10)
@@ -146,13 +146,14 @@ class OkRequestsTestCase(SimpleTestCase):
         locations = await search_flow.search_locations_for_filter('Киев, Украина')
         search_body, relations_body, users_body = await search_flow.search_users_by_location(locations[0])
         self.assertIsInstance(search_body, SearchGlobalResponseBody)
-        self.assertIsInstance(relations_body,UsersGetRelationInfoResponseBody )
+        self.assertIsInstance(relations_body, UsersGetRelationInfoResponseBody)
         self.assertIsInstance(users_body, UsersGetInfoResponseBody)
         self.assertTrue(search_body.anchor)
         for user in users_body.users:
             self.assertIsInstance(user, UserItem)
             dto = user.to_profile_dto()
             self.assertIsInstance(dto, SmProfileDto)
+
     async def get_likes(self, target_entity: BaseFeedEntity, stream_flow: OkStreamFlow):
 
         like_summary = target_entity.extract_like_summary()

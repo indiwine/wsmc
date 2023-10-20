@@ -42,17 +42,36 @@ class ProfileLocationPreciseFilter(SimpleListFilter):
             return queryset.filter(location_point__intersects=polygon_subquery)
 
 
+class ProfileLikesCountFilter(SimpleListFilter):
+    title = 'Likes Count Filter'
+    parameter_name = 'likes_count_filter'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('1-2', '1-2'),
+            ('>=3', '>=3')
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == '1-2':
+            return queryset.filter(likes_count__range=(1, 2))
+        if self.value() == '>=3':
+            return queryset.filter(likes_count__gte=3)
+
 class SmProfileResource(ModelResource):
     like_count = Field()
     permalink = Field()
 
     class Meta:
         model = SmProfile
-        fields = ('id', 'oid', 'name', 'permalink', 'country', 'location', 'like_count')
-        export_order = ('id', 'oid', 'name', 'permalink', 'country', 'location', 'like_count')
+        fields = ('id', 'oid', 'name', 'permalink', 'country_ref', 'location', 'like_count')
+        export_order = ('id', 'oid', 'name', 'permalink', 'country_ref', 'location', 'like_count')
 
     def dehydrate_permalink(self, profile: SmProfile):
         return profile.permalink
+
+    def dehydrate_country(self, profile: SmProfile):
+        return profile.country_ref.name
 
     def dehydrate_like_count(self, profile: SmProfile):
         return profile.likes_count
@@ -67,6 +86,7 @@ class SmProfileAdmin(ExportMixin, GISModelAdmin):
         'authenticity_status',
         'person_responsible',
         ProfileLocationPreciseFilter,
+        ProfileLikesCountFilter,
         'social_media'
     ]
     resource_classes = [SmProfileResource]

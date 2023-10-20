@@ -6,7 +6,7 @@ from django.conf import settings
 
 from social_media.common import nested_dataclass
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
-from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.devices.androiddevice import AndroidDevice
 from social_media.mimic.ok.log_requests.reader import OkLogStreamEncoder
 from social_media.mimic.ok.requests.abstractrequest import GenericRequest, AbstractRequestParams, \
     AbstractCustomPayloadEncoderMixin

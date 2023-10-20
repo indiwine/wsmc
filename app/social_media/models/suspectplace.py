@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.db import models
 
 from .country import Country
@@ -9,4 +10,8 @@ class SuspectPlace(models.Model):
     place_collected = models.BooleanField(default=False, verbose_name='Місце зібрано')
 
     def __str__(self):
+        return f'{self.city}, {self.country}'
+
+    @sync_to_async
+    def aget_location(self):
         return f'{self.city}, {self.country}'

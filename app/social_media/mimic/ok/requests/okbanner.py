@@ -5,7 +5,7 @@ import dataclasses
 from dataclasses_json import dataclass_json
 from django.conf import settings
 
-from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.devices.androiddevice import AndroidDevice
 
 
 @dataclass_json

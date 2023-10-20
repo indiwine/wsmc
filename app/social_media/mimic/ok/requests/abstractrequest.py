@@ -6,7 +6,7 @@ from abc import ABC
 from enum import Enum
 from typing import TypeVar, Generic, Type, Optional, Union
 
-from social_media.mimic.ok.device import AndroidDevice
+from social_media.mimic.ok.devices.androiddevice import AndroidDevice
 from social_media.mimic.ok.okhttpclientauthoptions import OkHttpClientAuthOptions
 from social_media.common import dataclass_asdict_skip_none
 

@@ -3,6 +3,8 @@ from pprint import pprint
 from django.conf import settings
 from django.test import TestCase
 
+from social_media.dtos.oksessiondto import OkSessionDto
+from social_media.mimic.ok.devices import AndroidDevice
 from social_media.models import SmCredential, SuspectGroup, SmGroup, Suspect, SuspectSocialMediaAccount, SuspectPlace, \
     Country
 from social_media.social_media import SocialMediaTypes, SocialMediaActions
@@ -36,7 +38,10 @@ class TestOkCollectors(TestCase):
 
         await self.credential.arefresh_from_db()
         self.assertIsNotNone(self.credential.session)
-        pprint(self.credential.session)
+        dto = self.credential.session_dto
+        self.assertIsInstance(dto, OkSessionDto)
+        self.assertIsInstance(dto.device, AndroidDevice)
+        pprint(dto)
 
     async def test_group_collector(self):
         suspect_group = await SuspectGroup.objects.acreate(

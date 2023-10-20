@@ -26,3 +26,8 @@ class OkOptions(BaseOptions):
     """
     Maximum number of profiles to discover. If None, no limit is applied
     """
+
+    use_login_jitter: bool = True
+    """
+    Use login jitter. A random delay will be added before login.
+    """

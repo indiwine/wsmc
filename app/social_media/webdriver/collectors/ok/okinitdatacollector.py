@@ -1,5 +1,5 @@
 from social_media.mimic.ok.client import OkHttpClient
-from social_media.mimic.ok.device import get_device
+from social_media.mimic.ok.device import get_random_device, default_device
 from social_media.webdriver.collectors import AbstractCollector
 from social_media.webdriver.options.okoptions import OkOptions
 from social_media.webdriver.request import Request
@@ -15,6 +15,7 @@ class OkInitDataCollector(AbstractCollector[OkRequestData, OkOptions]):
         """
 
         request_data = OkRequestData()
-        request_data.client = OkHttpClient(get_device())
+        # We initialize the client without a device, we will set it later
+        request_data.client = OkHttpClient()
 
         request.data = request_data

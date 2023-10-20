@@ -104,28 +104,29 @@ class OkPostsCollector(AbstractCollector[OkRequestData, OkOptions], OkMainLoopMi
             logger.info('No anchor, we reached end of the feed. Stopping')
             has_more = False
 
-        for post_dto, target_item in stream_body.post_generator():
-            if self.get_options().post_date_limit and post_dto.datetime < self.get_options().post_date_limit:
-                logger.info('Post date limit reached, stopping')
-                has_more = False
-                break
+        if stream_body.has_feeds:
+            for post_dto, target_item in stream_body.post_generator():
+                if self.get_options().post_date_limit and post_dto.datetime < self.get_options().post_date_limit:
+                    logger.info('Post date limit reached, stopping')
+                    has_more = False
+                    break
 
-            # Persist post and its corresponding author, create new author if needed
-            post, is_new = await self.apersist_post(post_dto, self.origin_entity, request)
-            logger.debug(f'Post {"created" if is_new else "updated"}: {post_dto.datetime} ')
+                # Persist post and its corresponding author, create new author if needed
+                post, is_new = await self.apersist_post(post_dto, self.origin_entity, request)
+                logger.debug(f'Post {"created" if is_new else "updated"}: {post_dto.datetime} ')
 
-            total_posts += 1
-            if is_new:
-                new_post_count += 1
+                total_posts += 1
+                if is_new:
+                    new_post_count += 1
 
-            if self.get_options().skip_likes_for_known_posts and not is_new:
-                logger.debug('Skipping likes for known post')
-                continue
+                if self.get_options().skip_likes_for_known_posts and not is_new:
+                    logger.debug('Skipping likes for known post')
+                    continue
 
-            # Fetch and preserve likes for this post
-            await self.collect_likes(post, target_item)
+                # Fetch and preserve likes for this post
+                await self.collect_likes(post, target_item)
 
-        can_continue = has_more and stream_body.available
+        can_continue = has_more and stream_body.available and stream_body.has_feeds
 
         return total_posts, new_post_count, stream_body.anchor or current_anchor, can_continue
 

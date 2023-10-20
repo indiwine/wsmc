@@ -46,3 +46,12 @@ class WsmcWebDriverPostLikesException(WsmcWebDriverPostException):
 
 class WsmcWebDriverNativeApiCallTimout(WsmcWebdriverException):
     pass
+
+
+class WsmcCeleryRetryException(Exception):
+    def __init__(self, exc, countdown, max_retries):
+        super().__init__('Celery retry exception')
+        self.max_retries = max_retries
+        self.countdown = countdown
+        self.exc = exc
+

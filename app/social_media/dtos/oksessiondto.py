@@ -1,12 +1,13 @@
-import dataclasses
 from typing import Optional
 
 import dataclasses_json
 
+from social_media.common import nested_dataclass
+from social_media.mimic.ok.devices import AndroidDevice
 
 
 @dataclasses_json.dataclass_json
-@dataclasses.dataclass
+@nested_dataclass
 class OkSessionDto:
     uid: str
     session_key: str
@@ -17,3 +18,4 @@ class OkSessionDto:
     activated_profile: bool
     auth_hash: str
     cookie_jar: Optional[str] = None
+    device: Optional[AndroidDevice] = None

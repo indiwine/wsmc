@@ -4,6 +4,7 @@ import time
 from typing import List, Optional
 
 from asgiref.sync import sync_to_async, async_to_sync
+from celery import Task
 from pyee.base import EventEmitter
 
 from social_media.models import Suspect, SuspectSocialMediaAccount, SuspectGroup, SuspectPlace, SmCredential
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 POST_BATCH_SIZE = 50
 
 @async_to_sync
-async def collect_groups(suspect_group_id: int, task_id: str):
+async def collect_groups(suspect_group_id: int, task: Task):
     suspect_group = await SuspectGroup.objects.aget(id=suspect_group_id)
     credentials = await suspect_group.afetch_next_credential()
     collect_request = Request(
@@ -36,21 +37,7 @@ async def collect_groups(suspect_group_id: int, task_id: str):
         suspect_group
     )
 
-    agent = Agent(collect_request, task_id)
-    await agent.run()
-
-@async_to_sync
-async def collect_unknown_profiles(suspect_group_id: int):
-    suspect_group = SuspectGroup.objects.get(id=suspect_group_id)
-    collect_request = Request(
-        [
-            SocialMediaActions.LOGIN,
-            SocialMediaActions.UNKNOWN_PROFILES
-        ],
-        suspect_group.credentials,
-    )
-
-    agent = Agent(collect_request)
+    agent = Agent(collect_request, task)
     await agent.run()
 
 @async_to_sync()
@@ -59,11 +46,11 @@ async def collect_and_process(suspect_id: int, with_posts: bool):
     await asyncio.gather(data_processing(event_emitter), post_data_collection(suspect_id, with_posts, event_emitter))
 
 @async_to_sync
-async def collect_profiles(suspect_id: int, with_posts: bool):
-    await post_data_collection(suspect_id, with_posts)
+async def collect_profiles(suspect_id: int, with_posts: bool, task: Task):
+    await post_data_collection(suspect_id, with_posts, task)
 
 @async_to_sync
-async def do_discover_profiles(suspect_place: int, task_id: str):
+async def do_discover_profiles(suspect_place: int, task: Task):
     suspect_group = await SuspectPlace.objects.aget(id=suspect_place)
 
     # Only OK is supported for now
@@ -77,10 +64,13 @@ async def do_discover_profiles(suspect_place: int, task_id: str):
         suspect_group
     )
 
-    agent = Agent(collect_request, task_id)
+    agent = Agent(collect_request, task)
     await agent.run()
 
-async def post_data_collection(suspect_id: int, with_posts: bool, ee: Optional[EventEmitter] = None):
+async def post_data_collection(suspect_id: int,
+                               with_posts: bool,
+                               task: Task,
+                               ee: Optional[EventEmitter] = None):
     suspect: Suspect = await Suspect.objects.aget(id=suspect_id)
     async for sm_account in SuspectSocialMediaAccount.objects.select_related('credentials').filter(suspect=suspect):
         entities = [SocialMediaActions.LOGIN, SocialMediaActions.PROFILE]
@@ -94,7 +84,7 @@ async def post_data_collection(suspect_id: int, with_posts: bool, ee: Optional[E
             ee=ee
         )
 
-        agent = Agent(collect_request)
+        agent = Agent(collect_request, task)
         try:
             await agent.run()
         finally:
